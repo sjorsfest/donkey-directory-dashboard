@@ -1,0 +1,213 @@
+:root {
+  --bg-main: #f8f6ef;
+  --bg-card: #fffdf7;
+  --text-main: #1d2b31;
+  --text-muted: #52646b;
+  --accent: #007f73;
+  --accent-soft: #d9f0ec;
+  --danger: #b03a2e;
+  --border: #d9ddd2;
+  --shadow: 0 16px 40px rgba(29, 43, 49, 0.08);
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Space Grotesk", "Avenir Next", "Trebuchet MS", sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 0% 0%, #d9f0ec 0%, transparent 35%),
+    radial-gradient(circle at 100% 100%, #fde7d8 0%, transparent 40%),
+    var(--bg-main);
+}
+
+.app-shell {
+  width: min(980px, 92vw);
+  margin: 2.5rem auto 3rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.hero {
+  padding: 0.4rem 0 0.6rem;
+}
+
+.hero h1 {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  line-height: 1.1;
+}
+
+.hero p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1.2rem;
+}
+
+.card h3 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+}
+
+.grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  color: var(--text-main);
+  background: #fff;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  outline: 2px solid var(--accent-soft);
+  border-color: var(--accent);
+}
+
+button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.62rem 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+button.ghost {
+  color: var(--accent);
+  background: #fff;
+  border-color: var(--accent);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.auth-forms form {
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+}
+
+.status-line {
+  margin-top: 0;
+  margin-bottom: 0.95rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+
+.logs {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.log {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffeff;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: #f7fbfa;
+}
+
+.log-header strong {
+  font-size: 0.92rem;
+}
+
+.log-header time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.log pre {
+  margin: 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  font-family: "IBM Plex Mono", "Menlo", "Consolas", monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.log.error {
+  border-color: #f1b8b1;
+}
+
+.log.error .log-header {
+  background: #fff4f2;
+}
+
+@media (max-width: 760px) {
+  .grid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell {
+    margin-top: 1.25rem;
+  }
+}
