@@ -7,7 +7,9 @@
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "gen:api": "openapi-typescript http://127.0.0.1:8000/openapi.json -o app/types/api.generated.ts"
+    "gen:api": "openapi-typescript http://127.0.0.1:8000/openapi.json -o app/types/api.generated.ts",
+    "ext:dev": "vite build --watch --config chrome-extension/vite.config.ts",
+    "ext:build": "vite build --config chrome-extension/vite.config.ts"
   },
   "dependencies": {
     "@react-router/node": "7.12.0",
@@ -21,9 +23,11 @@
   "devDependencies": {
     "@react-router/dev": "7.12.0",
     "@tailwindcss/vite": "^4.1.13",
+    "@types/chrome": "^0.1.37",
     "@types/node": "^22",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",

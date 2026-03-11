@@ -5,3 +5,6 @@
 # React Router
 /.react-router/
 /build/
+
+# Chrome Extension build
+/chrome-extension/dist/
