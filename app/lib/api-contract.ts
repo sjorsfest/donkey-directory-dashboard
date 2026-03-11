@@ -18,6 +18,7 @@ export const API_ROUTES = {
   },
   brand: {
     extract: "/api/v1/brand/extract",
+    projects: "/api/v1/brand/projects",
   },
 } as const satisfies {
   auth: {
@@ -30,6 +31,7 @@ export const API_ROUTES = {
   };
   brand: {
     extract: ApiPath;
+    projects: ApiPath;
   };
 };
 

@@ -2,12 +2,132 @@ import { useState, useCallback } from "react";
 import { fillForm } from "../lib/api";
 import { scanFormFields } from "../content-scripts/scan-form-fields";
 import { fillFormFields } from "../content-scripts/fill-form-fields";
-import type { StepInfo, FilledField, FillResult } from "../types";
+import type { StepInfo, FilledField, FillResult, ScannedField } from "../types";
 
 interface FillResults {
   fields: FilledField[];
   filled: number;
   skipped: number;
+}
+
+function isRestrictedTabUrl(url?: string): boolean {
+  if (!url) return false;
+
+  return (
+    url.startsWith("chrome://") ||
+    url.startsWith("chrome-extension://") ||
+    url.startsWith("edge://") ||
+    url.startsWith("about:") ||
+    url.startsWith("devtools://") ||
+    url.startsWith("view-source:")
+  );
+}
+
+async function getTargetTab(): Promise<chrome.tabs.Tab | undefined> {
+  const strategies: chrome.tabs.QueryInfo[] = [
+    { active: true, currentWindow: true },
+    { active: true, lastFocusedWindow: true },
+    { active: true },
+  ];
+
+  for (const query of strategies) {
+    const tabs = await chrome.tabs.query(query);
+    const usableTab = tabs.find(
+      (tab) => tab.id !== undefined && !isRestrictedTabUrl(tab.url)
+    );
+    if (usableTab) return usableTab;
+  }
+
+  return undefined;
+}
+
+function normalizeKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function toTokens(value: string): string[] {
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9]+/g)
+    .filter((token) => token.length > 1);
+}
+
+function buildFieldIdVariants(fieldId: string): string[] {
+  const lower = fieldId.toLowerCase();
+  const variants = new Set<string>([fieldId, lower]);
+
+  if (lower.endsWith("_id")) {
+    const withoutId = lower.slice(0, -3);
+    variants.add(withoutId);
+  }
+
+  if (lower.startsWith("meta_")) {
+    const withoutMeta = lower.slice(5);
+    variants.add(withoutMeta);
+  }
+
+  if (lower.endsWith("rules")) {
+    variants.add(`${lower.slice(0, -1)}`);
+  }
+
+  return Array.from(variants);
+}
+
+function scoreMatch(fieldId: string, scanned: ScannedField): number {
+  const variants = buildFieldIdVariants(fieldId);
+  const variantNormalized = variants.map(normalizeKey).filter(Boolean);
+  const fieldKey = scanned.field_id || "";
+  const fieldLabel = scanned.label || "";
+  const fieldPlaceholder = scanned.placeholder || "";
+  const fieldAliases = [fieldKey, fieldLabel, fieldPlaceholder];
+  const normalizedAliases = fieldAliases.map(normalizeKey).filter(Boolean);
+
+  if (fieldAliases.includes(fieldId)) return 100;
+  if (fieldAliases.some((a) => a.toLowerCase() === fieldId.toLowerCase())) return 90;
+  if (normalizedAliases.some((a) => variantNormalized.includes(a))) return 75;
+
+  const variantTokens = variants.flatMap(toTokens);
+  const aliasTokens = fieldAliases.flatMap(toTokens);
+  const aliasTokenSet = new Set(aliasTokens);
+  const overlap = variantTokens.filter((t) => aliasTokenSet.has(t)).length;
+
+  let score = overlap * 10;
+  const variantText = variants.join(" ");
+
+  if (variantText.includes("category") && scanned.tag === "select") score += 20;
+  if (variantText.includes("agree") && scanned.type === "checkbox") score += 20;
+  if (variantText.includes("meta") && /meta/i.test(fieldLabel)) score += 15;
+
+  return score;
+}
+
+function mapReturnedFieldsToScannedFields(
+  filledFields: FilledField[],
+  scannedFields: ScannedField[]
+): FilledField[] {
+  const scannedIds = new Set(scannedFields.map((f) => f.field_id));
+
+  return filledFields.map((field) => {
+    if (scannedIds.has(field.field_id)) return field;
+
+    let bestMatch: ScannedField | null = null;
+    let bestScore = 0;
+
+    for (const scanned of scannedFields) {
+      const score = scoreMatch(field.field_id, scanned);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = scanned;
+      }
+    }
+
+    if (!bestMatch || bestScore < 20) return field;
+
+    return {
+      ...field,
+      field_id: bestMatch.field_id,
+    };
+  });
 }
 
 export function useFillFlow(onSessionExpired?: () => void) {
@@ -37,21 +157,36 @@ export function useFillFlow(onSessionExpired?: () => void) {
 
       try {
         // Step 1: Get active tab
-        const [tab] = await chrome.tabs.query({
-          active: true,
-          currentWindow: true,
-        });
-        if (!tab?.id || !tab.url || tab.url.startsWith("chrome://")) {
+        const tab = await getTargetTab();
+        if (!tab?.id) {
           throw new Error(
             "Cannot access this page. Navigate to a directory submission form."
           );
         }
 
+        // In side panel context, tab.url may be unavailable without extra permissions.
+        // Read page metadata directly from the tab so the backend still receives URL/title.
+        let pageUrl = tab.url || "";
+        let pageTitle = tab.title || "";
+        if (!pageUrl || !pageTitle) {
+          const metadata = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => ({
+              url: window.location.href,
+              title: document.title,
+            }),
+          });
+
+          pageUrl = metadata?.[0]?.result?.url || pageUrl;
+          pageTitle = metadata?.[0]?.result?.title || pageTitle;
+        }
+
         // Step 2: Scan form fields
-        addStep("Scanning form fields...");
+        addStep("Scanning form fields (including lazy-loaded fields)...");
         const scanResults = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: scanFormFields,
+          args: [12000],
         });
 
         const fields = scanResults?.[0]?.result;
@@ -65,8 +200,8 @@ export function useFillFlow(onSessionExpired?: () => void) {
         addStep("Generating fill values...");
         const data = await fillForm(
           projectId,
-          tab.url,
-          tab.title || "",
+          pageUrl,
+          pageTitle,
           fields,
           onSessionExpired
         );
@@ -76,14 +211,15 @@ export function useFillFlow(onSessionExpired?: () => void) {
           updateLastStep("Backend returned no fill values.", "error");
           return;
         }
-        updateLastStep(`Generated ${filledFields.length} values`, "done");
+        const mappedFields = mapReturnedFieldsToScannedFields(filledFields, fields);
+        updateLastStep(`Generated ${mappedFields.length} values`, "done");
 
         // Step 4: Fill the form
-        addStep("Filling form fields...");
+        addStep("Filling form fields (waiting for delayed inputs)...");
         const fillResults = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: fillFormFields,
-          args: [filledFields],
+          args: [mappedFields, 8000],
         });
 
         const fillResult: FillResult = fillResults?.[0]?.result || {
@@ -93,7 +229,7 @@ export function useFillFlow(onSessionExpired?: () => void) {
         updateLastStep(`Filled ${fillResult.filled} fields`, "done");
 
         setResults({
-          fields: filledFields,
+          fields: mappedFields,
           filled: fillResult.filled,
           skipped: fillResult.skipped,
         });

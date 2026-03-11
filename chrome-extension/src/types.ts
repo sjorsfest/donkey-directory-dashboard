@@ -12,7 +12,7 @@ export interface ScannedField {
 
 export interface FilledField {
   field_id: string;
-  value: string | boolean | null;
+  value: string | number | boolean | null;
 }
 
 export interface FillResult {

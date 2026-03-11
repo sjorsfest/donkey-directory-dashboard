@@ -7,6 +7,11 @@ import {
   isApiToken,
 } from "~/lib/api-contract";
 import { commitSession, getSession } from "~/lib/session.server";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -76,37 +81,50 @@ export default function SignupPage() {
   const isSubmitting = navigation.state !== "idle";
 
   return (
-    <main className="auth-page-shell">
-      <section className="auth-card shiny-card">
-        <p className="auth-kicker">Directory access</p>
-        <h1>Sign Up</h1>
-        <p className="dashboard-muted">Create your account to start using the dashboard.</p>
+    <main className="min-h-screen grid place-items-center p-6 bg-muted/30">
+      <Card className="w-full max-w-xl">
+        <CardHeader className="space-y-2">
+          <p className="text-sm text-muted-foreground">Directory access</p>
+          <CardTitle>Sign Up</CardTitle>
+          <CardDescription>Create your account to start using the dashboard.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {actionData?.error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{actionData.error}</AlertDescription>
+            </Alert>
+          ) : null}
 
-        {actionData?.error ? <p className="auth-error">{actionData.error}</p> : null}
+          <Form method="post" className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="signup-email">Email</Label>
+              <Input id="signup-email" type="email" name="email" autoComplete="email" required />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="signup-password">Password</Label>
+              <Input
+                id="signup-password"
+                type="password"
+                name="password"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating account..." : "Create account"}
+            </Button>
+          </Form>
 
-        <Form method="post" className="auth-form">
-          <label>
-            Email
-            <input type="email" name="email" autoComplete="email" required />
-          </label>
-          <label>
-            Password
-            <input type="password" name="password" autoComplete="new-password" required />
-          </label>
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Create account"}
-          </button>
-        </Form>
-
-        <div className="auth-links">
-          <Link className="dashboard-nav-link" to="/login">
-            Already have an account? Login
-          </Link>
-          <Link className="dashboard-nav-link" to="/">
-            Back to home
-          </Link>
-        </div>
-      </section>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="link" className="px-0">
+              <Link to="/login">Already have an account? Login</Link>
+            </Button>
+            <Button asChild variant="link" className="px-0">
+              <Link to="/">Back to home</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

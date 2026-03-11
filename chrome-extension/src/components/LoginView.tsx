@@ -5,6 +5,11 @@ import {
   login,
 } from "../lib/api";
 import { Header } from "./Header";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 
 interface LoginViewProps {
   onLoginSuccess: (email: string) => void;
@@ -58,33 +63,47 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
   const isBusy = isPasswordSubmitting || isCodeSubmitting;
 
   return (
-    <div className="view">
-      <Header subtitle />
-      <button
-        type="button"
-        className="secondary-btn"
-        onClick={openConnectPage}
-        disabled={isBusy}
-      >
-        Open Connect Extension Page
-      </button>
+    <div className="view p-4">
+      <Card>
+        <CardHeader className="pb-4">
+          <Header subtitle />
+          <CardTitle className="text-base">Connect Session</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={openConnectPage}
+            disabled={isBusy}
+            className="w-full"
+          >
+            Open Connect Extension Page
+          </Button>
 
-      <form onSubmit={handleCodeSubmit}>
-        <label htmlFor="connect-code">One-time code</label>
-        <input
-          type="text"
-          id="connect-code"
-          name="connect-code"
-          required
-          placeholder="ABCD-EFGH"
-          value={connectCode}
-          onChange={(e) => setConnectCode(e.target.value.toUpperCase())}
-        />
-        {codeError && <p className="error">{codeError}</p>}
-        <button type="submit" disabled={isBusy}>
-          {isCodeSubmitting ? "Connecting..." : "Connect with code"}
-        </button>
-      </form>
+          <form onSubmit={handleCodeSubmit} className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="connect-code">One-time code</Label>
+              <Input
+                type="text"
+                id="connect-code"
+                name="connect-code"
+                required
+                placeholder="ABCD-EFGH"
+                value={connectCode}
+                onChange={(e) => setConnectCode(e.target.value.toUpperCase())}
+              />
+            </div>
+            {codeError && (
+              <Alert variant="destructive">
+                <AlertDescription>{codeError}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" disabled={isBusy} className="w-full">
+              {isCodeSubmitting ? "Connecting..." : "Connect with code"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

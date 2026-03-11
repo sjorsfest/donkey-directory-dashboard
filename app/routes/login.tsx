@@ -3,6 +3,12 @@ import type { Route } from "./+types/login";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { API_ROUTES, type ApiLoginRequest, isApiToken } from "~/lib/api-contract";
 import { commitSession, getSession } from "~/lib/session.server";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import { Separator } from "@/shared/ui/separator";
 
 type SocialIntent = "oauth:google" | "oauth:x";
 
@@ -95,62 +101,73 @@ export default function LoginPage() {
   const isLoginLoading = isBusy && activeIntent !== "oauth:google" && activeIntent !== "oauth:x";
 
   return (
-    <main className="auth-page-shell">
-      <section className="auth-card shiny-card">
-        <p className="auth-kicker">Directory access</p>
-        <h1>Login</h1>
-        <p className="dashboard-muted">
-          Use email/password or continue with Google or X.
-        </p>
+    <main className="min-h-screen grid place-items-center p-6 bg-muted/30">
+      <Card className="w-full max-w-xl">
+        <CardHeader className="space-y-2">
+          <p className="text-sm text-muted-foreground">Directory access</p>
+          <CardTitle>Login</CardTitle>
+          <CardDescription>Use email/password or continue with Google or X.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {actionData?.error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{actionData.error}</AlertDescription>
+            </Alert>
+          ) : null}
 
-        {actionData?.error ? <p className="auth-error">{actionData.error}</p> : null}
+          <Form method="post" className="grid gap-3 sm:grid-cols-2">
+            <Button
+              type="submit"
+              variant="outline"
+              name="intent"
+              value="oauth:google"
+              disabled={isBusy}
+            >
+              {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
+            </Button>
+            <Button
+              type="submit"
+              variant="outline"
+              name="intent"
+              value="oauth:x"
+              disabled={isBusy}
+            >
+              {isXLoading ? "Redirecting..." : "Continue with X"}
+            </Button>
+          </Form>
 
-        <Form method="post" className="auth-social-row">
-          <button
-            type="submit"
-            className="auth-social-btn"
-            name="intent"
-            value="oauth:google"
-            disabled={isBusy}
-          >
-            {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
-          </button>
-          <button
-            type="submit"
-            className="auth-social-btn"
-            name="intent"
-            value="oauth:x"
-            disabled={isBusy}
-          >
-            {isXLoading ? "Redirecting..." : "Continue with X"}
-          </button>
-        </Form>
+          <Separator />
 
-        <div className="auth-divider" />
+          <Form method="post" className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="login-email">Email</Label>
+              <Input id="login-email" type="email" name="email" autoComplete="email" required />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="login-password">Password</Label>
+              <Input
+                id="login-password"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={isBusy}>
+              {isLoginLoading ? "Logging in..." : "Login"}
+            </Button>
+          </Form>
 
-        <Form method="post" className="auth-form">
-          <label>
-            Email
-            <input type="email" name="email" autoComplete="email" required />
-          </label>
-          <label>
-            Password
-            <input type="password" name="password" autoComplete="current-password" required />
-          </label>
-          <button type="submit" disabled={isBusy}>
-            {isLoginLoading ? "Logging in..." : "Login"}
-          </button>
-        </Form>
-
-        <div className="auth-links">
-          <Link className="dashboard-nav-link" to="/signup">
-            Need an account? Sign up
-          </Link>
-          <Link className="dashboard-nav-link" to="/">
-            Back to home
-          </Link>
-        </div>
-      </section>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="link" className="px-0">
+              <Link to="/signup">Need an account? Sign up</Link>
+            </Button>
+            <Button asChild variant="link" className="px-0">
+              <Link to="/">Back to home</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

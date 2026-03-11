@@ -19,6 +19,11 @@ import {
   sendAuthenticatedRequest,
 } from "~/lib/authenticated-api.server";
 import { getSession } from "~/lib/session.server";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Separator } from "@/shared/ui/separator";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -171,62 +176,69 @@ export default function ConnectExtensionPage() {
   }
 
   return (
-    <main className="auth-page-shell">
-      <section className="auth-card shiny-card">
-        <p className="auth-kicker">Extension setup</p>
-        <h1>Connect Chrome Extension</h1>
-        <p className="dashboard-muted">
-          Generate a one-time code, then paste it into the extension popup.
-        </p>
+    <main className="min-h-screen grid place-items-center p-6 bg-muted/30">
+      <Card className="w-full max-w-xl">
+        <CardHeader className="space-y-2">
+          <p className="text-sm text-muted-foreground">Extension setup</p>
+          <CardTitle>Connect Chrome Extension</CardTitle>
+          <CardDescription>
+            Generate a one-time code, then paste it into the extension popup.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <ol className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground">
+            <li>Open your extension popup.</li>
+            <li>
+              Choose <strong>Connect with code</strong>.
+            </li>
+            <li>Paste the code before it expires.</li>
+          </ol>
 
-        <ol className="connect-steps">
-          <li>Open your extension popup.</li>
-          <li>Choose <strong>Connect with code</strong>.</li>
-          <li>Paste the code before it expires.</li>
-        </ol>
+          <Form method="post">
+            <Button type="submit" disabled={isGenerating} className="w-full">
+              {isGenerating ? "Generating..." : "Generate one-time code"}
+            </Button>
+          </Form>
 
-        <Form method="post" className="auth-form">
-          <button type="submit" disabled={isGenerating}>
-            {isGenerating ? "Generating..." : "Generate one-time code"}
-          </button>
-        </Form>
+          {errorMessage ? (
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
 
-        {errorMessage ? <p className="auth-error">{errorMessage}</p> : null}
+          {generatedCode ? (
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <p className="font-mono text-3xl font-bold tracking-widest">{generatedCode.code}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant={secondsLeft === 0 ? "destructive" : "secondary"}>
+                    Expires in {secondsLeft}s{secondsLeft === 0 ? " (expired)" : ""}
+                  </Badge>
+                </div>
+                <Button type="button" variant="outline" onClick={copyCode} disabled={secondsLeft === 0}>
+                  Copy code
+                </Button>
+                {copyStatus === "copied" ? (
+                  <Alert>
+                    <AlertDescription>Code copied to clipboard.</AlertDescription>
+                  </Alert>
+                ) : null}
+                {copyStatus === "failed" ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>Clipboard failed. Copy the code manually.</AlertDescription>
+                  </Alert>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
 
-        {generatedCode ? (
-          <div className="connect-code-card">
-            <p className="connect-code-value">{generatedCode.code}</p>
-            <p className="connect-code-meta">
-              Expires in {secondsLeft}s
-              {secondsLeft === 0 ? " (expired)" : ""}
-            </p>
-            <div className="connect-code-actions">
-              <button
-                type="button"
-                className="ghost"
-                onClick={copyCode}
-                disabled={secondsLeft === 0}
-              >
-                Copy code
-              </button>
-            </div>
-            {copyStatus === "copied" ? (
-              <p className="auth-success">Code copied to clipboard.</p>
-            ) : null}
-            {copyStatus === "failed" ? (
-              <p className="auth-error">
-                Clipboard failed. Copy the code manually.
-              </p>
-            ) : null}
-          </div>
-        ) : null}
+          <Separator />
 
-        <div className="auth-links">
-          <Link className="dashboard-nav-link" to="/">
-            Back to home
-          </Link>
-        </div>
-      </section>
+          <Button asChild variant="link" className="px-0">
+            <Link to="/">Back to home</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </main>
   );
 }

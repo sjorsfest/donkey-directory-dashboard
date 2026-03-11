@@ -64,6 +64,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/extension/connect-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint extension connect code
+         * @description Create a one-time connect code for Chrome extension login.
+         */
+        post: operations["create_extension_connect_code_api_v1_auth_extension_connect_codes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/extension/connect-codes/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchange extension connect code
+         * @description Exchange a one-time connect code for extension-scoped JWT tokens.
+         */
+        post: operations["exchange_extension_connect_code_api_v1_auth_extension_connect_codes_exchange_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/me": {
         parameters: {
             query?: never;
@@ -91,7 +131,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List user projects
+         * @description List all projects for the authenticated user.
+         */
+        get: operations["list_projects_api_v1_brand_projects_get"];
         put?: never;
         /**
          * Create a new project
@@ -158,6 +202,138 @@ export interface paths {
         get: operations["get_brand_profile_api_v1_brand_projects__project_id__brand_profile_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brand/projects/{project_id}/creators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List creators
+         * @description List creator profiles for a project.
+         */
+        get: operations["list_creators_api_v1_brand_projects__project_id__creators_get"];
+        put?: never;
+        /**
+         * Create creator
+         * @description Create a creator profile for a project.
+         */
+        post: operations["create_creator_api_v1_brand_projects__project_id__creators_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brand/projects/{project_id}/creators/{creator_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get creator
+         * @description Get a single creator profile for a project.
+         */
+        get: operations["get_creator_api_v1_brand_projects__project_id__creators__creator_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete creator
+         * @description Delete a creator profile from a project.
+         */
+        delete: operations["delete_creator_api_v1_brand_projects__project_id__creators__creator_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update creator
+         * @description Update a creator profile for a project.
+         */
+        patch: operations["update_creator_api_v1_brand_projects__project_id__creators__creator_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/brand/projects/{project_id}/creators/{creator_id}/profile-image/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create signed creator image upload URL
+         * @description Mint a short-lived signed PUT URL for client-side creator profile image upload.
+         */
+        post: operations["create_creator_profile_image_upload_url_api_v1_brand_projects__project_id__creators__creator_id__profile_image_upload_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brand/projects/{project_id}/creators/{creator_id}/profile-image/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finalize creator profile image
+         * @description Persist uploaded creator profile image location after client-side upload.
+         */
+        post: operations["complete_creator_profile_image_upload_api_v1_brand_projects__project_id__creators__creator_id__profile_image_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brand/projects/{project_id}/creators/{creator_id}/profile-image/read-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Create signed creator image read URL
+         * @description Mint a short-lived signed GET URL for a creator profile image stored in R2.
+         */
+        get: operations["create_creator_profile_image_read_url_api_v1_brand_projects__project_id__creators__creator_id__profile_image_read_url_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brand/fill-form": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fill form fields
+         * @description Use AI to fill directory submission form fields based on brand profile.
+         */
+        post: operations["fill_form_api_v1_brand_fill_form_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -305,7 +481,7 @@ export interface paths {
         };
         /**
          * Health
-         * @description Health check endpoint.
+         * @description Health check endpoint that verifies database connectivity.
          */
         get: operations["health_health_get"];
         put?: never;
@@ -349,6 +525,44 @@ export interface components {
             company_name?: string | null;
             /** Tagline */
             tagline?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Zip Code */
+            zip_code?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Mobile */
+            mobile?: string | null;
+            /** Fax */
+            fax?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Display Website */
+            display_website?: string | null;
+            /** Blog */
+            blog?: string | null;
+            /** Twitter */
+            twitter?: string | null;
+            /** Facebook */
+            facebook?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Linkedin */
+            linkedin?: string | null;
+            /** Tiktok */
+            tiktok?: string | null;
+            /** Video */
+            video?: string | null;
+            /** Instant Messenger */
+            instant_messenger?: string | null;
+            /** Business Tags */
+            business_tags?: string[] | null;
             /** Products Services */
             products_services?: {
                 [key: string]: unknown;
@@ -409,6 +623,210 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * CreateExtensionConnectCodeRequest
+         * @description Request to mint a one-time extension connect code.
+         */
+        CreateExtensionConnectCodeRequest: {
+            /**
+             * Client
+             * @constant
+             */
+            client: "chrome_extension";
+        };
+        /**
+         * CreateExtensionConnectCodeResponse
+         * @description Response with one-time extension connect code details.
+         */
+        CreateExtensionConnectCodeResponse: {
+            /** Code */
+            code: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+        };
+        /**
+         * CreatorCreateRequest
+         * @description Request to create a creator profile for a project.
+         */
+        CreatorCreateRequest: {
+            /** Full Name */
+            full_name: string;
+            /** Role */
+            role?: string | null;
+            /** Bio */
+            bio?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Profile Image Url */
+            profile_image_url?: string | null;
+            /** Twitter */
+            twitter?: string | null;
+            /** Facebook */
+            facebook?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Linkedin */
+            linkedin?: string | null;
+            /** Tiktok */
+            tiktok?: string | null;
+            /** Youtube */
+            youtube?: string | null;
+            /** Social Links */
+            social_links?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Expertise Tags */
+            expertise_tags?: string[] | null;
+        };
+        /**
+         * CreatorImageCompleteRequest
+         * @description Finalize creator profile image location after client upload.
+         */
+        CreatorImageCompleteRequest: {
+            /** Object Key */
+            object_key: string;
+        };
+        /**
+         * CreatorImageReadUrlResponse
+         * @description Signed read URL response for creator profile image.
+         */
+        CreatorImageReadUrlResponse: {
+            /** Signed Read Url */
+            signed_read_url: string;
+            /** Object Key */
+            object_key: string;
+            /** Storage Location */
+            storage_location: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+        };
+        /**
+         * CreatorImageUploadUrlRequest
+         * @description Request a signed upload URL for a creator profile image.
+         */
+        CreatorImageUploadUrlRequest: {
+            /** File Name */
+            file_name: string;
+            /** Content Type */
+            content_type: string;
+        };
+        /**
+         * CreatorImageUploadUrlResponse
+         * @description Signed upload URL response for creator profile image.
+         */
+        CreatorImageUploadUrlResponse: {
+            /** Upload Url */
+            upload_url: string;
+            /** Object Key */
+            object_key: string;
+            /** Storage Location */
+            storage_location: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /** Max Bytes */
+            max_bytes: number;
+        };
+        /**
+         * CreatorResponse
+         * @description Creator profile response.
+         */
+        CreatorResponse: {
+            /** Id */
+            id: string;
+            /** User Id */
+            user_id: string;
+            /** Project Id */
+            project_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Role */
+            role?: string | null;
+            /** Bio */
+            bio?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Profile Image Url */
+            profile_image_url?: string | null;
+            /** Twitter */
+            twitter?: string | null;
+            /** Facebook */
+            facebook?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Linkedin */
+            linkedin?: string | null;
+            /** Tiktok */
+            tiktok?: string | null;
+            /** Youtube */
+            youtube?: string | null;
+            /** Social Links */
+            social_links?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Expertise Tags */
+            expertise_tags?: string[] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * CreatorUpdateRequest
+         * @description Request to update an existing creator profile.
+         */
+        CreatorUpdateRequest: {
+            /** Full Name */
+            full_name?: string | null;
+            /** Role */
+            role?: string | null;
+            /** Bio */
+            bio?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Profile Image Url */
+            profile_image_url?: string | null;
+            /** Twitter */
+            twitter?: string | null;
+            /** Facebook */
+            facebook?: string | null;
+            /** Instagram */
+            instagram?: string | null;
+            /** Linkedin */
+            linkedin?: string | null;
+            /** Tiktok */
+            tiktok?: string | null;
+            /** Youtube */
+            youtube?: string | null;
+            /** Social Links */
+            social_links?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Expertise Tags */
+            expertise_tags?: string[] | null;
         };
         /**
          * DirectoryCreateRequest
@@ -934,6 +1352,183 @@ export interface components {
             /** Recommended Priority */
             recommended_priority?: number | null;
         };
+        /**
+         * ExchangeExtensionConnectCodeRequest
+         * @description Request to exchange a one-time connect code for tokens.
+         */
+        ExchangeExtensionConnectCodeRequest: {
+            /**
+             * Client
+             * @constant
+             */
+            client: "chrome_extension";
+            /** Code */
+            code: string;
+        };
+        /**
+         * ExchangeExtensionConnectCodeResponse
+         * @description Token payload returned after successful extension code exchange.
+         */
+        ExchangeExtensionConnectCodeResponse: {
+            /** Access Token */
+            access_token: string;
+            /** Refresh Token */
+            refresh_token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+            user: components["schemas"]["ExtensionConnectUserResponse"];
+        };
+        /**
+         * ExtensionConnectCodeError
+         * @description Error payload for failed extension code exchange.
+         */
+        ExtensionConnectCodeError: {
+            /**
+             * Error
+             * @constant
+             */
+            error: "invalid_or_expired_code";
+        };
+        /**
+         * ExtensionConnectUserResponse
+         * @description Minimal authenticated user payload for extension exchange.
+         */
+        ExtensionConnectUserResponse: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /**
+         * FillFormRequest
+         * @description Request to fill form fields using brand profile data.
+         */
+        FillFormRequest: {
+            /**
+             * Project Id
+             * @description Project ID to use for brand context
+             */
+            project_id: string;
+            /**
+             * Page Url
+             * @description URL of the page containing the form
+             */
+            page_url: string;
+            /**
+             * Page Title
+             * @description Title of the page
+             */
+            page_title: string;
+            /**
+             * Fields
+             * @description Form fields to fill
+             */
+            fields: components["schemas"]["FormFieldInput"][];
+        };
+        /**
+         * FillFormResponse
+         * @description Response with filled form field values.
+         */
+        FillFormResponse: {
+            /**
+             * Filled Fields
+             * @description List of filled fields; fields that cannot be filled are omitted
+             */
+            filled_fields?: components["schemas"]["FilledField"][];
+        };
+        /**
+         * FilledField
+         * @description A single filled form field result.
+         */
+        FilledField: {
+            /**
+             * Field Id
+             * @description The field_id from the request
+             */
+            field_id: string;
+            /**
+             * Value
+             * @description The suggested value for this field
+             */
+            value: string;
+            /**
+             * Confidence
+             * @description Confidence score for this suggestion
+             */
+            confidence: number;
+        };
+        /**
+         * FormFieldInput
+         * @description A single form field to be filled.
+         */
+        FormFieldInput: {
+            /**
+             * Field Id
+             * @description Unique identifier for the field on the page
+             */
+            field_id: string;
+            /**
+             * Type
+             * @description HTML input type: text, textarea, email, url, tel, number, select-one, radio, checkbox
+             */
+            type: string;
+            /**
+             * Tag
+             * @description HTML tag: input, textarea, select
+             */
+            tag: string;
+            /**
+             * Label
+             * @description The field's label text
+             */
+            label?: string | null;
+            /**
+             * Placeholder
+             * @description Placeholder text
+             */
+            placeholder?: string | null;
+            /**
+             * Required
+             * @description Whether the field is required
+             * @default false
+             */
+            required: boolean;
+            /**
+             * Max Length
+             * @description Maximum character length constraint
+             */
+            max_length?: number | null;
+            /**
+             * Options
+             * @description Available options for select/radio/checkbox fields
+             */
+            options?: components["schemas"]["FormFieldOption"][] | null;
+            /**
+             * Pattern
+             * @description Regex validation pattern
+             */
+            pattern?: string | null;
+        };
+        /**
+         * FormFieldOption
+         * @description An option for a select/radio/checkbox field.
+         */
+        FormFieldOption: {
+            /**
+             * Value
+             * @description The option value to submit
+             */
+            value: string;
+            /**
+             * Text
+             * @description The human-readable label
+             */
+            text: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1200,6 +1795,81 @@ export interface operations {
             };
         };
     };
+    create_extension_connect_code_api_v1_auth_extension_connect_codes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateExtensionConnectCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateExtensionConnectCodeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exchange_extension_connect_code_api_v1_auth_extension_connect_codes_exchange_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExchangeExtensionConnectCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExchangeExtensionConnectCodeResponse"];
+                };
+            };
+            /** @description Invalid or expired one-time code */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionConnectCodeError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_current_user_info_api_v1_auth_me_get: {
         parameters: {
             query?: never;
@@ -1216,6 +1886,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    list_projects_api_v1_brand_projects_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectResponse"][];
                 };
             };
         };
@@ -1335,6 +2025,307 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrandProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_creators_api_v1_brand_projects__project_id__creators_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_creator_api_v1_brand_projects__project_id__creators_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatorCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_creator_api_v1_brand_projects__project_id__creators__creator_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_creator_api_v1_brand_projects__project_id__creators__creator_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_creator_api_v1_brand_projects__project_id__creators__creator_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatorUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_creator_profile_image_upload_url_api_v1_brand_projects__project_id__creators__creator_id__profile_image_upload_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatorImageUploadUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorImageUploadUrlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_creator_profile_image_upload_api_v1_brand_projects__project_id__creators__creator_id__profile_image_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatorImageCompleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_creator_profile_image_read_url_api_v1_brand_projects__project_id__creators__creator_id__profile_image_read_url_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                creator_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatorImageReadUrlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fill_form_api_v1_brand_fill_form_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FillFormRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FillFormResponse"];
                 };
             };
             /** @description Validation Error */

@@ -3,13 +3,22 @@
   "name": "Donkey Directory Form Filler",
   "version": "1.0.0",
   "description": "Auto-fill directory submission forms using your brand profile.",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "sidePanel"],
   "host_permissions": [
     "http://127.0.0.1:8000/*",
-    "http://localhost:8000/*"
+    "http://localhost:8000/*",
+    "http://*/*",
+    "https://*/*"
   ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "dist/popup.html"
+  },
   "action": {
-    "default_popup": "dist/popup.html",
+    "default_title": "Donkey Directory",
     "default_icon": {
       "16": "public/icons/icon16.png",
       "48": "public/icons/icon48.png",
@@ -20,5 +29,6 @@
     "16": "public/icons/icon16.png",
     "48": "public/icons/icon48.png",
     "128": "public/icons/icon128.png"
-  }
+  },
+  "minimum_chrome_version": "116"
 }

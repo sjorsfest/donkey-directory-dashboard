@@ -13,8 +13,8 @@ export type AuthenticatedRequestResult = {
 export async function sendAuthenticatedRequest(options: {
   session: SessionType;
   apiBaseUrl: string;
-  path: AppApiPath;
-  method: "GET" | "POST";
+  path: AppApiPath | string;
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
 }): Promise<AuthenticatedRequestResult> {
   const { session, apiBaseUrl, path, method, body } = options;
@@ -102,8 +102,8 @@ export async function sendAuthenticatedRequest(options: {
 
 async function sendApiRequest(options: {
   apiBaseUrl: string;
-  path: AppApiPath;
-  method: "GET" | "POST";
+  path: AppApiPath | string;
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   accessToken: string;
 }) {

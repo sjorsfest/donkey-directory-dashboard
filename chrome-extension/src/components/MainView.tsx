@@ -3,6 +3,11 @@ import { StatusSteps } from "./StatusSteps";
 import { ResultsPanel } from "./ResultsPanel";
 import { useProjects } from "../hooks/useProjects";
 import { useFillFlow } from "../hooks/useFillFlow";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
+import { Card, CardContent } from "@/shared/ui/card";
+import { Label } from "@/shared/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 
 interface MainViewProps {
   userEmail: string;
@@ -34,58 +39,70 @@ export function MainView({
   }
 
   return (
-    <div className="view">
-      <Header />
-      <div className="user-bar">
-        <span className="user-email">{userEmail}</span>
-        <button className="link-btn" onClick={onLogout}>
-          Logout
-        </button>
-      </div>
+    <div className="view p-4 space-y-4">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <Header />
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
+            <Button variant="link" size="sm" className="h-auto p-0" onClick={onLogout}>
+              Logout
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="project-section">
-        <label htmlFor="project-select">Project</label>
-        <select
-          id="project-select"
-          value={selectedProjectId}
-          onChange={(e) => setSelectedProjectId(e.target.value)}
-          disabled={projectsLoading}
-        >
-          {projectsLoading ? (
-            <option value="">Loading projects...</option>
-          ) : projects.length === 0 ? (
-            <option value="">
-              {projectsError || "No projects found"}
-            </option>
-          ) : (
-            projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.domain})
-              </option>
-            ))
-          )}
-        </select>
-      </div>
+      <Card>
+        <CardContent className="pt-6 space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="project-select">Project</Label>
+            <Select
+              value={selectedProjectId || undefined}
+              onValueChange={setSelectedProjectId}
+              disabled={projectsLoading || projects.length === 0}
+            >
+              <SelectTrigger id="project-select">
+                <SelectValue
+                  placeholder={
+                    projectsLoading ? "Loading projects..." : projectsError || "No projects found"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name} ({p.domain})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            disabled={!canFill}
+            onClick={handleFill}
+            className="w-full"
+          >
+            Fill Forms
+          </Button>
+        </CardContent>
+      </Card>
 
-      <button
-        className="primary-btn"
-        disabled={!canFill}
-        onClick={handleFill}
-      >
-        Fill Forms
-      </button>
-
-      {fillError && <p className="error">{fillError}</p>}
-
-      <StatusSteps steps={steps} />
-
-      {results && (
-        <ResultsPanel
-          fields={results.fields}
-          filled={results.filled}
-          skipped={results.skipped}
-        />
+      {fillError && (
+        <Alert variant="destructive">
+          <AlertDescription>{fillError}</AlertDescription>
+        </Alert>
       )}
+
+      <div className="space-y-4">
+        <StatusSteps steps={steps} />
+        {results && (
+          <ResultsPanel
+            fields={results.fields}
+            filled={results.filled}
+            skipped={results.skipped}
+          />
+        )}
+      </div>
     </div>
   );
 }
