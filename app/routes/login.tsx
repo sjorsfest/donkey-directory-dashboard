@@ -101,7 +101,7 @@ export default function LoginPage() {
   const isLoginLoading = isBusy && activeIntent !== "oauth:google" && activeIntent !== "oauth:x";
 
   return (
-    <main className="min-h-screen grid place-items-center p-6 bg-muted/30">
+    <main className="min-h-screen grid place-items-center p-6 bg-background">
       <Card className="w-full max-w-xl">
         <CardHeader className="space-y-2">
           <p className="text-sm text-muted-foreground">Directory access</p>

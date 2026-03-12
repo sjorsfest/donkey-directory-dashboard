@@ -11,7 +11,7 @@ interface ResultsPanelProps {
 
 export function ResultsPanel({ fields, filled, skipped }: ResultsPanelProps) {
   const total = fields.length;
-  let countText = `Filled ${filled} of ${total} fields`;
+  let countText = `Filled ${filled} of ${total}`;
   if (skipped > 0) countText += ` (${skipped} skipped)`;
 
   return (
@@ -19,7 +19,7 @@ export function ResultsPanel({ fields, filled, skipped }: ResultsPanelProps) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between gap-2 text-sm">
           Results
-          <Badge variant="secondary">{countText}</Badge>
+          <Badge variant="accent">{countText}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -33,8 +33,8 @@ export function ResultsPanel({ fields, filled, skipped }: ResultsPanelProps) {
                   : null;
 
               return (
-                <div key={f.field_id} className="flex items-start justify-between gap-2 rounded-md border p-2 text-xs">
-                  <span className="max-w-32 truncate text-muted-foreground" title={f.field_id}>
+                <div key={f.field_id} className="flex items-start justify-between gap-2 rounded-md border-2 p-2 text-xs">
+                  <span className="max-w-32 truncate font-bold text-muted-foreground font-mono" title={f.field_id}>
                     {f.field_id}
                   </span>
                   {displayValue ? (

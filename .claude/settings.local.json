@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python3:*)",
       "Bash(npm install:*)",
-      "Bash(npm run ext:build:*)"
+      "Bash(npm run ext:build:*)",
+      "WebFetch(domain:jobalert.world)"
     ]
   }
 }

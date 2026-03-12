@@ -43,9 +43,9 @@ export function MainView({
       <Card>
         <CardContent className="pt-6 space-y-4">
           <Header />
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
-            <Button variant="link" size="sm" className="h-auto p-0" onClick={onLogout}>
+          <div className="flex items-center justify-between gap-2 rounded-md border-2 bg-secondary p-2">
+            <span className="truncate text-xs font-semibold text-muted-foreground">{userEmail}</span>
+            <Button variant="ghost" size="sm" className="h-auto px-2 py-1 text-xs" onClick={onLogout}>
               Logout
             </Button>
           </div>
