@@ -20,6 +20,9 @@ export const API_ROUTES = {
     extract: "/api/v1/brand/extract",
     projects: "/api/v1/brand/projects",
   },
+  directories: {
+    count: "/api/v1/directories/count",
+  },
 } as const satisfies {
   auth: {
     register: ApiPath;
@@ -33,6 +36,9 @@ export const API_ROUTES = {
     extract: ApiPath;
     projects: ApiPath;
   };
+  directories: {
+    count: ApiPath;
+  };
 };
 
 export type ApiToken = components["schemas"]["Token"];
@@ -45,6 +51,8 @@ export type ApiRefreshRequest =
   operations["refresh_token_api_v1_auth_refresh_post"]["requestBody"]["content"]["application/json"];
 export type ApiBrandExtractRequest =
   operations["extract_brand_profile_api_v1_brand_extract_post"]["requestBody"]["content"]["application/json"];
+export type ApiDirectoryCountResponse =
+  components["schemas"]["DirectoryCountResponse"];
 
 export interface CreateExtensionConnectCodeRequest {
   client: "chrome_extension";
@@ -117,4 +125,14 @@ export function isExchangeExtensionConnectCodeResponse(
   }
 
   return typeof value.user.email === "string";
+}
+
+export function isApiDirectoryCountResponse(
+  value: unknown
+): value is ApiDirectoryCountResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return typeof value.total === "number";
 }

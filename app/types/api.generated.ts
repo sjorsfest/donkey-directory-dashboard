@@ -179,7 +179,7 @@ export interface paths {
         put?: never;
         /**
          * Extract brand profile
-         * @description Scrape a website and extract brand profile using AI agents.
+         * @description Queue website scraping and AI extraction in the background.
          */
         post: operations["extract_brand_profile_api_v1_brand_extract_post"];
         delete?: never;
@@ -384,6 +384,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/directories/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get directory count
+         * @description Get the total number of directories.
+         */
+        get: operations["get_directory_count_api_v1_directories_count_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/directories/projects/{project_id}/directories/{directory_id}/submission-stage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set project directory submission stage
+         * @description Set submission stage for a directory within a project.
+         */
+        put: operations["set_project_directory_submission_stage_api_v1_directories_projects__project_id__directories__directory_id__submission_stage_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/directories/{directory_id}": {
         parameters: {
             query?: never;
@@ -513,6 +553,12 @@ export interface components {
             additional_context?: string | null;
         };
         /**
+         * BrandExtractionStatus
+         * @description Brand extraction lifecycle status.
+         * @enum {string}
+         */
+        BrandExtractionStatus: "IN_PROGRESS" | "COMPLETE" | "FAILED";
+        /**
          * BrandProfileResponse
          * @description Response with extracted brand profile.
          */
@@ -531,14 +577,8 @@ export interface components {
             city?: string | null;
             /** Country */
             country?: string | null;
-            /** Zip Code */
-            zip_code?: string | null;
             /** Phone */
             phone?: string | null;
-            /** Mobile */
-            mobile?: string | null;
-            /** Fax */
-            fax?: string | null;
             /** Email */
             email?: string | null;
             /** Website */
@@ -559,8 +599,6 @@ export interface components {
             tiktok?: string | null;
             /** Video */
             video?: string | null;
-            /** Instant Messenger */
-            instant_messenger?: string | null;
             /** Business Tags */
             business_tags?: string[] | null;
             /** Products Services */
@@ -613,6 +651,9 @@ export interface components {
             extraction_confidence?: number | null;
             /** Visual Extraction Confidence */
             visual_extraction_confidence?: number | null;
+            status: components["schemas"]["BrandExtractionStatus"];
+            /** Failure Reason */
+            failure_reason?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -829,6 +870,14 @@ export interface components {
             expertise_tags?: string[] | null;
         };
         /**
+         * DirectoryCountResponse
+         * @description Response with total number of directories.
+         */
+        DirectoryCountResponse: {
+            /** Total */
+            total: number;
+        };
+        /**
          * DirectoryCreateRequest
          * @description Request to create a new directory.
          */
@@ -916,6 +965,14 @@ export interface components {
             status: string;
             /** Quality Score */
             quality_score?: number | null;
+            /** Extraction Confidence */
+            extraction_confidence?: number | null;
+            /** Link Analysis Confidence */
+            link_analysis_confidence?: number | null;
+            /** Data Completeness Score */
+            data_completeness_score?: number | null;
+            /** Last Scraped At */
+            last_scraped_at?: string | null;
             /** Verification Notes */
             verification_notes?: string | null;
             /** Target Audience */
@@ -926,6 +983,14 @@ export interface components {
             features?: string[] | null;
             /** Benefits */
             benefits?: string[] | null;
+            /** Success Stories */
+            success_stories?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Testimonials */
+            testimonials?: {
+                [key: string]: unknown;
+            }[] | null;
             /**
              * Language
              * @default en
@@ -935,6 +1000,18 @@ export interface components {
             country?: string | null;
             /** Timezone */
             timezone?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Logo Source Url */
+            logo_source_url?: string | null;
+            /** Logo Storage Location */
+            logo_storage_location?: string | null;
+            /** Logo Mime Type */
+            logo_mime_type?: string | null;
+            /** Logo Last Synced At */
+            logo_last_synced_at?: string | null;
+            /** Source Urls */
+            source_urls?: string[] | null;
             /** Internal Notes */
             internal_notes?: string | null;
             /**
@@ -1042,6 +1119,26 @@ export interface components {
              */
             pricing_details?: string | null;
             /**
+             * Domain Authority
+             * @description Domain authority metric if explicitly provided
+             */
+            domain_authority?: number | null;
+            /**
+             * Monthly Traffic
+             * @description Estimated monthly visits if explicitly mentioned
+             */
+            monthly_traffic?: number | null;
+            /**
+             * Alexa Rank
+             * @description Legacy Alexa rank if the source explicitly provides it
+             */
+            alexa_rank?: number | null;
+            /**
+             * Spam Score
+             * @description Spam score metric if explicitly provided
+             */
+            spam_score?: number | null;
+            /**
              * Contact Email
              * @description Contact email
              */
@@ -1083,6 +1180,20 @@ export interface components {
              */
             benefits?: string[];
             /**
+             * Success Stories
+             * @description Structured social proof stories/case studies if available
+             */
+            success_stories?: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Testimonials
+             * @description Structured testimonial snippets if available
+             */
+            testimonials?: {
+                [key: string]: unknown;
+            }[];
+            /**
              * Estimated Quality Score
              * @description Estimated quality score based on professionalism, content quality, etc.
              */
@@ -1104,6 +1215,11 @@ export interface components {
              * @description Primary country if region-specific
              */
             country?: string | null;
+            /**
+             * Timezone
+             * @description Primary timezone if explicitly stated
+             */
+            timezone?: string | null;
             /**
              * Extraction Confidence
              * @description Overall confidence in the extraction (0-1)
@@ -1196,8 +1312,16 @@ export interface components {
             status: string;
             /** Quality Score */
             quality_score?: number | null;
+            /** Extraction Confidence */
+            extraction_confidence?: number | null;
+            /** Link Analysis Confidence */
+            link_analysis_confidence?: number | null;
+            /** Data Completeness Score */
+            data_completeness_score?: number | null;
             /** Last Verified At */
             last_verified_at?: string | null;
+            /** Last Scraped At */
+            last_scraped_at?: string | null;
             /** Verification Notes */
             verification_notes?: string | null;
             /** Target Audience */
@@ -1222,10 +1346,24 @@ export interface components {
             country?: string | null;
             /** Timezone */
             timezone?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Logo Source Url */
+            logo_source_url?: string | null;
+            /** Logo Storage Location */
+            logo_storage_location?: string | null;
+            /** Logo Mime Type */
+            logo_mime_type?: string | null;
+            /** Logo Last Synced At */
+            logo_last_synced_at?: string | null;
+            /** Source Urls */
+            source_urls?: string[] | null;
             /** Internal Notes */
             internal_notes?: string | null;
             /** Recommended Priority */
             recommended_priority: number;
+            /** @default not_submitted */
+            submission_stage: components["schemas"]["DirectorySubmissionStage"];
             /**
              * Created At
              * Format: date-time
@@ -1248,9 +1386,19 @@ export interface components {
             additional_context?: string | null;
             /**
              * Auto Save
-             * @default false
+             * @default true
              */
             auto_save: boolean;
+            /**
+             * Upsert Existing
+             * @default true
+             */
+            upsert_existing: boolean;
+            /**
+             * Max Pages
+             * @default 8
+             */
+            max_pages: number;
         };
         /**
          * DirectoryScrapeResponse
@@ -1265,6 +1413,41 @@ export interface components {
             saved: boolean;
             /** Directory Id */
             directory_id?: string | null;
+            /** Save Action */
+            save_action?: string | null;
+            /**
+             * Logo Uploaded
+             * @default false
+             */
+            logo_uploaded: boolean;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Logo Source Url */
+            logo_source_url?: string | null;
+        };
+        /**
+         * DirectorySubmissionStage
+         * @description Submission stage for a project-directory pair.
+         * @enum {string}
+         */
+        DirectorySubmissionStage: "not_submitted" | "in_progress" | "submitted";
+        /**
+         * DirectorySubmissionStageResponse
+         * @description Response with the submission stage for one project-directory pair.
+         */
+        DirectorySubmissionStageResponse: {
+            /** Project Id */
+            project_id: string;
+            /** Directory Id */
+            directory_id: string;
+            submission_stage: components["schemas"]["DirectorySubmissionStage"];
+        };
+        /**
+         * DirectorySubmissionStageUpdateRequest
+         * @description Request to set submission stage for one project-directory pair.
+         */
+        DirectorySubmissionStageUpdateRequest: {
+            submission_stage: components["schemas"]["DirectorySubmissionStage"];
         };
         /**
          * DirectoryUpdateRequest
@@ -1329,8 +1512,16 @@ export interface components {
             status?: string | null;
             /** Quality Score */
             quality_score?: number | null;
+            /** Extraction Confidence */
+            extraction_confidence?: number | null;
+            /** Link Analysis Confidence */
+            link_analysis_confidence?: number | null;
+            /** Data Completeness Score */
+            data_completeness_score?: number | null;
             /** Last Verified At */
             last_verified_at?: string | null;
+            /** Last Scraped At */
+            last_scraped_at?: string | null;
             /** Verification Notes */
             verification_notes?: string | null;
             /** Target Audience */
@@ -1341,12 +1532,32 @@ export interface components {
             features?: string[] | null;
             /** Benefits */
             benefits?: string[] | null;
+            /** Success Stories */
+            success_stories?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Testimonials */
+            testimonials?: {
+                [key: string]: unknown;
+            }[] | null;
             /** Language */
             language?: string | null;
             /** Country */
             country?: string | null;
             /** Timezone */
             timezone?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Logo Source Url */
+            logo_source_url?: string | null;
+            /** Logo Storage Location */
+            logo_storage_location?: string | null;
+            /** Logo Mime Type */
+            logo_mime_type?: string | null;
+            /** Logo Last Synced At */
+            logo_last_synced_at?: string | null;
+            /** Source Urls */
+            source_urls?: string[] | null;
             /** Internal Notes */
             internal_notes?: string | null;
             /** Recommended Priority */
@@ -1988,7 +2199,7 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            201: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2342,6 +2553,8 @@ export interface operations {
     list_directories_api_v1_directories__get: {
         parameters: {
             query?: {
+                /** @description Project ID used to include per-directory submission stage */
+                project_id?: string | null;
                 /** @description Page number */
                 page?: number;
                 /** @description Items per page */
@@ -2457,9 +2670,68 @@ export interface operations {
             };
         };
     };
-    get_directory_api_v1_directories__directory_id__get: {
+    get_directory_count_api_v1_directories_count_get: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryCountResponse"];
+                };
+            };
+        };
+    };
+    set_project_directory_submission_stage_api_v1_directories_projects__project_id__directories__directory_id__submission_stage_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                directory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DirectorySubmissionStageUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectorySubmissionStageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_directory_api_v1_directories__directory_id__get: {
+        parameters: {
+            query?: {
+                /** @description Project ID used to include this project's submission stage */
+                project_id?: string | null;
+            };
             header?: never;
             path: {
                 directory_id: string;
