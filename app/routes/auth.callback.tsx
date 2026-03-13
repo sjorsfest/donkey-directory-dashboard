@@ -13,7 +13,7 @@ type CallbackLoaderData = {
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Social Login Callback | Donkey Directory Dashboard" },
+    { title: "Social Login Callback | Donkey Directories Dashboard" },
     {
       name: "description",
       content: "Processes OAuth callback and stores returned tokens.",
@@ -93,20 +93,22 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function AuthCallbackPage() {
   const loaderData = useLoaderData<typeof loader>();
+  const authErrorClass =
+    "m-0 rounded-lg border-2 border-foreground border-l-4 border-l-destructive bg-destructive/12 p-3 text-sm font-semibold text-destructive";
 
   return (
-    <main className="auth-page-shell">
-      <section className="auth-card shiny-card">
-        <p className="auth-kicker">Directory access</p>
+    <main className="grid min-h-screen place-items-center p-6">
+      <section className="grid w-full max-w-xl gap-4 rounded-lg border-2 border-foreground bg-card p-5 shadow-[var(--shadow-md)]">
+        <p className="mt-2 max-w-[540px] text-muted-foreground">Directory access</p>
         <h1>Social Login</h1>
-        <p className={loaderData.isError ? "auth-error" : "dashboard-muted"}>
+        <p className={loaderData.isError ? authErrorClass : "text-muted-foreground"}>
           {loaderData.message}
         </p>
-        <div className="auth-links">
-          <Link className="dashboard-nav-link" to="/login">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link className="text-sm font-semibold hover:underline" to="/login">
             Back to login
           </Link>
-          <Link className="dashboard-nav-link" to="/">
+          <Link className="text-sm font-semibold hover:underline" to="/">
             Back to home
           </Link>
         </div>

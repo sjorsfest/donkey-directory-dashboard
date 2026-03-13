@@ -1,6 +1,6 @@
-# Donkey Directory Dashboard (React Router)
+# Donkey Directories Dashboard (React Router)
 
-Simple React Router app to interact with the Donkey Directory API.
+Simple React Router app to interact with the Donkey Directories API.
 
 ## Included logic
 

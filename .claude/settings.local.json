@@ -4,7 +4,8 @@
       "Bash(python3:*)",
       "Bash(npm install:*)",
       "Bash(npm run ext:build:*)",
-      "WebFetch(domain:jobalert.world)"
+      "WebFetch(domain:jobalert.world)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

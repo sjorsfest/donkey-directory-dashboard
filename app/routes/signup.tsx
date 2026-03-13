@@ -15,10 +15,10 @@ import { Label } from "@/shared/ui/label";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Sign Up | Donkey Directory Dashboard" },
+    { title: "Sign Up | Donkey Directories Dashboard" },
     {
       name: "description",
-      content: "Create a new Donkey Directory account.",
+      content: "Create a new Donkey Directories account.",
     },
   ];
 }

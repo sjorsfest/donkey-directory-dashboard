@@ -62,11 +62,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="error-shell">
+    <main className="mx-auto my-8 w-[min(900px,calc(100vw-2rem))]">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre>
+        <pre className="overflow-x-auto rounded-lg border-2 border-foreground bg-card p-4 font-['IBM_Plex_Mono',monospace] shadow-[var(--shadow-md)]">
           <code>{stack}</code>
         </pre>
       )}

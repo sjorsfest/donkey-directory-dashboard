@@ -14,7 +14,7 @@ type SocialIntent = "oauth:google" | "oauth:x";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Login | Donkey Directory Dashboard" },
+    { title: "Login | Donkey Directories Dashboard" },
     {
       name: "description",
       content: "Login page with password and social auth options.",
