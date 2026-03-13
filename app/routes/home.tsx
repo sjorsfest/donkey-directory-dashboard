@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, data, useLoaderData } from "react-router";
 import { CheckCheck, Chrome, ExternalLink, ListChecks, Zap } from "lucide-react";
 
@@ -209,6 +209,163 @@ const STATUS_ROW_CLASS: Record<SignupStatus, string> = {
   submitted: "bg-accent/5",
 };
 
+type Ripple = { x: number; y: number; t: number };
+type Burst = { x: number; y: number; t: number };
+
+function DotRippleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseRef = useRef<{ x: number; y: number } | null>(null);
+  const ripplesRef = useRef<Ripple[]>([]);
+  const burstsRef = useRef<Burst[]>([]);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const GRID = 20;
+    const BASE_R = 1;
+    const MAX_EXTRA = 2.5;
+    const RIPPLE_SPEED = 80;
+    const RIPPLE_WIDTH = 28;
+    const RIPPLE_LIFE = 1.4;
+    const HOVER_RADIUS = 70;
+
+    const BURST_SPEED = 180;
+    const BURST_WIDTH = 40;
+    const BURST_LIFE = 2.2;
+    const BURST_MAX_EXTRA = 4.5;
+
+    let last = performance.now();
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (!mouseRef.current) {
+        ripplesRef.current.push({ x, y, t: 0 });
+      } else {
+        const dx = x - mouseRef.current.x;
+        const dy = y - mouseRef.current.y;
+        if (dx * dx + dy * dy > 400) {
+          ripplesRef.current.push({ x, y, t: 0 });
+        }
+      }
+      mouseRef.current = { x, y };
+    };
+    const onMouseLeave = () => { mouseRef.current = null; };
+    const onClick = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      burstsRef.current.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, t: 0 });
+    };
+
+    canvas.parentElement?.addEventListener("mousemove", onMouseMove);
+    canvas.parentElement?.addEventListener("mouseleave", onMouseLeave);
+    canvas.parentElement?.addEventListener("click", onClick);
+
+    const draw = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+
+      ripplesRef.current = ripplesRef.current
+        .map(r => ({ ...r, t: r.t + dt }))
+        .filter(r => r.t < RIPPLE_LIFE);
+
+      burstsRef.current = burstsRef.current
+        .map(b => ({ ...b, t: b.t + dt }))
+        .filter(b => b.t < BURST_LIFE);
+
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const mouse = mouseRef.current;
+
+      for (let gx = GRID / 2; gx < w + GRID; gx += GRID) {
+        for (let gy = GRID / 2; gy < h + GRID; gy += GRID) {
+          let extra = 0;
+          let color: string | null = null;
+
+          // static hover bulge
+          if (mouse) {
+            const d = Math.hypot(gx - mouse.x, gy - mouse.y);
+            if (d < HOVER_RADIUS) {
+              const t = 1 - d / HOVER_RADIUS;
+              extra = Math.max(extra, MAX_EXTRA * t * t);
+            }
+          }
+
+          // ripple rings
+          for (const r of ripplesRef.current) {
+            const radius = r.t * RIPPLE_SPEED;
+            const d = Math.hypot(gx - r.x, gy - r.y);
+            const delta = Math.abs(d - radius);
+            if (delta < RIPPLE_WIDTH) {
+              const fade = 1 - r.t / RIPPLE_LIFE;
+              const ring = 1 - delta / RIPPLE_WIDTH;
+              extra = Math.max(extra, MAX_EXTRA * ring * fade);
+            }
+          }
+
+          // burst rings (rainbow)
+          for (const b of burstsRef.current) {
+            const radius = b.t * BURST_SPEED;
+            const d = Math.hypot(gx - b.x, gy - b.y);
+            const delta = Math.abs(d - radius);
+            if (delta < BURST_WIDTH) {
+              const fade = 1 - b.t / BURST_LIFE;
+              const ring = 1 - delta / BURST_WIDTH;
+              const strength = BURST_MAX_EXTRA * ring * fade;
+              if (strength > extra) {
+                extra = strength;
+                const angle = Math.atan2(gy - b.y, gx - b.x);
+                const hue = ((angle / (Math.PI * 2)) * 360 + 360) % 360;
+                color = `hsla(${hue}, 100%, 55%, ${0.3 + ring * fade * 0.7})`;
+              }
+            }
+          }
+
+          if (extra < 0.05) continue;
+
+          ctx.beginPath();
+          ctx.arc(gx, gy, BASE_R + extra, 0, Math.PI * 2);
+          ctx.fillStyle = color ?? `rgba(61, 59, 243, ${0.15 + extra / MAX_EXTRA * 0.55})`;
+          ctx.fill();
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      canvas.parentElement?.removeEventListener("mousemove", onMouseMove);
+      canvas.parentElement?.removeEventListener("mouseleave", onMouseLeave);
+      canvas.parentElement?.removeEventListener("click", onClick);
+      ro.disconnect();
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+    />
+  );
+}
+
 export default function HomePage() {
   const { isAuthenticated, directoryCount } = useLoaderData<typeof loader>();
   const [statuses, setStatuses] = useState<Record<string, SignupStatus>>({});
@@ -235,7 +392,7 @@ export default function HomePage() {
 
             <div className="space-y-3">
               <h1 className="text-[2.6rem] font-bold leading-[1.1] max-[960px]:text-3xl">
-                Know exactly where you&apos;ve submitted your product.
+                Track exactly where you&apos;ve submitted your product.
               </h1>
               <p className="text-muted-foreground text-base max-w-md">
                 Every launch directory, curated in one place. Track each submission with a single click — and use the free Chrome extension to autofill forms in seconds instead of minutes.
@@ -280,15 +437,54 @@ export default function HomePage() {
           </div>
 
           {/* Right — visual mockup */}
-          <div className="max-[960px]:hidden border-l-2 border-foreground bg-secondary/20 flex items-center justify-center p-8 relative overflow-hidden">
+          <div className="max-[960px]:hidden border-l-2 border-foreground bg-secondary/40 flex items-center justify-center p-8 relative overflow-hidden">
             {/* Dot grid bg */}
             <div
-              className="absolute inset-0 opacity-[0.05]"
+              className="absolute inset-0"
               style={{
-                backgroundImage: "radial-gradient(circle, #1A1A1A 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(circle, #1A1A1A 1.5px, transparent 1.5px)",
                 backgroundSize: "20px 20px",
+                maskImage: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 10%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.05) 90%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 10%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.05) 90%, transparent 100%)",
+                maskSize: "60% 100%",
+                WebkitMaskSize: "60% 100%",
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                animation: "dot-wave 6s ease-in-out infinite",
               }}
             />
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: "radial-gradient(circle, #3D3BF3 1.5px, transparent 1.5px)",
+                backgroundSize: "20px 20px",
+                maskImage: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 10%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.05) 90%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 10%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.05) 90%, transparent 100%)",
+                maskSize: "60% 100%",
+                WebkitMaskSize: "60% 100%",
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                animation: "dot-wave 6s ease-in-out infinite",
+                animationDelay: "2s",
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: "radial-gradient(circle, hsl(var(--primary)) 1.5px, transparent 1.5px)",
+                backgroundSize: "20px 20px",
+                maskImage: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 10%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.05) 90%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 10%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.05) 90%, transparent 100%)",
+                maskSize: "60% 100%",
+                WebkitMaskSize: "60% 100%",
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                animation: "dot-wave 6s ease-in-out infinite",
+                animationDelay: "4s",
+              }}
+            />
+
+            <DotRippleCanvas />
 
             {/* Outer wrapper — positions the extension card as an overlay */}
             <div className="relative w-full max-w-[300px]">
