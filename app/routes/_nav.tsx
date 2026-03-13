@@ -88,9 +88,9 @@ export default function NavLayout() {
   const dashboardMatch = useMatch("/dashboard");
   const navLinkButtonBaseClass =
     "inline-flex items-center justify-center gap-2 rounded-lg border-2 border-foreground px-4 py-2 text-sm font-bold no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]";
-  const navLinkButtonPrimaryClass = `${navLinkButtonBaseClass} text-primary-foreground`;
+  const navLinkButtonPrimaryClass = `${navLinkButtonBaseClass}`;
   const loginClasses = `bg-primary ${navLinkButtonPrimaryClass}`;
-  const signupClasses = `bg-accent-200 ${navLinkButtonPrimaryClass}`;
+  const signupClasses = `bg-accent text-secondary-foreground ${navLinkButtonPrimaryClass}`;
   const launchNewClasses = `bg-primary ${navLinkButtonPrimaryClass}`;
   const dashboardClasses = cn(
     navLinkButtonBaseClass,
@@ -154,7 +154,7 @@ export default function NavLayout() {
   return (
     <main className="flex min-h-screen flex-col pt-4">
       <header className="sticky top-0 z-20 pt-4 pb-3">
-        <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]">
+        <div className="mx-auto w-[min(1500px,calc(100vw-2rem))] max-[960px]:w-[min(1500px,calc(100vw-1rem))]">
           <nav className="flex flex-wrap items-center justify-between gap-4 rounded-[1.25rem] border-2 border-foreground bg-card px-4 py-3 shadow-[var(--shadow-md)]">
             <Link className="group inline-flex items-center gap-3 no-underline" to="/">
               <img

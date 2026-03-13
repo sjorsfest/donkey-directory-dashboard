@@ -4,7 +4,13 @@ import {
   clearTokens,
   setUserEmail,
 } from "./storage";
-import type { Project, FillFormResponse, ScannedField } from "../types";
+import type {
+  Project,
+  FillFormResponse,
+  ScannedField,
+  DirectoryVoteChoice,
+  DirectoryVoteTarget,
+} from "../types";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 export const WEB_APP_ORIGIN = "http://localhost:5173";
@@ -17,7 +23,24 @@ const API_ROUTES = {
   exchangeConnectCode: "/api/v1/auth/extension/connect-codes/exchange",
   projects: "/api/v1/brand/projects",
   fillForm: "/api/v1/brand/fill-form",
+  directories: "/api/v1/directories/",
 } as const;
+
+const COMMON_SECOND_LEVEL_TLDS = new Set([
+  "ac",
+  "co",
+  "com",
+  "edu",
+  "gov",
+  "net",
+  "org",
+]);
+
+interface DirectoryRecord {
+  id: string;
+  name: string;
+  domain: string;
+}
 
 async function apiFetch(path: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${path}`;
@@ -205,4 +228,156 @@ export async function fillForm(
 
   const data = await res.json();
   return data;
+}
+
+export async function findDirectoryByHostname(
+  hostname: string,
+  onSessionExpired?: () => void
+): Promise<DirectoryVoteTarget | null> {
+  const normalizedHost = normalizeDomain(hostname);
+  if (!normalizedHost) {
+    return null;
+  }
+
+  const candidates = buildDomainCandidates(normalizedHost);
+
+  for (const candidate of candidates) {
+    const directories = await listDirectoriesByDomain(candidate, onSessionExpired);
+    const exactMatch = directories.find((directory) =>
+      isDomainMatch(normalizedHost, directory.domain)
+    );
+
+    if (exactMatch) {
+      return {
+        id: exactMatch.id,
+        name: exactMatch.name,
+        domain: normalizeDomain(exactMatch.domain),
+      };
+    }
+  }
+
+  return null;
+}
+
+export async function voteDirectory(
+  directoryId: string,
+  vote: DirectoryVoteChoice,
+  onSessionExpired?: () => void
+): Promise<void> {
+  const votePath = `${API_ROUTES.directories}${encodeURIComponent(directoryId)}/vote`;
+
+  const res = await fetchWithAuth(
+    votePath,
+    {
+      method: "PUT",
+      body: JSON.stringify({ vote }),
+    },
+    onSessionExpired
+  );
+
+  if (!res.ok) {
+    const msg = await parseErrorMessage(res, "Failed to submit vote.");
+    throw new Error(msg);
+  }
+}
+
+async function listDirectoriesByDomain(
+  domain: string,
+  onSessionExpired?: () => void
+): Promise<DirectoryRecord[]> {
+  const params = new URLSearchParams({
+    domain,
+    page: "1",
+    page_size: "25",
+  });
+
+  const res = await fetchWithAuth(
+    `${API_ROUTES.directories}?${params.toString()}`,
+    {},
+    onSessionExpired
+  );
+
+  if (!res.ok) {
+    const msg = await parseErrorMessage(
+      res,
+      `Failed to find directory for domain ${domain}.`
+    );
+    throw new Error(msg);
+  }
+
+  const payload = await res.json();
+  return asDirectoryRecords(payload);
+}
+
+function buildDomainCandidates(hostname: string): string[] {
+  const normalized = normalizeDomain(hostname);
+  if (!normalized) {
+    return [];
+  }
+
+  const labels = normalized.split(".").filter(Boolean);
+  const candidates = new Set<string>([normalized]);
+
+  if (labels.length >= 3) {
+    candidates.add(labels.slice(-2).join("."));
+  }
+
+  if (
+    labels.length >= 3 &&
+    COMMON_SECOND_LEVEL_TLDS.has(labels[labels.length - 2])
+  ) {
+    candidates.add(labels.slice(-3).join("."));
+  }
+
+  return Array.from(candidates).filter((candidate) => candidate.length > 0);
+}
+
+function normalizeDomain(value: string): string {
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) {
+    return "";
+  }
+
+  const withoutProtocol = trimmed.replace(/^[a-z][a-z0-9+.-]*:\/\//, "");
+  const withoutPath = withoutProtocol.split("/")[0] || "";
+  const withoutPort = withoutPath.split(":")[0] || "";
+  return withoutPort.startsWith("www.") ? withoutPort.slice(4) : withoutPort;
+}
+
+function isDomainMatch(hostname: string, directoryDomain: string): boolean {
+  const normalizedHost = normalizeDomain(hostname);
+  const normalizedDirectory = normalizeDomain(directoryDomain);
+
+  if (!normalizedHost || !normalizedDirectory) {
+    return false;
+  }
+
+  return (
+    normalizedHost === normalizedDirectory ||
+    normalizedHost.endsWith(`.${normalizedDirectory}`)
+  );
+}
+
+function asDirectoryRecords(value: unknown): DirectoryRecord[] {
+  if (!isRecord(value) || !Array.isArray(value.directories)) {
+    return [];
+  }
+
+  return value.directories.filter(isDirectoryRecord);
+}
+
+function isDirectoryRecord(value: unknown): value is DirectoryRecord {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    typeof value.domain === "string"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

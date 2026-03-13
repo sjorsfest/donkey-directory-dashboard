@@ -21,7 +21,9 @@ export const API_ROUTES = {
     projects: "/api/v1/brand/projects",
   },
   directories: {
+    list: "/api/v1/directories/",
     count: "/api/v1/directories/count",
+    statsSummary: "/api/v1/directories/stats/summary",
   },
 } as const satisfies {
   auth: {
@@ -37,7 +39,9 @@ export const API_ROUTES = {
     projects: ApiPath;
   };
   directories: {
+    list: ApiPath;
     count: ApiPath;
+    statsSummary: ApiPath;
   };
 };
 
@@ -53,6 +57,37 @@ export type ApiBrandExtractRequest =
   operations["extract_brand_profile_api_v1_brand_extract_post"]["requestBody"]["content"]["application/json"];
 export type ApiDirectoryCountResponse =
   components["schemas"]["DirectoryCountResponse"];
+export type ApiDirectoryVoteChoice = "up" | "down";
+
+type ApiDirectoryVoteMetrics = {
+  thumbs_up_count: number;
+  thumbs_down_count: number;
+  total_votes: number;
+  thumbs_up_percentage: number;
+};
+
+export interface ApiDirectoryVoteRequest {
+  vote: ApiDirectoryVoteChoice;
+}
+
+export type ApiDirectoryVoteSummaryResponse = ApiDirectoryVoteMetrics;
+
+export interface ApiDirectoryUserVoteResponse {
+  directory_id: string;
+  my_vote: ApiDirectoryVoteChoice | null;
+}
+
+export type ApiDirectoryResponse = components["schemas"]["DirectoryResponse"] &
+  ApiDirectoryVoteMetrics & {
+    my_vote: ApiDirectoryVoteChoice | null;
+  };
+
+export type ApiDirectoryListResponse = Omit<
+  components["schemas"]["DirectoryListResponse"],
+  "directories"
+> & {
+  directories: ApiDirectoryResponse[];
+};
 
 export interface CreateExtensionConnectCodeRequest {
   client: "chrome_extension";
@@ -135,4 +170,47 @@ export function isApiDirectoryCountResponse(
   }
 
   return typeof value.total === "number";
+}
+
+export function directoryPath(directoryId: string): string {
+  return `/api/v1/directories/${encodeURIComponent(directoryId)}`;
+}
+
+export function directoryVotePath(directoryId: string): string {
+  return `${directoryPath(directoryId)}/vote`;
+}
+
+export function isApiDirectoryVoteChoice(
+  value: unknown
+): value is ApiDirectoryVoteChoice {
+  return value === "up" || value === "down";
+}
+
+export function isApiDirectoryVoteSummaryResponse(
+  value: unknown
+): value is ApiDirectoryVoteSummaryResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.thumbs_up_count === "number" &&
+    typeof value.thumbs_down_count === "number" &&
+    typeof value.total_votes === "number" &&
+    typeof value.thumbs_up_percentage === "number"
+  );
+}
+
+export function isApiDirectoryUserVoteResponse(
+  value: unknown
+): value is ApiDirectoryUserVoteResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  if (typeof value.directory_id !== "string") {
+    return false;
+  }
+
+  return value.my_vote === null || isApiDirectoryVoteChoice(value.my_vote);
 }

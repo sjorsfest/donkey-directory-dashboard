@@ -195,7 +195,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
         {/* Left — copy */}
         <div className="px-10 py-12 max-[960px]:px-6 max-[960px]:py-8 flex flex-col justify-center gap-6">
           <div className="space-y-3">
-            <h1 className="text-[2.6rem] font-bold leading-[1.1] max-[960px]:text-3xl">
+            <h1 className="text-[3.2rem] font-bold leading-[1.1] max-[960px]:text-3xl">
               <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:4px_hsl(var(--foreground))] [paint-order:stroke_fill]">Track</span> where you{" "}
               <span className="relative inline-block">
                 <motion.span
@@ -203,7 +203,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                   initial={{ opacity: 0, y: 12, rotate: -2 }}
                   animate={{ opacity: 1, y: 0, rotate: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="inline-block text-[3.6rem] leading-[1.1] max-[960px]:text-[2.2rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill]"
+                  className="inline-block text-[3.6rem] leading-[1.1] max-[960px]:text-[2.2rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]"
                 >
                   {HERO_PHRASES[activePhraseIndex].text}
                 </motion.span>
@@ -218,8 +218,8 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                 </motion.span>
               </span>
             </h1>
-            <p className="text-muted-foreground text-base max-w-md">
-              Every launch directory, curated in one place. Track each submission with a single click — and use the free Chrome extension to autofill forms in seconds instead of minutes.
+            <p className="text-foreground/80 text-base font-medium max-w-sm">
+              Every launch directory in one place. Submit your product everywhere, faster.
             </p>
           </div>
 
@@ -328,7 +328,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                 <div className="w-2 h-2 rounded-full bg-red-400 border border-black/20" />
                 <div className="w-2 h-2 rounded-full bg-yellow-400 border border-black/20" />
                 <div className="w-2 h-2 rounded-full bg-green-400 border border-black/20" />
-                <div className="flex-1 mx-2 h-4 rounded-sm bg-background border border-foreground/20 flex items-center px-2">
+                <div className="flex-1 mx-2 h-4 rounded-sm bg-secondary-50 border border-foreground/20 flex items-center px-2">
                   <span className="text-[0.5rem] text-muted-foreground">donkey.directory</span>
                 </div>
               </div>
@@ -337,7 +337,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
               <div className="px-3 pt-2.5 pb-2 border-b border-foreground/10">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[0.55rem] font-bold text-foreground">Launch progress</span>
-                  <span className="text-[0.55rem] font-bold" style={{ color: "hsl(var(--primary))" }}>2 of 5</span>
+                  <span className="text-[0.55rem] font-bold" style={{ color: "hsl(var(--accent))" }}>2 of 5</span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden bg-secondary border border-foreground/10">
                   <motion.div

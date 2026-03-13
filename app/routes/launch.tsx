@@ -177,7 +177,7 @@ const BRAND_SOCIAL_KEYS = [
 ];
 
 const STUDIO_SHELL_CLASS =
-  "mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]";
+  "mx-auto w-[min(1500px,calc(100vw-2rem))] max-[960px]:w-[min(1500px,calc(100vw-1rem))]";
 const STUDIO_PANEL_CLASS = "rounded-lg border-2 border-foreground bg-card p-5 shadow-[var(--shadow-md)]";
 const STUDIO_PANEL_HEADING_CLASS = "mb-4 flex flex-wrap items-start justify-between gap-4";
 const STUDIO_SECTION_LABEL_CLASS =

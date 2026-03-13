@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  LayoutList,
   LockKeyhole,
   SlidersHorizontal,
 } from "lucide-react";
@@ -462,6 +463,7 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
       {/* Table header bar */}
       <div className="flex items-center justify-between gap-4 border-b-2 border-foreground px-5 py-4">
         <div className="flex items-center gap-3">
+          <LayoutList size={18} />
           <h2 className="text-base font-bold">All directories</h2>
           <span className="inline-flex items-center rounded-full border-2 border-foreground bg-secondary px-2.5 py-0.5 text-xs font-bold">
             {directoryCount ?? DIRECTORIES.length}

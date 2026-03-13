@@ -64,7 +64,7 @@ export default function HomePage() {
   const { isAuthenticated, directoryCount } = useLoaderData<typeof loader>();
 
   return (
-    <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))] py-8 space-y-8">
+    <div className="mx-auto w-[min(1500px,calc(100vw-2rem))] max-[960px]:w-[min(1500px,calc(100vw-1rem))] py-8 space-y-8">
       <HomeHero
         isAuthenticated={isAuthenticated}
         directoryCount={directoryCount}

@@ -36,3 +36,11 @@ export interface Project {
   name: string;
   domain: string;
 }
+
+export type DirectoryVoteChoice = "up" | "down";
+
+export interface DirectoryVoteTarget {
+  id: string;
+  name: string;
+  domain: string;
+}
