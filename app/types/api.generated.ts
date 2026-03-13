@@ -537,6 +537,16 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AudienceTag
+         * @enum {string}
+         */
+        AudienceTag: "DEVELOPERS" | "FOUNDERS" | "MARKETERS" | "PRODUCT_MANAGERS" | "SMB_OWNERS" | "CREATORS" | "INVESTORS" | "STUDENTS" | "INDIE_HACKERS" | "AGENCIES" | "PROFESSIONALS" | "OTHER";
+        /**
+         * BenefitTag
+         * @enum {string}
+         */
+        BenefitTag: "SEO_BACKLINK" | "TRAFFIC_EXPOSURE" | "BRAND_AWARENESS" | "LEAD_GENERATION" | "COMMUNITY_FEEDBACK" | "SOCIAL_PROOF" | "CREDIBILITY" | "NETWORKING" | "PRODUCT_DISCOVERY" | "OTHER";
+        /**
          * BrandExtractionRequest
          * @description Request to extract brand profile from domain.
          */
@@ -870,6 +880,11 @@ export interface components {
             expertise_tags?: string[] | null;
         };
         /**
+         * DirectoryCategory
+         * @enum {string}
+         */
+        DirectoryCategory: "AI" | "SAAS" | "STARTUP" | "DEVELOPER_TOOLS" | "DESIGN" | "AGENCY" | "API" | "COMMUNITY" | "SOFTWARE_DISCOVERY" | "SOFTWARE_REVIEWS" | "MARKETPLACE" | "MEDIA" | "DATA_ANALYTICS" | "GENERAL_TECH" | "NON_DIRECTORY" | "OTHER";
+        /**
          * DirectoryCountResponse
          * @description Response with total number of directories.
          */
@@ -890,33 +905,24 @@ export interface components {
             url: string;
             /** Description */
             description?: string | null;
-            /** Category */
-            category?: string | null;
-            /** Niche */
-            niche?: string | null;
+            category?: components["schemas"]["DirectoryCategory"] | null;
+            niche?: components["schemas"]["DirectoryNiche"] | null;
             /** Tags */
-            tags?: string[] | null;
+            tags?: components["schemas"]["DirectoryTag"][] | null;
             /**
              * Is Dofollow
              * @default false
              */
             is_dofollow: boolean;
-            /**
-             * Link Type
-             * @description dofollow, nofollow, ugc, sponsored
-             */
-            link_type?: string | null;
+            /** @default NOFOLLOW */
+            link_type: components["schemas"]["LinkType"];
             /** Submission Url */
             submission_url?: string | null;
             /** Submission Guidelines */
             submission_guidelines?: string | null;
             /** Submission Requirements */
-            submission_requirements?: string[] | null;
-            /**
-             * Submission Process
-             * @description manual, automated, API
-             */
-            submission_process?: string | null;
+            submission_requirements?: components["schemas"]["SubmissionRequirementTag"][] | null;
+            submission_process?: components["schemas"]["SubmissionProcess"] | null;
             /**
              * Requires Approval
              * @default true
@@ -929,11 +935,8 @@ export interface components {
              * @default true
              */
             is_free: boolean;
-            /**
-             * Pricing Model
-             * @description free, freemium, paid, one-time, subscription
-             */
-            pricing_model?: string | null;
+            /** @default FREE */
+            pricing_model: components["schemas"]["PricingModel"];
             /** Price Usd */
             price_usd?: number | null;
             /** Pricing Details */
@@ -957,12 +960,8 @@ export interface components {
             api_available: boolean;
             /** Api Documentation Url */
             api_documentation_url?: string | null;
-            /**
-             * Status
-             * @description active, inactive, broken, pending_review
-             * @default active
-             */
-            status: string;
+            /** @default ACTIVE */
+            status: components["schemas"]["DirectoryStatus"];
             /** Quality Score */
             quality_score?: number | null;
             /** Extraction Confidence */
@@ -976,13 +975,13 @@ export interface components {
             /** Verification Notes */
             verification_notes?: string | null;
             /** Target Audience */
-            target_audience?: string[] | null;
+            target_audience?: components["schemas"]["AudienceTag"][] | null;
             /** Supported Industries */
-            supported_industries?: string[] | null;
+            supported_industries?: components["schemas"]["IndustryTag"][] | null;
             /** Features */
-            features?: string[] | null;
+            features?: components["schemas"]["FeatureTag"][] | null;
             /** Benefits */
-            benefits?: string[] | null;
+            benefits?: components["schemas"]["BenefitTag"][] | null;
             /** Success Stories */
             success_stories?: {
                 [key: string]: unknown;
@@ -1035,21 +1034,15 @@ export interface components {
              * @description Description of what the directory is for
              */
             description?: string | null;
-            /**
-             * Category
-             * @description Main category (e.g., 'Startup Directories', 'SaaS Directories', 'Product Hunt Alternatives')
-             */
-            category?: string | null;
-            /**
-             * Niche
-             * @description Specific niche (e.g., 'B2B SaaS', 'AI Tools', 'No-Code')
-             */
-            niche?: string | null;
+            /** @description Main category enum token */
+            category?: components["schemas"]["DirectoryCategory"] | null;
+            /** @description Specific niche enum token */
+            niche?: components["schemas"]["DirectoryNiche"] | null;
             /**
              * Tags
-             * @description Relevant tags for categorization
+             * @description Relevant directory tag enum values
              */
-            tags?: string[];
+            tags?: components["schemas"]["DirectoryTag"][];
             /**
              * Is Dofollow
              * @description Whether links from this directory are dofollow (good for SEO)
@@ -1057,10 +1050,10 @@ export interface components {
              */
             is_dofollow: boolean;
             /**
-             * Link Type
-             * @description Type of link: dofollow, nofollow, ugc, sponsored, or mixed
+             * @description Type of link: DOFOLLOW, NOFOLLOW, or CONDITIONAL_DOFOLLOW
+             * @default NOFOLLOW
              */
-            link_type?: string | null;
+            link_type: components["schemas"]["LinkType"];
             /**
              * Link Analysis Confidence
              * @description Confidence in the link type analysis
@@ -1078,14 +1071,11 @@ export interface components {
             submission_guidelines?: string | null;
             /**
              * Submission Requirements
-             * @description List of requirements (e.g., 'Logo required', 'Working website', 'English only')
+             * @description List of submission requirement enum values
              */
-            submission_requirements?: string[];
-            /**
-             * Submission Process
-             * @description How submission works: manual, automated, API, or hybrid
-             */
-            submission_process?: string | null;
+            submission_requirements?: components["schemas"]["SubmissionRequirementTag"][];
+            /** @description How submission works using submission process enums */
+            submission_process?: components["schemas"]["SubmissionProcess"] | null;
             /**
              * Requires Approval
              * @description Whether submissions need to be approved/reviewed
@@ -1104,10 +1094,10 @@ export interface components {
              */
             is_free: boolean;
             /**
-             * Pricing Model
-             * @description Pricing model: free, freemium, paid, one-time, subscription
+             * @description Pricing model: FREE or PAID
+             * @default FREE
              */
-            pricing_model?: string | null;
+            pricing_model: components["schemas"]["PricingModel"];
             /**
              * Price Usd
              * @description Price in USD if single pricing tier
@@ -1161,24 +1151,24 @@ export interface components {
             api_documentation_url?: string | null;
             /**
              * Target Audience
-             * @description Who uses this directory (e.g., 'B2B', 'B2C', 'SaaS founders', 'Developers')
+             * @description Audience enum values for who uses this directory
              */
-            target_audience?: string[];
+            target_audience?: components["schemas"]["AudienceTag"][];
             /**
              * Supported Industries
-             * @description Industries or verticals supported
+             * @description Industry enum values
              */
-            supported_industries?: string[];
+            supported_industries?: components["schemas"]["IndustryTag"][];
             /**
              * Features
-             * @description Features offered (e.g., 'Featured listings', 'Analytics', 'Backlink')
+             * @description Feature enum values offered by the directory
              */
-            features?: string[];
+            features?: components["schemas"]["FeatureTag"][];
             /**
              * Benefits
-             * @description Benefits of listing (e.g., 'SEO boost', 'Traffic', 'Brand awareness')
+             * @description Benefit enum values of listing on this directory
              */
-            benefits?: string[];
+            benefits?: components["schemas"]["BenefitTag"][];
             /**
              * Success Stories
              * @description Structured social proof stories/case studies if available
@@ -1248,6 +1238,11 @@ export interface components {
             total_pages: number;
         };
         /**
+         * DirectoryNiche
+         * @enum {string}
+         */
+        DirectoryNiche: "AI_TOOLS" | "B2B_SAAS" | "GENERATIVE_AI" | "PRODUCTIVITY" | "MARTECH" | "SALES_TECH" | "NO_CODE" | "SOFTWARE_ALTERNATIVES" | "SOFTWARE_REVIEWS" | "DESIGN_RESOURCES" | "STARTUP_COMMUNITY" | "INVESTOR_DATA" | "AEROSPACE" | "GENERAL" | "OTHER";
+        /**
          * DirectoryResponse
          * @description Response with directory information.
          */
@@ -1262,32 +1257,27 @@ export interface components {
             url: string;
             /** Description */
             description?: string | null;
-            /** Category */
-            category?: string | null;
-            /** Niche */
-            niche?: string | null;
+            category?: components["schemas"]["DirectoryCategory"] | null;
+            niche?: components["schemas"]["DirectoryNiche"] | null;
             /** Tags */
-            tags?: string[] | null;
+            tags?: components["schemas"]["DirectoryTag"][] | null;
             /** Is Dofollow */
             is_dofollow: boolean;
-            /** Link Type */
-            link_type?: string | null;
+            link_type: components["schemas"]["LinkType"];
             /** Submission Url */
             submission_url?: string | null;
             /** Submission Guidelines */
             submission_guidelines?: string | null;
             /** Submission Requirements */
-            submission_requirements?: string[] | null;
-            /** Submission Process */
-            submission_process?: string | null;
+            submission_requirements?: components["schemas"]["SubmissionRequirementTag"][] | null;
+            submission_process?: components["schemas"]["SubmissionProcess"] | null;
             /** Requires Approval */
             requires_approval: boolean;
             /** Typical Approval Time Days */
             typical_approval_time_days?: number | null;
             /** Is Free */
             is_free: boolean;
-            /** Pricing Model */
-            pricing_model?: string | null;
+            pricing_model: components["schemas"]["PricingModel"];
             /** Price Usd */
             price_usd?: number | null;
             /** Pricing Details */
@@ -1308,8 +1298,7 @@ export interface components {
             api_available: boolean;
             /** Api Documentation Url */
             api_documentation_url?: string | null;
-            /** Status */
-            status: string;
+            status: components["schemas"]["DirectoryStatus"];
             /** Quality Score */
             quality_score?: number | null;
             /** Extraction Confidence */
@@ -1325,13 +1314,13 @@ export interface components {
             /** Verification Notes */
             verification_notes?: string | null;
             /** Target Audience */
-            target_audience?: string[] | null;
+            target_audience?: components["schemas"]["AudienceTag"][] | null;
             /** Supported Industries */
-            supported_industries?: string[] | null;
+            supported_industries?: components["schemas"]["IndustryTag"][] | null;
             /** Features */
-            features?: string[] | null;
+            features?: components["schemas"]["FeatureTag"][] | null;
             /** Benefits */
-            benefits?: string[] | null;
+            benefits?: components["schemas"]["BenefitTag"][] | null;
             /** Success Stories */
             success_stories?: {
                 [key: string]: unknown;
@@ -1426,6 +1415,11 @@ export interface components {
             logo_source_url?: string | null;
         };
         /**
+         * DirectoryStatus
+         * @enum {string}
+         */
+        DirectoryStatus: "PENDING_REVIEW" | "ACTIVE" | "INACTIVE" | "BROKEN" | "REJECTED" | "ARCHIVED";
+        /**
          * DirectorySubmissionStage
          * @description Submission stage for a project-directory pair.
          * @enum {string}
@@ -1450,6 +1444,11 @@ export interface components {
             submission_stage: components["schemas"]["DirectorySubmissionStage"];
         };
         /**
+         * DirectoryTag
+         * @enum {string}
+         */
+        DirectoryTag: "AI" | "MACHINE_LEARNING" | "SAAS" | "B2B" | "STARTUPS" | "DEVELOPER_TOOLS" | "PRODUCTIVITY" | "MARKETING" | "DESIGN" | "NO_CODE" | "API" | "SEO" | "SOFTWARE_DIRECTORY" | "SOFTWARE_REVIEWS" | "SOFTWARE_ALTERNATIVES" | "COMMUNITY" | "NEWSLETTER" | "OTHER";
+        /**
          * DirectoryUpdateRequest
          * @description Request to update a directory.
          */
@@ -1462,32 +1461,27 @@ export interface components {
             url?: string | null;
             /** Description */
             description?: string | null;
-            /** Category */
-            category?: string | null;
-            /** Niche */
-            niche?: string | null;
+            category?: components["schemas"]["DirectoryCategory"] | null;
+            niche?: components["schemas"]["DirectoryNiche"] | null;
             /** Tags */
-            tags?: string[] | null;
+            tags?: components["schemas"]["DirectoryTag"][] | null;
             /** Is Dofollow */
             is_dofollow?: boolean | null;
-            /** Link Type */
-            link_type?: string | null;
+            link_type?: components["schemas"]["LinkType"] | null;
             /** Submission Url */
             submission_url?: string | null;
             /** Submission Guidelines */
             submission_guidelines?: string | null;
             /** Submission Requirements */
-            submission_requirements?: string[] | null;
-            /** Submission Process */
-            submission_process?: string | null;
+            submission_requirements?: components["schemas"]["SubmissionRequirementTag"][] | null;
+            submission_process?: components["schemas"]["SubmissionProcess"] | null;
             /** Requires Approval */
             requires_approval?: boolean | null;
             /** Typical Approval Time Days */
             typical_approval_time_days?: number | null;
             /** Is Free */
             is_free?: boolean | null;
-            /** Pricing Model */
-            pricing_model?: string | null;
+            pricing_model?: components["schemas"]["PricingModel"] | null;
             /** Price Usd */
             price_usd?: number | null;
             /** Pricing Details */
@@ -1508,8 +1502,7 @@ export interface components {
             api_available?: boolean | null;
             /** Api Documentation Url */
             api_documentation_url?: string | null;
-            /** Status */
-            status?: string | null;
+            status?: components["schemas"]["DirectoryStatus"] | null;
             /** Quality Score */
             quality_score?: number | null;
             /** Extraction Confidence */
@@ -1525,13 +1518,13 @@ export interface components {
             /** Verification Notes */
             verification_notes?: string | null;
             /** Target Audience */
-            target_audience?: string[] | null;
+            target_audience?: components["schemas"]["AudienceTag"][] | null;
             /** Supported Industries */
-            supported_industries?: string[] | null;
+            supported_industries?: components["schemas"]["IndustryTag"][] | null;
             /** Features */
-            features?: string[] | null;
+            features?: components["schemas"]["FeatureTag"][] | null;
             /** Benefits */
-            benefits?: string[] | null;
+            benefits?: components["schemas"]["BenefitTag"][] | null;
             /** Success Stories */
             success_stories?: {
                 [key: string]: unknown;
@@ -1614,6 +1607,11 @@ export interface components {
              */
             email: string;
         };
+        /**
+         * FeatureTag
+         * @enum {string}
+         */
+        FeatureTag: "DIRECTORY_LISTING" | "FEATURED_LISTING" | "USER_REVIEWS_RATINGS" | "TOOL_COMPARISON" | "COMMUNITY_DISCUSSIONS" | "COMMUNITY_VOTING" | "NEWSLETTER" | "SEARCH_FILTERS" | "DIRECT_MESSAGING" | "CLAIM_OWNERSHIP" | "ANALYTICS" | "API_ACCESS" | "SPONSORED_PLACEMENT" | "OTHER";
         /**
          * FillFormRequest
          * @description Request to fill form fields using brand profile data.
@@ -1746,6 +1744,21 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * IndustryTag
+         * @enum {string}
+         */
+        IndustryTag: "SOFTWARE" | "SAAS" | "AI_ML" | "TECHNOLOGY" | "MARKETING" | "FINANCE" | "HEALTHCARE" | "EDUCATION" | "ECOMMERCE" | "DESIGN" | "CONTENT_CREATION" | "AUTOMATION" | "AEROSPACE" | "GENERAL" | "OTHER";
+        /**
+         * LinkType
+         * @enum {string}
+         */
+        LinkType: "DOFOLLOW" | "NOFOLLOW" | "CONDITIONAL_DOFOLLOW";
+        /**
+         * PricingModel
+         * @enum {string}
+         */
+        PricingModel: "FREE" | "PAID";
+        /**
          * ProjectCreateRequest
          * @description Request to create a new project.
          */
@@ -1808,6 +1821,16 @@ export interface components {
              */
             updated_at: string;
         };
+        /**
+         * SubmissionProcess
+         * @enum {string}
+         */
+        SubmissionProcess: "FORM_SELF_SERVICE" | "FORM_LOGIN_REQUIRED" | "MANUAL_REVIEW" | "HYBRID" | "APPLICATION_BASED" | "CONTACT_REVIEW";
+        /**
+         * SubmissionRequirementTag
+         * @enum {string}
+         */
+        SubmissionRequirementTag: "TOOL_NAME_REQUIRED" | "WEBSITE_URL_REQUIRED" | "CATEGORY_SELECTION_REQUIRED" | "DESCRIPTION_REQUIRED" | "SCREENSHOTS_REQUIRED" | "EMAIL_REQUIRED" | "EMAIL_VERIFICATION_REQUIRED" | "LOGIN_REQUIRED" | "PAYMENT_REQUIRED" | "FUNCTIONAL_WEBSITE_REQUIRED" | "AI_PRODUCT_REQUIRED" | "COMMUNITY_MIN_SIZE_REQUIRED" | "MANUAL_REVIEW_REQUIRED" | "OTHER";
         /**
          * Token
          * @description Schema for JWT token response.
@@ -2559,22 +2582,68 @@ export interface operations {
                 page?: number;
                 /** @description Items per page */
                 page_size?: number;
+                /** @description Filter by name (case-insensitive partial match) */
+                name?: string | null;
+                /** @description Filter by domain (case-insensitive partial match) */
+                domain?: string | null;
+                /** @description Filter by language code */
+                language?: string | null;
+                /** @description Filter by country code */
+                country?: string | null;
                 /** @description Filter by category */
-                category?: string | null;
+                category?: components["schemas"]["DirectoryCategory"] | null;
                 /** @description Filter by niche */
-                niche?: string | null;
+                niche?: components["schemas"]["DirectoryNiche"] | null;
+                /** @description Filter by link type */
+                link_type?: components["schemas"]["LinkType"] | null;
+                /** @description Filter by pricing model */
+                pricing_model?: components["schemas"]["PricingModel"] | null;
+                /** @description Filter by submission process */
+                submission_process?: components["schemas"]["SubmissionProcess"] | null;
+                /** @description Filter by tags (contains all values) */
+                tags?: components["schemas"]["DirectoryTag"][] | null;
+                /** @description Filter by target audience (contains all values) */
+                target_audience?: components["schemas"]["AudienceTag"][] | null;
+                /** @description Filter by supported industries (contains all values) */
+                supported_industries?: components["schemas"]["IndustryTag"][] | null;
+                /** @description Filter by features (contains all values) */
+                features?: components["schemas"]["FeatureTag"][] | null;
+                /** @description Filter by benefits (contains all values) */
+                benefits?: components["schemas"]["BenefitTag"][] | null;
+                /** @description Filter by submission requirements (contains all values) */
+                submission_requirements?: components["schemas"]["SubmissionRequirementTag"][] | null;
                 /** @description Filter by dofollow status */
                 is_dofollow?: boolean | null;
                 /** @description Filter by free status */
                 is_free?: boolean | null;
+                /** @description Filter by approval requirement */
+                requires_approval?: boolean | null;
                 /** @description Filter by status */
-                status?: string | null;
+                status?: components["schemas"]["DirectoryStatus"] | null;
                 /** @description Minimum domain authority */
                 min_domain_authority?: number | null;
+                /** @description Maximum domain authority */
+                max_domain_authority?: number | null;
+                /** @description Minimum monthly traffic */
+                min_monthly_traffic?: number | null;
+                /** @description Maximum monthly traffic */
+                max_monthly_traffic?: number | null;
+                /** @description Minimum price in USD */
+                min_price_usd?: number | null;
+                /** @description Maximum price in USD */
+                max_price_usd?: number | null;
+                /** @description Minimum approval time in days */
+                min_typical_approval_time_days?: number | null;
+                /** @description Maximum approval time in days */
+                max_typical_approval_time_days?: number | null;
+                /** @description Minimum spam score */
+                min_spam_score?: number | null;
                 /** @description Maximum spam score */
                 max_spam_score?: number | null;
                 /** @description Minimum quality score */
                 min_quality_score?: number | null;
+                /** @description Maximum quality score */
+                max_quality_score?: number | null;
                 /** @description Search in name, domain, or description */
                 search?: string | null;
             };

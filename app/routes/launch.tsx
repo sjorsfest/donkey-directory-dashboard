@@ -45,6 +45,7 @@ import {
   type ApiBrandExtractRequest,
   type CreateExtensionConnectCodeRequest,
 } from "~/lib/api-contract";
+import { normalizeDomainInput } from "~/lib/domain-input";
 import {
   parseApiErrorMessage,
   sendAuthenticatedRequest,
@@ -564,32 +565,16 @@ function ProjectListView(props: {
 }) {
   return (
     <section className="mt-6 grid gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className={STUDIO_KICKER_CLASS}>Launch workspace</p>
-          <h1 className="m-0 text-[1.75rem] leading-[1.1] font-extrabold">
-            {props.projects.length === 0 ? "Create your first project" : "Your projects"}
-          </h1>
-        </div>
-        <Button onClick={props.onNewProject}>
-          <Plus className="mr-1 h-4 w-4" />
-          New project
-        </Button>
+      <div>
+        <p className={STUDIO_KICKER_CLASS}>Launch workspace</p>
+        <h1 className="m-0 text-[1.75rem] leading-[1.1] font-extrabold">
+          {props.projects.length === 0 ? "Create your first project" : "Your projects"}
+        </h1>
       </div>
 
       {props.projectsError ? <p className={AUTH_ERROR_CLASS}>{props.projectsError}</p> : null}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1">
-        <button
-          type="button"
-          className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-foreground bg-transparent p-5 text-center text-muted-foreground transition-[background,color,transform] duration-100 hover:-translate-x-px hover:-translate-y-px hover:bg-secondary hover:text-foreground"
-          onClick={props.onNewProject}
-        >
-          <Plus className="mb-1.5 h-8 w-8" />
-          <strong>New project</strong>
-          <small>Start from a domain URL</small>
-        </button>
-
         {props.projects.map((project) => (
           <Link
             key={project.id}
@@ -606,6 +591,16 @@ function ProjectListView(props: {
             </div>
           </Link>
         ))}
+
+        <button
+          type="button"
+          className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-foreground bg-transparent p-5 text-center text-muted-foreground transition-[background,color,transform] duration-100 hover:-translate-x-px hover:-translate-y-px hover:bg-secondary hover:text-foreground"
+          onClick={props.onNewProject}
+        >
+          <Plus className="mb-1.5 h-8 w-8" />
+          <strong>New project</strong>
+          <small>Start from a domain URL</small>
+        </button>
       </div>
 
       {props.projects.length === 0 ? (
@@ -631,7 +626,7 @@ function ProjectDetailView(props: {
     <>
       <div className="mt-6 mb-5 grid gap-1.5">
         <Link
-          to="/launch"
+          to="/dashboard"
           className="inline-flex w-fit items-center gap-1.5 text-sm font-bold text-muted-foreground no-underline transition-colors duration-100 hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -1534,45 +1529,6 @@ function isLaunchActionIntent(value: string | undefined): value is LaunchActionI
   );
 }
 
-function normalizeDomainInput(
-  rawValue: string,
-): { ok: true; domain: string } | { ok: false; error: string } {
-  const trimmed = rawValue.trim();
-
-  if (!trimmed) {
-    return {
-      ok: false,
-      error: "Domain URL is required.",
-    };
-  }
-
-  const withProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)
-    ? trimmed
-    : `https://${trimmed}`;
-
-  try {
-    const parsed = new URL(withProtocol);
-    const normalized = parsed.hostname.toLowerCase().replace(/^www\./, "");
-
-    if (!normalized || !normalized.includes(".")) {
-      return {
-        ok: false,
-        error: "Enter a valid domain URL (for example https://example.com).",
-      };
-    }
-
-    return {
-      ok: true,
-      domain: normalized,
-    };
-  } catch {
-    return {
-      ok: false,
-      error: "Enter a valid domain URL (for example https://example.com).",
-    };
-  }
-}
-
 function parseSocialLinksFromFormData(value: FormDataEntryValue | null): {
   entries: SocialLinkInput[];
   error: string | null;
@@ -1638,7 +1594,7 @@ function projectCreatorsPath(projectId: string): string {
 }
 
 function buildLaunchProjectHref(projectId: string): string {
-  return `/launch?project=${encodeURIComponent(projectId)}`;
+  return `/dashboard?project=${encodeURIComponent(projectId)}`;
 }
 
 function pickSelectedProjectId(projects: Project[], requestedProjectId?: string): string | null {

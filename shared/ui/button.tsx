@@ -14,7 +14,7 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground border-2 border-foreground shadow-[var(--shadow-btn)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-md)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[var(--shadow-pressed)]",
         outline:
-          "bg-background text-foreground border-2 border-foreground shadow-[var(--shadow-btn)] hover:bg-secondary hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-md)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[var(--shadow-pressed)]",
+          "bg-secondary-100 text-foreground border-2 border-foreground shadow-[var(--shadow-btn)] hover:bg-secondary-200 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-md)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[var(--shadow-pressed)]",
         secondary:
           "bg-secondary text-secondary-foreground border-2 border-foreground shadow-[var(--shadow-sm)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-btn)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[var(--shadow-pressed)]",
         ghost: "hover:bg-accent hover:text-accent-foreground",

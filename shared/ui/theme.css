@@ -20,6 +20,54 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+
+  /* Green (primary) scale — base: hsl(78 72% 68%) */
+  --color-primary-50: hsl(78 70% 97%);
+  --color-primary-100: hsl(78 70% 94%);
+  --color-primary-200: hsl(78 70% 88%);
+  --color-primary-300: hsl(78 71% 80%);
+  --color-primary-400: hsl(78 71% 74%);
+  --color-primary-500: hsl(78 72% 68%);
+  --color-primary-600: hsl(78 65% 55%);
+  --color-primary-700: hsl(78 60% 42%);
+  --color-primary-800: hsl(78 55% 30%);
+  --color-primary-900: hsl(78 50% 18%);
+
+  /* Secondary scale — base: hsl(38 30% 93%) creamy off-white */
+  --color-secondary-50: hsl(38 40% 99%);
+  --color-secondary-100: hsl(38 38% 97%);
+  --color-secondary-200: hsl(38 32% 92%);
+  --color-secondary-300: hsl(38 28% 84%);
+  --color-secondary-400: hsl(38 25% 73%);
+  --color-secondary-500: hsl(38 22% 60%);
+  --color-secondary-600: hsl(38 20% 47%);
+  --color-secondary-700: hsl(38 20% 35%);
+  --color-secondary-800: hsl(38 20% 24%);
+  --color-secondary-900: hsl(38 20% 14%);
+
+  /* Accent (terracotta) scale — base: hsl(17 51% 57%) = #C97A5A */
+  --color-accent-50: hsl(17 50% 97%);
+  --color-accent-100: hsl(17 50% 94%);
+  --color-accent-200: hsl(17 51% 86%);
+  --color-accent-300: hsl(17 51% 76%);
+  --color-accent-400: hsl(17 51% 66%);
+  --color-accent-500: hsl(17 51% 57%);
+  --color-accent-600: hsl(17 47% 47%);
+  --color-accent-700: hsl(17 44% 37%);
+  --color-accent-800: hsl(17 40% 28%);
+  --color-accent-900: hsl(17 38% 18%);
+
+  /* Terracotta alias (same as accent scale) */
+  --color-terracotta-100: var(--color-accent-100);
+  --color-terracotta-200: var(--color-accent-200);
+  --color-terracotta-300: var(--color-accent-300);
+  --color-terracotta-400: var(--color-accent-400);
+  --color-terracotta-500: var(--color-accent-500);
+  --color-terracotta-600: var(--color-accent-600);
+  --color-terracotta-700: var(--color-accent-700);
+  --color-terracotta-800: var(--color-accent-800);
+  --color-terracotta-900: var(--color-accent-900);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -27,7 +75,7 @@
 
 @layer base {
   :root {
-    --background: 50 20% 98%;
+    --background: 180 40% 94%;
     --foreground: 0 0% 10%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
@@ -35,11 +83,11 @@
     --popover-foreground: 0 0% 10%;
     --primary: 78 72% 68%;
     --primary-foreground: 0 0% 10%;
-    --secondary: 40 14% 93%;
+    --secondary: 38 32% 92%;
     --secondary-foreground: 0 0% 10%;
-    --muted: 40 14% 93%;
+    --muted: 38 32% 92%;
     --muted-foreground: 0 0% 42%;
-    --accent: 241 95% 59%;
+    --accent: 17 51% 57%;
     --accent-foreground: 0 0% 100%;
     --destructive: 14 80% 54%;
     --destructive-foreground: 0 0% 100%;
