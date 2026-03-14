@@ -177,7 +177,7 @@ const BRAND_SOCIAL_KEYS = [
 ];
 
 const STUDIO_SHELL_CLASS =
-  "mx-auto w-[min(1500px,calc(100vw-2rem))] max-[960px]:w-[min(1500px,calc(100vw-1rem))]";
+  "mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]";
 const STUDIO_PANEL_CLASS = "rounded-lg border-2 border-foreground bg-card p-5 shadow-[var(--shadow-md)]";
 const STUDIO_PANEL_HEADING_CLASS = "mb-4 flex flex-wrap items-start justify-between gap-4";
 const STUDIO_SECTION_LABEL_CLASS =
@@ -567,7 +567,7 @@ function ProjectListView(props: {
     <section className="mt-6 grid gap-5">
       <div>
         <p className={STUDIO_KICKER_CLASS}>Launch workspace</p>
-        <h1 className="m-0 text-[1.75rem] leading-[1.1] font-extrabold">
+        <h1 className="m-0 text-[1.4rem] leading-[1.1] font-extrabold sm:text-[1.75rem]">
           {props.projects.length === 0 ? "Create your first project" : "Your projects"}
         </h1>
       </div>
@@ -633,7 +633,7 @@ function ProjectDetailView(props: {
           All projects
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="m-0 text-[1.75rem] leading-[1.1] font-extrabold">
+          <h1 className="m-0 text-[1.4rem] leading-[1.1] font-extrabold sm:text-[1.75rem]">
             {props.project.name}
           </h1>
           <Badge variant="secondary">{props.project.status}</Badge>
@@ -934,7 +934,7 @@ function ConnectExtensionSection(props: {
         </div>
 
         {/* Right: action */}
-        <div className="flex flex-col justify-center gap-3 sm:min-w-[200px]">
+        <div className="flex flex-col justify-center gap-3 sm:w-[200px] sm:shrink-0">
           <Form method="post" className="flex flex-col gap-2">
             <Input type="hidden" name="intent" value="extension_connect_generate" />
             <Button type="submit" disabled={props.isGeneratingConnect}>
@@ -954,7 +954,7 @@ function ConnectExtensionSection(props: {
 
           {props.generatedCode ? (
             <div className="grid gap-3 rounded-md border-2 border-foreground bg-secondary p-3.5">
-              <p className="m-0 font-['IBM_Plex_Mono',monospace] text-[1.6rem] font-bold tracking-[0.06em]">
+              <p className="m-0 font-['IBM_Plex_Mono',monospace] text-xl font-bold tracking-[0.06em] sm:text-[1.6rem]">
                 {props.generatedCode.code}
               </p>
               <div className="flex flex-wrap items-center gap-3">

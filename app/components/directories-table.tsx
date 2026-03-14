@@ -489,7 +489,7 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
               {!isAuthenticated ? (
                 <>
                   <DialogHeader className="space-y-2">
@@ -800,11 +800,11 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
         <Table>
           <TableHeader>
             <TableRow className="border-b-2 border-foreground">
-              <TableHead className="w-[220px]">Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Pricing</TableHead>
-              <TableHead>Dofollow</TableHead>
-              <TableHead>Signed up</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead className="hidden sm:table-cell">Category</TableHead>
+              <TableHead className="hidden sm:table-cell">Pricing</TableHead>
+              <TableHead className="hidden sm:table-cell">Dofollow</TableHead>
+              <TableHead className="hidden sm:table-cell">Signed up</TableHead>
               <TableHead className="text-right pr-5">Visit</TableHead>
             </TableRow>
           </TableHeader>
@@ -844,15 +844,15 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
                   <TableCell className="font-semibold py-3.5">
                     {dir.name}
                   </TableCell>
-                  <TableCell className="py-3.5">
+                  <TableCell className="hidden py-3.5 sm:table-cell">
                     <Badge variant="outline" className="text-xs font-medium">
                       {dir.categoryLabel}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-3.5">
+                  <TableCell className="hidden py-3.5 sm:table-cell">
                     {PRICING_BADGE[dir.pricingLabel]}
                   </TableCell>
-                  <TableCell className="py-3.5">
+                  <TableCell className="hidden py-3.5 sm:table-cell">
                     {dir.linkType === "DOFOLLOW" ? (
                       <Badge
                         variant="default"
@@ -879,7 +879,7 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="py-3.5">
+                  <TableCell className="hidden py-3.5 sm:table-cell">
                     <SignupBadge status={status} />
                   </TableCell>
                   <TableCell className="py-3.5 text-right pr-5">

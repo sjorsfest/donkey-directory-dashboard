@@ -3,6 +3,7 @@ import { StatusSteps } from "./StatusSteps";
 import { ResultsPanel } from "./ResultsPanel";
 import { useProjects } from "../hooks/useProjects";
 import { useFillFlow } from "../hooks/useFillFlow";
+import type { DirectoryVoteChoice } from "../types";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
@@ -13,12 +14,22 @@ interface MainViewProps {
   userEmail: string;
   onLogout: () => void;
   onSessionExpired: () => void;
+  voteState: {
+    isSubmitting: boolean;
+    targetDomain: string | null;
+    selectedVote: DirectoryVoteChoice | null;
+    successMessage: string | null;
+    errorMessage: string | null;
+  };
+  onVote: (vote: DirectoryVoteChoice) => void;
 }
 
 export function MainView({
   userEmail,
   onLogout,
   onSessionExpired,
+  voteState,
+  onVote,
 }: MainViewProps) {
   const {
     projects,
@@ -32,6 +43,13 @@ export function MainView({
     useFillFlow(onSessionExpired);
 
   const canFill = !!selectedProjectId && !isRunning && !projectsLoading;
+  const {
+    isSubmitting: isVoting,
+    targetDomain,
+    selectedVote,
+    successMessage: voteSuccessMessage,
+    errorMessage: voteErrorMessage,
+  } = voteState;
 
   function handleFill() {
     reset();
@@ -84,6 +102,50 @@ export function MainView({
           >
             Fill Forms
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6 space-y-3">
+          <div className="space-y-1">
+            <Label>Vote this directory</Label>
+            <p className="text-xs text-muted-foreground">
+              Vote for the active tab domain.
+            </p>
+            {targetDomain && (
+              <p className="text-xs text-muted-foreground">
+                Last voted domain: {targetDomain}
+              </p>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant={selectedVote === "up" ? "default" : "outline"}
+              disabled={isVoting}
+              onClick={() => onVote("up")}
+            >
+              {isVoting ? "Submitting..." : "Thumbs Up"}
+            </Button>
+            <Button
+              type="button"
+              variant={selectedVote === "down" ? "destructive" : "outline"}
+              disabled={isVoting}
+              onClick={() => onVote("down")}
+            >
+              {isVoting ? "Submitting..." : "Thumbs Down"}
+            </Button>
+          </div>
+          {voteErrorMessage && (
+            <Alert variant="destructive">
+              <AlertDescription>{voteErrorMessage}</AlertDescription>
+            </Alert>
+          )}
+          {voteSuccessMessage && (
+            <Alert>
+              <AlertDescription>{voteSuccessMessage}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 

@@ -166,10 +166,10 @@ function DotRippleCanvas() {
 }
 
 const HERO_PHRASES = [
-  { text: "submitted your product", emoji: "📬" },
-  { text: "launched your tool",     emoji: "🚀" },
-  { text: "listed your SaaS",       emoji: "📋" },
-  { text: "shared your app",        emoji: "🌍" },
+  { text: "everywhere it matters",     emoji: "🚀" },
+  { text: "across 80+ directories",    emoji: "📋" },
+  { text: "without the copy-paste",    emoji: "⚡" },
+  { text: "and get discovered",        emoji: "🌍" },
 ];
 
 type Props = {
@@ -193,17 +193,17 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
       <div className="grid max-[960px]:grid-cols-1 grid-cols-[1fr_420px]">
 
         {/* Left — copy */}
-        <div className="px-10 py-12 max-[960px]:px-6 max-[960px]:py-8 flex flex-col justify-center gap-6">
+        <div className="px-10 py-12 max-[960px]:px-6 max-[960px]:py-8 max-[480px]:px-4 max-[480px]:py-5 flex flex-col justify-center gap-6">
           <div className="space-y-3">
-            <h1 className="text-[3.2rem] font-bold leading-[1.1] max-[960px]:text-3xl">
-              <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:4px_hsl(var(--foreground))] [paint-order:stroke_fill]">Track</span> where you{" "}
+            <h1 className="text-[3.2rem] font-bold leading-[1.1] max-[960px]:text-3xl max-[480px]:text-2xl">
+              <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill] max-[960px]:text-3xl max-[480px]:text-2xl">Launch Your Product</span>{" "}
               <span className="relative inline-block">
                 <motion.span
                   key={activePhraseIndex}
                   initial={{ opacity: 0, y: 12, rotate: -2 }}
                   animate={{ opacity: 1, y: 0, rotate: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="inline-block text-[3.6rem] leading-[1.1] max-[960px]:text-[2.2rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]"
+                  className="inline-block text-[3.6rem] leading-[1.1] max-[960px]:text-[2.2rem] max-[480px]:text-[1.9rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]"
                 >
                   {HERO_PHRASES[activePhraseIndex].text}
                 </motion.span>
@@ -212,23 +212,26 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                   initial={{ opacity: 0, y: 12, rotate: -2 }}
                   animate={{ opacity: 1, y: 0, rotate: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="ml-2 inline-block text-[3.4rem] leading-[1.1] max-[960px]:text-[2.2rem]"
+                  className="ml-2 inline-block text-[3.4rem] leading-[1.1] max-[960px]:text-[2.2rem] max-[480px]:text-[1.9rem]"
                 >
                   {HERO_PHRASES[activePhraseIndex].emoji}
                 </motion.span>
               </span>
             </h1>
-            <p className="text-foreground/80 text-base font-medium max-w-sm">
-              Every launch directory in one place. Submit your product everywhere, faster.
+            <p className="text-foreground/80 text-base font-medium max-w-md -mb-1">
+              The complete checklist for a successful product launch. 
+            </p>
+            <p className="text-foreground/80 text-base font-medium max-w-md">
+              Built to get you your first customers.
             </p>
           </div>
 
           {/* Feature bullets */}
           <ul className="flex flex-col gap-2.5">
             {([
+              { icon: Zap,        text: "Chrome extension autofills forms — skip the copy-paste" },
               { icon: ListChecks, text: `${directoryCount ?? localDirectoryCount}+ curated directories, always up to date` },
               { icon: CheckCheck, text: "Track every submission: not started, in progress, or done" },
-              { icon: Zap,        text: "Chrome extension autofills forms — skip the copy-paste" },
             ] as const).map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-2.5 text-sm font-medium">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 border-foreground bg-accent shadow-[1px_1px_0_#1A1A1A]">
@@ -240,14 +243,14 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
           </ul>
 
           {/* CTAs */}
-          <div className="flex items-center gap-4 flex-wrap pt-1">
+          <div className="flex items-center gap-4 flex-wrap pt-1 max-[480px]:flex-col max-[480px]:items-stretch">
             {!isAuthenticated && (
               <Button
                 asChild
                 size="default"
                 className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
               >
-                <Link to="/signup">Start tracking your submissions</Link>
+                <Link to="/signup">Start your launch →</Link>
               </Button>
             )}
             <Button

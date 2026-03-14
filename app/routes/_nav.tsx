@@ -153,17 +153,17 @@ export default function NavLayout() {
 
   return (
     <main className="flex min-h-screen flex-col pt-4">
-      <header className="sticky top-0 z-20 pt-4 pb-3">
-        <div className="mx-auto w-[min(1500px,calc(100vw-2rem))] max-[960px]:w-[min(1500px,calc(100vw-1rem))]">
-          <nav className="flex flex-wrap items-center justify-between gap-4 rounded-[1.25rem] border-2 border-foreground bg-card px-4 py-3 shadow-[var(--shadow-md)]">
-            <Link className="group inline-flex items-center gap-3 no-underline" to="/">
+      <header className="sticky top-0 z-20 pt-3 pb-2 sm:pt-4 sm:pb-3">
+        <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]">
+          <nav className="flex flex-wrap items-center justify-between gap-3 rounded-[1.25rem] border-2 border-foreground bg-card px-3 py-2.5 shadow-[var(--shadow-md)] sm:gap-4 sm:px-4 sm:py-3">
+            <Link className="group inline-flex items-center gap-2 no-underline sm:gap-3" to="/">
               <img
                 src="/static/donkey.png"
                 alt="Donkey Directories"
-                className="block h-12 w-12 object-contain transition-transform duration-300 group-hover:scale-110"
+                className="block h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110 sm:h-12 sm:w-12"
               />
               <span>
-                <strong className="font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-3xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill]">
+                <strong className="font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill] sm:text-3xl">
                   Donkey Directories
                 </strong>
               </span>
@@ -174,7 +174,7 @@ export default function NavLayout() {
                 <Link className={loginClasses} to="/login">
                   Login
                 </Link>
-                <Link className={signupClasses} to="/signup">
+                <Link className={`${signupClasses} max-sm:hidden`} to="/signup">
                   Sign up
                 </Link>
               </div>
