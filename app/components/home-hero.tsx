@@ -196,7 +196,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
         <div className="px-10 py-12 max-[960px]:px-6 max-[960px]:py-8 max-[480px]:px-4 max-[480px]:py-5 flex flex-col justify-center gap-6">
           <div className="space-y-3">
             <h1 className="text-[3.2rem] font-bold leading-[1.1] max-[960px]:text-3xl max-[480px]:text-2xl">
-              <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill] max-[960px]:text-3xl max-[480px]:text-2xl">Launch Your Product</span>{" "}
+              <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill] max-[960px]:text-3xl max-[480px]:text-2xl">Submit Your Product</span>{" "}
               <span className="relative inline-block">
                 <motion.span
                   key={activePhraseIndex}
@@ -229,7 +229,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
           {/* Feature bullets */}
           <ul className="flex flex-col gap-2.5">
             {([
-              { icon: Zap,        text: "Chrome extension autofills forms — skip the copy-paste" },
+              { icon: Zap,        text: "Chrome extension autofills forms. Skip the copy-paste." },
               { icon: ListChecks, text: `${directoryCount ?? localDirectoryCount}+ curated directories, always up to date` },
               { icon: CheckCheck, text: "Track every submission: not started, in progress, or done" },
             ] as const).map(({ icon: Icon, text }) => (
@@ -243,26 +243,36 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
           </ul>
 
           {/* CTAs */}
-          <div className="flex items-center gap-4 flex-wrap pt-1 max-[480px]:flex-col max-[480px]:items-stretch">
-            {!isAuthenticated && (
+          <div className="flex flex-col gap-3 pt-1">
+            <div className="flex items-center gap-4 flex-wrap max-[480px]:flex-col max-[480px]:items-stretch">
+              {!isAuthenticated && (
+                <Button
+                  asChild
+                  size="default"
+                  className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
+                >
+                  <Link to="/signup">Start your launch →</Link>
+                </Button>
+              )}
               <Button
-                asChild
+                variant="outline"
                 size="default"
+                type="button"
+                onClick={() => document.getElementById("directories-table")?.scrollIntoView({ behavior: "smooth" })}
                 className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
               >
-                <Link to="/signup">Start your launch →</Link>
+                See all directories ↓
               </Button>
-            )}
-            <Button
-              variant="outline"
-              size="default"
+            </div>
+            <button
               type="button"
-              onClick={() => document.getElementById("directories-table")?.scrollIntoView({ behavior: "smooth" })}
-              className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
+              onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+              className="w-fit text-sm font-medium text-foreground/45 hover:text-foreground/70 transition-colors flex items-center gap-1"
             >
-              See all directories ↓
-            </Button>
+              How does it work? ↓
+            </button>
           </div>
+
         </div>
 
         {/* Right — visual mockup */}

@@ -104,6 +104,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/extension/integration-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get extension widget integration status
+         * @description Return whether the authenticated user has already integrated the extension widget.
+         */
+        get: operations["get_extension_integration_status_api_v1_auth_extension_integration_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/extension/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List extension connections
+         * @description List extension connection events for the authenticated user, including browser and device metadata.
+         */
+        get: operations["list_extension_connections_api_v1_auth_extension_connections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/me": {
         parameters: {
             query?: never;
@@ -116,6 +156,86 @@ export interface paths {
          * @description Return the authenticated user's profile derived from the bearer access token.
          */
         get: operations["get_current_user_info_api_v1_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/google/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Start Google OAuth
+         * @description Validate the frontend redirect URI and redirect the browser to Google's OAuth consent screen.
+         */
+        get: operations["oauth_google_start_api_v1_auth_oauth_google_start_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/twitter/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Start Twitter OAuth
+         * @description Validate the frontend redirect URI and redirect the browser to Twitter's OAuth consent screen.
+         */
+        get: operations["oauth_twitter_start_api_v1_auth_oauth_twitter_start_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Handle Google OAuth callback
+         * @description Exchange the Google authorization code, sign in or create a local user, then redirect to the frontend with issued JWT tokens.
+         */
+        get: operations["oauth_google_callback_api_v1_auth_oauth_google_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/twitter/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Handle Twitter OAuth callback
+         * @description Exchange the Twitter authorization code, sign in or create a local user, then redirect to the frontend with issued JWT tokens.
+         */
+        get: operations["oauth_twitter_callback_api_v1_auth_oauth_twitter_callback_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -399,6 +519,34 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/directories/{directory_id}/vote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user vote
+         * @description Get the current user's vote for one directory.
+         */
+        get: operations["get_current_user_directory_vote_api_v1_directories__directory_id__vote_get"];
+        /**
+         * Set directory vote
+         * @description Create or update the current user's thumbs up/down vote for a directory.
+         */
+        put: operations["set_directory_vote_api_v1_directories__directory_id__vote_put"];
+        post?: never;
+        /**
+         * Remove directory vote
+         * @description Remove the current user's vote for a directory.
+         */
+        delete: operations["delete_directory_vote_api_v1_directories__directory_id__vote_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1354,6 +1502,24 @@ export interface components {
             /** @default not_submitted */
             submission_stage: components["schemas"]["DirectorySubmissionStage"];
             /**
+             * Thumbs Up Count
+             * @default 0
+             */
+            thumbs_up_count: number;
+            /**
+             * Thumbs Down Count
+             * @default 0
+             */
+            thumbs_down_count: number;
+            /**
+             * Total Votes
+             * @default 0
+             */
+            total_votes: number;
+            /** Thumbs Up Percentage */
+            thumbs_up_percentage?: number | null;
+            my_vote?: components["schemas"]["DirectoryVoteChoice"] | null;
+            /**
              * Created At
              * Format: date-time
              */
@@ -1557,6 +1723,45 @@ export interface components {
             recommended_priority?: number | null;
         };
         /**
+         * DirectoryUserVoteResponse
+         * @description Current user's vote for one directory.
+         */
+        DirectoryUserVoteResponse: {
+            /** Directory Id */
+            directory_id: string;
+            my_vote?: components["schemas"]["DirectoryVoteChoice"] | null;
+        };
+        /**
+         * DirectoryVoteChoice
+         * @description Thumbs vote direction.
+         * @enum {string}
+         */
+        DirectoryVoteChoice: "up" | "down";
+        /**
+         * DirectoryVoteRequest
+         * @description Request body for setting a thumbs vote.
+         */
+        DirectoryVoteRequest: {
+            vote: components["schemas"]["DirectoryVoteChoice"];
+        };
+        /**
+         * DirectoryVoteSummaryResponse
+         * @description Vote summary for one directory plus current user's vote.
+         */
+        DirectoryVoteSummaryResponse: {
+            /** Directory Id */
+            directory_id: string;
+            my_vote?: components["schemas"]["DirectoryVoteChoice"] | null;
+            /** Thumbs Up Count */
+            thumbs_up_count: number;
+            /** Thumbs Down Count */
+            thumbs_down_count: number;
+            /** Total Votes */
+            total_votes: number;
+            /** Thumbs Up Percentage */
+            thumbs_up_percentage?: number | null;
+        };
+        /**
          * ExchangeExtensionConnectCodeRequest
          * @description Request to exchange a one-time connect code for tokens.
          */
@@ -1568,6 +1773,10 @@ export interface components {
             client: "chrome_extension";
             /** Code */
             code: string;
+            /** Device Id */
+            device_id?: string | null;
+            /** Device Name */
+            device_name?: string | null;
         };
         /**
          * ExchangeExtensionConnectCodeResponse
@@ -1606,6 +1815,47 @@ export interface components {
              * Format: email
              */
             email: string;
+        };
+        /**
+         * ExtensionConnectionResponse
+         * @description Single extension connection event for a user.
+         */
+        ExtensionConnectionResponse: {
+            /**
+             * Client
+             * @constant
+             */
+            client: "chrome_extension";
+            /**
+             * Connected At
+             * Format: date-time
+             */
+            connected_at: string;
+            /** Browser Name */
+            browser_name?: string | null;
+            /** Device Id */
+            device_id?: string | null;
+            /** Device Name */
+            device_name?: string | null;
+            /** Ip Address */
+            ip_address?: string | null;
+            /** User Agent */
+            user_agent?: string | null;
+        };
+        /**
+         * ExtensionIntegrationStatusResponse
+         * @description Current integration state for extension widget login.
+         */
+        ExtensionIntegrationStatusResponse: {
+            /**
+             * Client
+             * @constant
+             */
+            client: "chrome_extension";
+            /** Is Integrated */
+            is_integrated: boolean;
+            /** Integrated At */
+            integrated_at?: string | null;
         };
         /**
          * FeatureTag
@@ -2104,6 +2354,46 @@ export interface operations {
             };
         };
     };
+    get_extension_integration_status_api_v1_auth_extension_integration_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionIntegrationStatusResponse"];
+                };
+            };
+        };
+    };
+    list_extension_connections_api_v1_auth_extension_connections_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionConnectionResponse"][];
+                };
+            };
+        };
+    };
     get_current_user_info_api_v1_auth_me_get: {
         parameters: {
             query?: never;
@@ -2120,6 +2410,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    oauth_google_start_api_v1_auth_oauth_google_start_get: {
+        parameters: {
+            query: {
+                redirect_uri: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    oauth_twitter_start_api_v1_auth_oauth_twitter_start_get: {
+        parameters: {
+            query: {
+                redirect_uri: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    oauth_google_callback_api_v1_auth_oauth_google_callback_get: {
+        parameters: {
+            query?: {
+                code?: string | null;
+                state?: string | null;
+                error?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    oauth_twitter_callback_api_v1_auth_oauth_twitter_callback_get: {
+        parameters: {
+            query?: {
+                code?: string | null;
+                state?: string | null;
+                error?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2755,6 +3173,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DirectoryCountResponse"];
+                };
+            };
+        };
+    };
+    get_current_user_directory_vote_api_v1_directories__directory_id__vote_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                directory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryUserVoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_directory_vote_api_v1_directories__directory_id__vote_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                directory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DirectoryVoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryVoteSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_directory_vote_api_v1_directories__directory_id__vote_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                directory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

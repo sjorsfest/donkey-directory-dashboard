@@ -5,6 +5,7 @@ import {
   data,
   redirect,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigate,
   useNavigation,
@@ -36,15 +37,14 @@ import {
   CheckCircle2,
   ExternalLink,
   User,
-  Zap,
   Facebook,
 } from "lucide-react";
 import {
   API_ROUTES,
-  isCreateExtensionConnectCodeResponse,
   type ApiBrandExtractRequest,
-  type CreateExtensionConnectCodeRequest,
 } from "~/lib/api-contract";
+import { listDirectoriesRequest } from "~/lib/directories-api.server";
+import { ProjectSubmissionsTable } from "~/components/directories-table";
 import { normalizeDomainInput } from "~/lib/domain-input";
 import {
   parseApiErrorMessage,
@@ -60,6 +60,16 @@ type CreatorCreateRequest = components["schemas"]["CreatorCreateRequest"];
 type BrandProfile = components["schemas"]["BrandProfileResponse"];
 type Creator = components["schemas"]["CreatorResponse"];
 
+type DirectorySubmissionStage = "not_submitted" | "in_progress" | "submitted";
+
+type DirectoryWithStage = {
+  id: string;
+  name: string;
+  domain: string;
+  url: string;
+  submission_stage: DirectorySubmissionStage;
+};
+
 type LoaderData = {
   isAuthenticated: true;
   projects: Project[];
@@ -68,6 +78,8 @@ type LoaderData = {
   brandProfile: BrandProfile | null;
   creators: Creator[];
   projectDetailError: string | null;
+  directories: DirectoryWithStage[];
+  directoriesTotal: number;
 };
 
 type ActionFeedback = {
@@ -107,7 +119,7 @@ type CreatorDraft = {
 type LaunchActionIntent =
   | "project_extract"
   | "creator_create_quick"
-  | "extension_connect_generate";
+  | "submission_stage_update";
 
 type LaunchActionData = {
   intent: LaunchActionIntent;
@@ -118,15 +130,7 @@ type LaunchActionData = {
   };
   extractDraftDomain?: string;
   creatorDraft?: CreatorDraft;
-  connectCode?: {
-    code: string;
-    expiresAt: string;
-    expiresInSeconds: number;
-    generatedAt: string;
-  };
 };
-
-type ConnectCode = NonNullable<LaunchActionData["connectCode"]>;
 
 const STAPLE_SOCIAL_CONFIGS: StapleSocialConfig[] = [
   {
@@ -270,9 +274,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   let brandProfile: BrandProfile | null = null;
   let creators: Creator[] = [];
   let projectDetailError: string | null = null;
+  let directories: DirectoryWithStage[] = [];
+  let directoriesTotal = 0;
 
   if (selectedProjectId) {
-    const [brandProfileResult, creatorsResult] = await Promise.all([
+    const [brandProfileResult, creatorsResult, directoriesResult] = await Promise.all([
       sendAuthenticatedRequest({
         session,
         apiBaseUrl,
@@ -285,10 +291,16 @@ export async function loader({ request }: Route.LoaderArgs) {
         path: projectCreatorsPath(selectedProjectId),
         method: "GET",
       }),
+      listDirectoriesRequest({
+        session,
+        apiBaseUrl,
+        query: { project_id: selectedProjectId, page_size: 100 },
+      }),
     ]);
 
     latestSetCookie = pickSetCookie(latestSetCookie, brandProfileResult.setCookie);
     latestSetCookie = pickSetCookie(latestSetCookie, creatorsResult.setCookie);
+    latestSetCookie = pickSetCookie(latestSetCookie, directoriesResult.setCookie);
 
     brandProfile = brandProfileResult.response.ok
       ? asBrandProfile(brandProfileResult.responseData)
@@ -297,6 +309,16 @@ export async function loader({ request }: Route.LoaderArgs) {
     creators = creatorsResult.response.ok
       ? asCreatorArray(creatorsResult.responseData)
       : [];
+
+    if (directoriesResult.response.ok && isRecord(directoriesResult.responseData)) {
+      const payload = directoriesResult.responseData as Record<string, unknown>;
+      if (Array.isArray(payload.directories)) {
+        directories = payload.directories as DirectoryWithStage[];
+      }
+      if (typeof payload.total === "number") {
+        directoriesTotal = payload.total;
+      }
+    }
 
     if (!brandProfileResult.response.ok || !creatorsResult.response.ok) {
       const errResult = !brandProfileResult.response.ok
@@ -318,6 +340,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       brandProfile,
       creators,
       projectDetailError,
+      directories,
+      directoriesTotal,
     },
     {
       headers: latestSetCookie ? { "Set-Cookie": latestSetCookie } : undefined,
@@ -364,11 +388,18 @@ export async function action({ request }: Route.ActionArgs) {
     });
   }
 
-  return runExtensionConnectAction({ session, apiBaseUrl });
+  // submission_stage_update
+  return runSubmissionStageUpdateAction({
+    session,
+    apiBaseUrl,
+    projectId: toOptionalString(formData.get("project_id")) ?? "",
+    directoryId: toOptionalString(formData.get("directory_id")) ?? "",
+    submissionStage: toOptionalString(formData.get("submission_stage")) ?? "",
+  });
 }
 
 export default function LaunchPage() {
-  const { projects, selectedProjectId, projectsError, brandProfile, creators, projectDetailError } =
+  const { projects, selectedProjectId, projectsError, directories, directoriesTotal } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -379,7 +410,6 @@ export default function LaunchPage() {
   const isBusy = navigation.state !== "idle";
   const isExtracting = isBusy && navIntent === "project_extract";
   const isCreatingCreator = isBusy && navIntent === "creator_create_quick";
-  const isGeneratingConnect = isBusy && navIntent === "extension_connect_generate";
 
   const extractActionSuccess =
     actionData?.intent === "project_extract" &&
@@ -401,16 +431,6 @@ export default function LaunchPage() {
   const [creatorSocialValues, setCreatorSocialValues] = useState<StapleSocialValues>(
     createEmptyStapleSocialValues(),
   );
-
-  const generatedCode =
-    actionData?.intent === "extension_connect_generate" &&
-    actionData.feedback.kind === "success" &&
-    actionData.connectCode
-      ? actionData.connectCode
-      : null;
-
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const [copyStatus, setCopyStatus] = useState<null | "copied" | "failed">(null);
 
   useEffect(() => {
     if (extractActionSuccess?.projectId) {
@@ -443,54 +463,9 @@ export default function LaunchPage() {
     }
   }, [creatorWasCreated]);
 
-  useEffect(() => {
-    setCopyStatus(null);
-  }, [generatedCode?.code]);
-
-  useEffect(() => {
-    if (!generatedCode?.expiresAt) {
-      setSecondsLeft(0);
-      return;
-    }
-
-    const expiresAtMs = Date.parse(generatedCode.expiresAt);
-
-    const tick = () => {
-      const remaining = Math.max(0, Math.ceil((expiresAtMs - Date.now()) / 1000));
-      setSecondsLeft(remaining);
-    };
-
-    tick();
-    const intervalId = window.setInterval(tick, 250);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [generatedCode?.expiresAt]);
-
-  async function copyCode() {
-    if (!generatedCode?.code) return;
-
-    try {
-      await navigator.clipboard.writeText(generatedCode.code);
-      setCopyStatus("copied");
-    } catch {
-      setCopyStatus("failed");
-    }
-  }
-
   function openNewProjectDialog() {
     setDialogStep(1);
     setDialogProjectId(null);
-    setCreatorFullName("");
-    setCreatorBio("");
-    setCreatorSocialValues(createEmptyStapleSocialValues());
-    setIsCreateDialogOpen(true);
-  }
-
-  function openAddCreatorDialog() {
-    setDialogStep(2);
-    setDialogProjectId(selectedProjectId);
     setCreatorFullName("");
     setCreatorBio("");
     setCreatorSocialValues(createEmptyStapleSocialValues());
@@ -509,31 +484,63 @@ export default function LaunchPage() {
   return (
     <>
       <div className={STUDIO_SHELL_CLASS}>
-        {selectedProject ? (
-          <ProjectDetailView
-            project={selectedProject}
-            brandProfile={brandProfile}
-            creators={creators}
-            projectDetailError={projectDetailError}
-            creatorWasCreated={creatorWasCreated}
-            onAddCreator={openAddCreatorDialog}
-          />
-        ) : (
-          <ProjectListView
-            projects={projects}
-            projectsError={projectsError}
-            onNewProject={openNewProjectDialog}
-          />
-        )}
+        <section className="mt-6 grid gap-5 pb-10">
+          <div>
+            <p className={STUDIO_KICKER_CLASS}>Launch workspace</p>
+            <h1 className="m-0 text-[1.4rem] leading-[1.1] font-extrabold sm:text-[1.75rem]">
+              {projects.length === 0 ? "Create your first project" : "Your projects"}
+            </h1>
+          </div>
 
-        <ConnectExtensionSection
-          isGeneratingConnect={isGeneratingConnect}
-          actionData={actionData}
-          generatedCode={generatedCode}
-          secondsLeft={secondsLeft}
-          copyStatus={copyStatus}
-          onCopy={copyCode}
-        />
+          {projectsError ? <p className={AUTH_ERROR_CLASS}>{projectsError}</p> : null}
+
+          {/* Project cards */}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1">
+            {projects.map((project) => {
+              const isActive = project.id === selectedProjectId;
+              return (
+                <Link
+                  key={project.id}
+                  to={buildLaunchProjectHref(project.id)}
+                  className={cn(
+                    "flex flex-col gap-3 rounded-lg border-2 border-foreground p-5 text-inherit no-underline shadow-[var(--shadow-md)] transition-[transform,box-shadow,background] duration-100 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_hsl(var(--foreground))] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]",
+                    isActive ? "bg-primary text-primary-foreground" : "bg-card",
+                  )}
+                >
+                  <strong className="m-0 text-base leading-[1.2] font-extrabold">{project.name}</strong>
+                  <p className={cn("m-0 font-['IBM_Plex_Mono',monospace] text-[0.8rem]", isActive ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                    {project.domain}
+                  </p>
+                  <div className="mt-auto flex items-center justify-between text-xs">
+                    <Badge variant={isActive ? "outline" : "secondary"} className={isActive ? "border-primary-foreground/40 text-primary-foreground" : ""}>{project.status}</Badge>
+                    <small className={isActive ? "text-primary-foreground/70" : ""}>Updated {formatDate(project.updated_at)}</small>
+                  </div>
+                </Link>
+              );
+            })}
+
+            <button
+              type="button"
+              className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-foreground bg-transparent p-5 text-center text-muted-foreground transition-[background,color,transform] duration-100 hover:-translate-x-px hover:-translate-y-px hover:bg-secondary hover:text-foreground"
+              onClick={openNewProjectDialog}
+            >
+              <Plus className="mb-1.5 h-8 w-8" />
+              <strong>New project</strong>
+              <small>Start from a domain URL</small>
+            </button>
+          </div>
+
+          {/* Submissions table or skeleton */}
+          {selectedProject ? (
+            <ProjectSubmissionsTable
+              projectId={selectedProject.id}
+              directories={directories}
+              directoriesTotal={directoriesTotal}
+            />
+          ) : (
+            <SkeletonSubmissionsTable />
+          )}
+        </section>
       </div>
 
       <CreateProjectDialog
@@ -552,174 +559,6 @@ export default function LaunchPage() {
         setCreatorSocialValues={setCreatorSocialValues}
         onSkipCreator={handleSkipCreator}
       />
-    </>
-  );
-}
-
-// ─── Project List View ───────────────────────────────────────────────────────
-
-function ProjectListView(props: {
-  projects: Project[];
-  projectsError: string | null;
-  onNewProject: () => void;
-}) {
-  return (
-    <section className="mt-6 grid gap-5">
-      <div>
-        <p className={STUDIO_KICKER_CLASS}>Launch workspace</p>
-        <h1 className="m-0 text-[1.4rem] leading-[1.1] font-extrabold sm:text-[1.75rem]">
-          {props.projects.length === 0 ? "Create your first project" : "Your projects"}
-        </h1>
-      </div>
-
-      {props.projectsError ? <p className={AUTH_ERROR_CLASS}>{props.projectsError}</p> : null}
-
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1">
-        {props.projects.map((project) => (
-          <Link
-            key={project.id}
-            to={buildLaunchProjectHref(project.id)}
-            className="flex flex-col gap-3 rounded-lg border-2 border-foreground bg-card p-5 text-inherit no-underline shadow-[var(--shadow-md)] transition-[transform,box-shadow] duration-100 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_hsl(var(--foreground))] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]"
-          >
-            <strong className="m-0 text-base leading-[1.2] font-extrabold">{project.name}</strong>
-            <p className="m-0 font-['IBM_Plex_Mono',monospace] text-[0.8rem] text-muted-foreground">
-              {project.domain}
-            </p>
-            <div className="mt-auto flex items-center justify-between text-xs">
-              <Badge variant="secondary">{project.status}</Badge>
-              <small>Updated {formatDate(project.updated_at)}</small>
-            </div>
-          </Link>
-        ))}
-
-        <button
-          type="button"
-          className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-foreground bg-transparent p-5 text-center text-muted-foreground transition-[background,color,transform] duration-100 hover:-translate-x-px hover:-translate-y-px hover:bg-secondary hover:text-foreground"
-          onClick={props.onNewProject}
-        >
-          <Plus className="mb-1.5 h-8 w-8" />
-          <strong>New project</strong>
-          <small>Start from a domain URL</small>
-        </button>
-      </div>
-
-      {props.projects.length === 0 ? (
-        <p className="pb-2 text-center text-muted-foreground">
-          No projects yet. Create one to get started.
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
-// ─── Project Detail View ─────────────────────────────────────────────────────
-
-function ProjectDetailView(props: {
-  project: Project;
-  brandProfile: BrandProfile | null;
-  creators: Creator[];
-  projectDetailError: string | null;
-  creatorWasCreated: boolean;
-  onAddCreator: () => void;
-}) {
-  return (
-    <>
-      <div className="mt-6 mb-5 grid gap-1.5">
-        <Link
-          to="/dashboard"
-          className="inline-flex w-fit items-center gap-1.5 text-sm font-bold text-muted-foreground no-underline transition-colors duration-100 hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          All projects
-        </Link>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="m-0 text-[1.4rem] leading-[1.1] font-extrabold sm:text-[1.75rem]">
-            {props.project.name}
-          </h1>
-          <Badge variant="secondary">{props.project.status}</Badge>
-        </div>
-        <p className="m-0 font-['IBM_Plex_Mono',monospace] text-[0.8rem] text-muted-foreground">
-          {props.project.domain}
-        </p>
-        <small className={MUTED_TEXT_CLASS}>
-          Updated {formatDate(props.project.updated_at)}
-        </small>
-      </div>
-
-      {props.projectDetailError ? (
-        <p className={AUTH_ERROR_CLASS}>{props.projectDetailError}</p>
-      ) : null}
-
-      {props.creatorWasCreated ? (
-        <p className={`${AUTH_SUCCESS_CLASS} mb-4`}>
-          <CheckCircle2
-            className={STEP_SUCCESS_ICON_CLASS}
-            style={{
-              display: "inline",
-              width: "1em",
-              height: "1em",
-              marginRight: "0.375rem",
-              verticalAlign: "middle",
-            }}
-          />
-          Creator added successfully.
-        </p>
-      ) : null}
-
-      <div className="grid grid-cols-2 gap-5 max-[960px]:grid-cols-1">
-        <section className={STUDIO_PANEL_CLASS}>
-          <div className={STUDIO_PANEL_HEADING_CLASS}>
-            <div>
-              <p className={STUDIO_SECTION_LABEL_CLASS}>Brand</p>
-              <h2>Brand profile</h2>
-            </div>
-          </div>
-
-          {props.brandProfile ? (
-            <BrandProfileSection profile={props.brandProfile} project={props.project} />
-          ) : (
-            <div className={EMPTY_STATE_CLASS}>
-              <strong className="text-[0.9rem]">No brand profile yet.</strong>
-              <p className="m-0">Brand data will appear here after extraction.</p>
-            </div>
-          )}
-        </section>
-
-        <section className={STUDIO_PANEL_CLASS}>
-          <div className={STUDIO_PANEL_HEADING_CLASS}>
-            <div>
-              <p className={STUDIO_SECTION_LABEL_CLASS}>Creators</p>
-              <h2>Team</h2>
-            </div>
-            <Button variant="outline" onClick={props.onAddCreator}>
-              <Plus className="mr-1 h-4 w-4" />
-              Add creator
-            </Button>
-          </div>
-
-          <div className="grid gap-3">
-            {props.creators.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-foreground/30 px-4 py-8 text-center text-muted-foreground">
-                <User style={{ width: "2rem", height: "2rem", opacity: 0.4 }} />
-                <strong>No creators yet.</strong>
-                <p>Add a creator to associate with this project.</p>
-                <Button variant="outline" onClick={props.onAddCreator}>
-                  <Plus className="mr-1 h-4 w-4" />
-                  Add first creator
-                </Button>
-              </div>
-            ) : (
-              props.creators.map((creator) => (
-                <CreatorCard
-                  key={creator.id}
-                  creator={creator}
-                  projectId={props.project.id}
-                />
-              ))
-            )}
-          </div>
-        </section>
-      </div>
     </>
   );
 }
@@ -888,109 +727,6 @@ function CreatorCard(props: { creator: Creator; projectId: string }) {
         </div>
       ) : null}
     </div>
-  );
-}
-
-// ─── Connect Extension Section ───────────────────────────────────────────────
-
-function ConnectExtensionSection(props: {
-  isGeneratingConnect: boolean;
-  actionData: LaunchActionData | undefined;
-  generatedCode: ConnectCode | null;
-  secondsLeft: number;
-  copyStatus: null | "copied" | "failed";
-  onCopy: () => void;
-}) {
-  return (
-    <section className="mt-5 mb-6 overflow-hidden rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)]">
-      {/* Thin lime-green top stripe — cohesive with the button colour */}
-      <div className="h-[3px] bg-primary" />
-
-      <div className="flex flex-col gap-6 p-5 sm:flex-row sm:gap-10">
-        {/* Left: value proposition */}
-        <div className="flex flex-1 flex-col gap-3">
-          <p className="m-0 text-[0.7rem] font-bold tracking-widest text-muted-foreground uppercase">
-            Chrome Extension
-          </p>
-          <h2 className="m-0 text-xl font-extrabold leading-tight">
-            Fill directory listings in one click
-          </h2>
-          <p className="m-0 text-sm leading-relaxed text-muted-foreground">
-            The extension auto-fills your brand and creator details into directory
-            submission forms — no more copy-pasting the same info over and over.
-          </p>
-          <ul className="m-0 grid list-none gap-1.5 p-0">
-            {[
-              "Auto-fills brand name, bio, socials & tags",
-              "Works across hundreds of directory sites",
-              "Always in sync with your dashboard",
-            ].map((text) => (
-              <li key={text} className="flex items-center gap-2 text-sm font-semibold">
-                <span className="h-2 w-2 shrink-0 rounded-full border-2 border-foreground bg-primary" />
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Right: action */}
-        <div className="flex flex-col justify-center gap-3 sm:w-[200px] sm:shrink-0">
-          <Form method="post" className="flex flex-col gap-2">
-            <Input type="hidden" name="intent" value="extension_connect_generate" />
-            <Button type="submit" disabled={props.isGeneratingConnect}>
-              <Zap className="mr-1.5 h-4 w-4" />
-              {props.isGeneratingConnect ? "Generating..." : "Generate one-time code"}
-            </Button>
-            <small className="text-xs text-muted-foreground">
-              Paste the code into the extension popup to link your account.
-            </small>
-            {props.actionData?.intent === "extension_connect_generate" &&
-            props.actionData.feedback.kind === "error" ? (
-              <p className={AUTH_ERROR_CLASS} style={{ margin: 0 }}>
-                {props.actionData.feedback.message}
-              </p>
-            ) : null}
-          </Form>
-
-          {props.generatedCode ? (
-            <div className="grid gap-3 rounded-md border-2 border-foreground bg-secondary p-3.5">
-              <p className="m-0 font-['IBM_Plex_Mono',monospace] text-xl font-bold tracking-[0.06em] sm:text-[1.6rem]">
-                {props.generatedCode.code}
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <small className={MUTED_TEXT_CLASS}>
-                  Expires in {props.secondsLeft}s
-                  {props.secondsLeft === 0 ? " — expired" : ""}
-                </small>
-                <Button
-                  type="button"
-                  variant={props.copyStatus === "copied" ? "outline" : "default"}
-                  onClick={props.onCopy}
-                  disabled={props.secondsLeft === 0}
-                >
-                  {props.copyStatus === "copied" ? (
-                    <>
-                      <CheckCircle2
-                        className={STEP_SUCCESS_ICON_CLASS}
-                        style={{ width: "1rem", height: "1rem", marginRight: "0.375rem" }}
-                      />
-                      Copied!
-                    </>
-                  ) : (
-                    "Copy code"
-                  )}
-                </Button>
-              </div>
-              {props.copyStatus === "failed" ? (
-                <p className={AUTH_ERROR_CLASS} style={{ margin: 0 }}>
-                  Clipboard failed. Copy the code manually.
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -1177,6 +913,228 @@ function QuickSocialLinksInput(props: {
 
       <Input type="hidden" name={props.hiddenFieldName} value={serialized} />
     </div>
+  );
+}
+
+// ─── Skeleton Submissions Table ──────────────────────────────────────────────
+
+function SkeletonSubmissionsTable() {
+  const ROWS = 6;
+  return (
+    <div className="relative">
+      <div className="rounded-lg border-2 border-foreground overflow-hidden shadow-[4px_4px_0_hsl(var(--foreground))] opacity-30 pointer-events-none select-none" aria-hidden="true">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b-2 border-foreground bg-secondary">
+                <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">Directory</th>
+                <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">Domain</th>
+                <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: ROWS }).map((_, i) => (
+                <tr key={i} className={cn("border-b border-foreground/10 bg-card", i === ROWS - 1 && "border-b-0")}>
+                  <td className="px-4 py-3"><div className="h-4 w-32 animate-pulse rounded bg-foreground/15" /></td>
+                  <td className="px-4 py-3 hidden sm:table-cell"><div className="h-3.5 w-24 animate-pulse rounded bg-foreground/15" /></td>
+                  <td className="px-4 py-3"><div className="h-7 w-28 animate-pulse rounded-lg bg-foreground/15" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-4">
+        <p className="m-0 text-base font-extrabold">Add your app to start tracking its submissions</p>
+        <p className="m-0 text-sm text-muted-foreground max-w-xs">Create a project from your domain URL and we will populate the directory list for you.</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Directory Submissions Section ───────────────────────────────────────────
+
+const STAGE_LABELS: Record<DirectorySubmissionStage, string> = {
+  not_submitted: "Not submitted",
+  in_progress: "In progress",
+  submitted: "Submitted",
+};
+
+function DirectorySubmissionsSection(props: {
+  projectId: string;
+  directories: DirectoryWithStage[];
+  directoriesTotal: number;
+}) {
+  const { directories, directoriesTotal, projectId } = props;
+
+  const submitted = directories.filter((d) => d.submission_stage === "submitted").length;
+  const inProgress = directories.filter((d) => d.submission_stage === "in_progress").length;
+  const notSubmitted = directories.filter((d) => d.submission_stage === "not_submitted").length;
+
+  return (
+    <section className="mt-5 mb-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className={STUDIO_KICKER_CLASS}>Submission tracker</p>
+          <h2 className="m-0 text-lg font-extrabold leading-tight">
+            Directory submissions
+            {directoriesTotal > directories.length ? (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                (showing {directories.length} of {directoriesTotal})
+              </span>
+            ) : null}
+          </h2>
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      <div className="mb-4 grid grid-cols-3 gap-3 max-[640px]:grid-cols-1">
+        <StatCard
+          label="Submitted"
+          count={submitted}
+          color="emerald"
+        />
+        <StatCard
+          label="In progress"
+          count={inProgress}
+          color="amber"
+        />
+        <StatCard
+          label="Not submitted"
+          count={notSubmitted}
+          color="muted"
+        />
+      </div>
+
+      {/* Directory table */}
+      {directories.length === 0 ? (
+        <div className={EMPTY_STATE_CLASS}>
+          <strong className="text-[0.9rem]">No directories found.</strong>
+          <p className="m-0 text-sm text-muted-foreground">
+            Directories will appear here once they are available.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-lg border-2 border-foreground overflow-hidden shadow-[var(--shadow-md)]">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b-2 border-foreground bg-secondary">
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
+                    Directory
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
+                    Domain
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {directories.map((directory, index) => (
+                  <tr
+                    key={directory.id}
+                    className={cn(
+                      "border-b border-foreground/10 bg-card transition-colors hover:bg-secondary/40",
+                      index === directories.length - 1 && "border-b-0",
+                    )}
+                  >
+                    <td className="px-4 py-3">
+                      <a
+                        href={directory.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-foreground no-underline hover:underline"
+                      >
+                        {directory.name}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 font-['IBM_Plex_Mono',monospace] text-[0.75rem] text-muted-foreground hidden sm:table-cell">
+                      {directory.domain}
+                    </td>
+                    <td className="px-4 py-3">
+                      <DirectoryStageSelector
+                        directory={directory}
+                        projectId={projectId}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function StatCard(props: {
+  label: string;
+  count: number;
+  color: "emerald" | "amber" | "muted";
+}) {
+  const colorClasses = {
+    emerald: "border-l-emerald-500 bg-emerald-50 text-emerald-700",
+    amber: "border-l-amber-500 bg-amber-50 text-amber-700",
+    muted: "border-l-foreground/20 bg-card text-muted-foreground",
+  };
+
+  return (
+    <div
+      className={cn(
+        "rounded-lg border-2 border-foreground border-l-4 p-4 shadow-[var(--shadow-sm)]",
+        colorClasses[props.color],
+      )}
+    >
+      <p className="m-0 text-2xl font-extrabold">{props.count}</p>
+      <p className="m-0 text-xs font-semibold mt-0.5">{props.label}</p>
+    </div>
+  );
+}
+
+function DirectoryStageSelector(props: {
+  directory: DirectoryWithStage;
+  projectId: string;
+}) {
+  const fetcher = useFetcher<typeof action>();
+  const optimisticStage = fetcher.formData?.get("submission_stage") as DirectorySubmissionStage | null;
+  const stage = optimisticStage ?? props.directory.submission_stage;
+  const isPending = fetcher.state !== "idle";
+
+  const stageClasses: Record<DirectorySubmissionStage, string> = {
+    submitted: "border-emerald-500 bg-emerald-50 text-emerald-700",
+    in_progress: "border-amber-500 bg-amber-50 text-amber-700",
+    not_submitted: "border-foreground/20 bg-card text-muted-foreground",
+  };
+
+  return (
+    <select
+      value={stage}
+      disabled={isPending}
+      className={cn(
+        "rounded-lg border-2 px-2 py-1 text-xs font-bold cursor-pointer transition-opacity",
+        stageClasses[stage],
+        isPending && "opacity-50",
+      )}
+      onChange={(e) => {
+        const formData = new FormData();
+        formData.set("intent", "submission_stage_update");
+        formData.set("project_id", props.projectId);
+        formData.set("directory_id", props.directory.id);
+        formData.set("submission_stage", e.target.value);
+        fetcher.submit(formData, { method: "post" });
+      }}
+    >
+      {(["not_submitted", "in_progress", "submitted"] as DirectorySubmissionStage[]).map(
+        (s) => (
+          <option key={s} value={s}>
+            {STAGE_LABELS[s]}
+          </option>
+        ),
+      )}
+    </select>
   );
 }
 
@@ -1446,20 +1404,30 @@ async function runQuickCreatorAction(options: {
   });
 }
 
-async function runExtensionConnectAction(options: {
+async function runSubmissionStageUpdateAction(options: {
   session: SessionType;
   apiBaseUrl: string;
+  projectId: string;
+  directoryId: string;
+  submissionStage: string;
 }) {
-  const payload: CreateExtensionConnectCodeRequest = {
-    client: "chrome_extension",
-  };
+  const validStages: DirectorySubmissionStage[] = ["not_submitted", "in_progress", "submitted"];
+
+  if (!validStages.includes(options.submissionStage as DirectorySubmissionStage)) {
+    return data<LaunchActionData>(
+      { intent: "submission_stage_update", feedback: { kind: "error", message: "Invalid submission stage." } },
+      { status: 400 },
+    );
+  }
+
+  const path = `/api/v1/directories/projects/${encodeURIComponent(options.projectId)}/directories/${encodeURIComponent(options.directoryId)}/submission-stage`;
 
   const result = await sendAuthenticatedRequest({
     session: options.session,
     apiBaseUrl: options.apiBaseUrl,
-    path: API_ROUTES.auth.extensionConnectCodes,
-    method: "POST",
-    body: payload,
+    path,
+    method: "PUT",
+    body: { submission_stage: options.submissionStage },
   });
 
   const headers = buildSetCookieHeaders(result.setCookie);
@@ -1471,52 +1439,21 @@ async function runExtensionConnectAction(options: {
   if (!result.response.ok) {
     return data<LaunchActionData>(
       {
-        intent: "extension_connect_generate",
+        intent: "submission_stage_update",
         feedback: {
           kind: "error",
           message: parseApiErrorMessage(
             result.responseData,
-            `Failed to generate one-time code (HTTP ${result.response.status}).`,
+            `Failed to update submission stage (HTTP ${result.response.status}).`,
           ),
         },
       },
-      {
-        status: result.response.status,
-        headers,
-      },
-    );
-  }
-
-  if (!isCreateExtensionConnectCodeResponse(result.responseData)) {
-    return data<LaunchActionData>(
-      {
-        intent: "extension_connect_generate",
-        feedback: {
-          kind: "error",
-          message: "Unexpected response format while generating one-time code.",
-        },
-      },
-      {
-        status: 502,
-        headers,
-      },
+      { status: result.response.status, headers },
     );
   }
 
   return data<LaunchActionData>(
-    {
-      intent: "extension_connect_generate",
-      feedback: {
-        kind: "success",
-        message: "One-time code generated.",
-      },
-      connectCode: {
-        code: result.responseData.code,
-        expiresAt: result.responseData.expires_at,
-        expiresInSeconds: result.responseData.expires_in_seconds,
-        generatedAt: new Date().toISOString(),
-      },
-    },
+    { intent: "submission_stage_update", feedback: { kind: "success", message: "Updated." } },
     { headers },
   );
 }
@@ -1525,7 +1462,7 @@ function isLaunchActionIntent(value: string | undefined): value is LaunchActionI
   return (
     value === "project_extract" ||
     value === "creator_create_quick" ||
-    value === "extension_connect_generate"
+    value === "submission_stage_update"
   );
 }
 
@@ -1602,7 +1539,7 @@ function pickSelectedProjectId(projects: Project[], requestedProjectId?: string)
     return requestedProjectId;
   }
 
-  return null;
+  return projects[0]?.id ?? null;
 }
 
 function buildSetCookieHeaders(setCookie: string | null): HeadersInit | undefined {

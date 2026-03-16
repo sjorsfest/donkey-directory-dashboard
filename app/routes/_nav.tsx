@@ -86,6 +86,7 @@ export default function NavLayout() {
     navigation.state !== "idle" && navigation.formData?.get("intent") === "logout";
   const isCreatingProject = launchNewFetcher.state !== "idle";
   const dashboardMatch = useMatch("/dashboard");
+
   const navLinkButtonBaseClass =
     "inline-flex items-center justify-center gap-2 rounded-lg border-2 border-foreground px-4 py-2 text-sm font-bold no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]";
   const navLinkButtonPrimaryClass = `${navLinkButtonBaseClass}`;
@@ -192,11 +193,11 @@ export default function NavLayout() {
                   Dashboard
                 </Link>
 
-                <Form method="post">
-                  <Button type="submit" variant="destructive" name="intent" value="logout">
+                <Link to="/logout">
+                  <Button type="button" variant="destructive">
                     {isLoggingOut ? "Logging out..." : "Logout"}
                   </Button>
-                </Form>
+                </Link>
               </div>
             )}
           </nav>

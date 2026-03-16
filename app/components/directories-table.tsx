@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 import {
   ArrowRight,
   ChevronDown,
@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
+import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -1026,4 +1027,178 @@ function formatEnumToken(token: string): string {
       return `${part.charAt(0)}${part.slice(1).toLowerCase()}`;
     })
     .join(" ");
+}
+
+// ─── Project Submissions Table ────────────────────────────────────────────────
+
+export type DirectorySubmissionStage = "not_submitted" | "in_progress" | "submitted";
+
+export type DirectoryWithStage = {
+  id: string;
+  name: string;
+  domain: string;
+  url: string;
+  submission_stage: DirectorySubmissionStage;
+};
+
+const SUBMISSION_STAGE_LABELS: Record<DirectorySubmissionStage, string> = {
+  not_submitted: "Not submitted",
+  in_progress: "In progress",
+  submitted: "Submitted",
+};
+
+const SUBMISSION_STAGE_CLASSES: Record<DirectorySubmissionStage, string> = {
+  submitted: "border-emerald-500 bg-emerald-50 text-emerald-700",
+  in_progress: "border-amber-500 bg-amber-50 text-amber-700",
+  not_submitted: "border-foreground/20 bg-card text-muted-foreground",
+};
+
+const STAT_CARD_COLORS = {
+  emerald: "border-l-emerald-500 bg-emerald-50 text-emerald-700",
+  amber: "border-l-amber-500 bg-amber-50 text-amber-700",
+  muted: "border-l-foreground/20 bg-card text-muted-foreground",
+} as const;
+
+export function ProjectSubmissionsTable(props: {
+  projectId: string;
+  directories: DirectoryWithStage[];
+  directoriesTotal: number;
+}) {
+  const { directories, directoriesTotal, projectId } = props;
+
+  const submitted = directories.filter((d) => d.submission_stage === "submitted").length;
+  const inProgress = directories.filter((d) => d.submission_stage === "in_progress").length;
+  const notSubmitted = directories.filter((d) => d.submission_stage === "not_submitted").length;
+
+  return (
+    <section>
+      <div className="mb-4">
+        <p className="text-[0.8rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
+          Submission tracker
+        </p>
+        <h2 className="m-0 text-lg font-extrabold leading-tight">
+          Directory submissions
+          {directoriesTotal > directories.length ? (
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              (showing {directories.length} of {directoriesTotal})
+            </span>
+          ) : null}
+        </h2>
+      </div>
+
+      <div className="mb-4 grid grid-cols-3 gap-3 max-[640px]:grid-cols-1">
+        <SubmissionStatCard label="Submitted" count={submitted} color="emerald" />
+        <SubmissionStatCard label="In progress" count={inProgress} color="amber" />
+        <SubmissionStatCard label="Not submitted" count={notSubmitted} color="muted" />
+      </div>
+
+      {directories.length === 0 ? (
+        <div className="grid gap-2 rounded-lg border-2 border-foreground border-l-4 border-l-muted-foreground bg-card p-4">
+          <strong className="text-[0.9rem]">No directories found.</strong>
+          <p className="m-0 text-sm text-muted-foreground">
+            Directories will appear here once they are available for this project.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-lg border-2 border-foreground overflow-hidden shadow-[4px_4px_0_hsl(var(--foreground))]">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b-2 border-foreground bg-secondary">
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
+                    Directory
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
+                    Domain
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {directories.map((directory, index) => (
+                  <tr
+                    key={directory.id}
+                    className={cn(
+                      "border-b border-foreground/10 bg-card transition-colors hover:bg-secondary/40",
+                      index === directories.length - 1 && "border-b-0",
+                    )}
+                  >
+                    <td className="px-4 py-3">
+                      <a
+                        href={directory.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-foreground no-underline hover:underline"
+                      >
+                        {directory.name}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 font-['IBM_Plex_Mono',monospace] text-[0.75rem] text-muted-foreground hidden sm:table-cell">
+                      {directory.domain}
+                    </td>
+                    <td className="px-4 py-3">
+                      <SubmissionStageSelector directory={directory} projectId={projectId} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SubmissionStatCard(props: {
+  label: string;
+  count: number;
+  color: keyof typeof STAT_CARD_COLORS;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border-2 border-foreground border-l-4 p-4 shadow-[var(--shadow-sm)]",
+        STAT_CARD_COLORS[props.color],
+      )}
+    >
+      <p className="m-0 text-2xl font-extrabold">{props.count}</p>
+      <p className="m-0 text-xs font-semibold mt-0.5">{props.label}</p>
+    </div>
+  );
+}
+
+function SubmissionStageSelector(props: { directory: DirectoryWithStage; projectId: string }) {
+  const fetcher = useFetcher();
+  const optimisticStage = fetcher.formData?.get("submission_stage") as DirectorySubmissionStage | null;
+  const stage = optimisticStage ?? props.directory.submission_stage;
+  const isPending = fetcher.state !== "idle";
+
+  return (
+    <select
+      value={stage}
+      disabled={isPending}
+      className={cn(
+        "rounded-lg border-2 px-2 py-1 text-xs font-bold cursor-pointer transition-opacity",
+        SUBMISSION_STAGE_CLASSES[stage],
+        isPending && "opacity-50",
+      )}
+      onChange={(e) => {
+        const formData = new FormData();
+        formData.set("intent", "submission_stage_update");
+        formData.set("project_id", props.projectId);
+        formData.set("directory_id", props.directory.id);
+        formData.set("submission_stage", e.target.value);
+        fetcher.submit(formData, { method: "post" });
+      }}
+    >
+      {(["not_submitted", "in_progress", "submitted"] as DirectorySubmissionStage[]).map((s) => (
+        <option key={s} value={s}>
+          {SUBMISSION_STAGE_LABELS[s]}
+        </option>
+      ))}
+    </select>
+  );
 }
