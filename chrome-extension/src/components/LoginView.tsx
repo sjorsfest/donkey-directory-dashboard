@@ -66,7 +66,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     <div className="view p-4">
       <Card>
         <CardHeader className="pb-4">
-          <Header subtitle />
+          <Header />
           <CardTitle className="text-base">Connect Session</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

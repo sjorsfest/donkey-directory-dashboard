@@ -15,30 +15,9 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
   ]);
 
   const getAccessibleDocuments = (): Document[] => {
-    const docs: Document[] = [];
-    const queue: Document[] = [document];
-    const seen = new Set<Document>();
-
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      if (seen.has(current)) continue;
-      seen.add(current);
-      docs.push(current);
-
-      const frames = current.querySelectorAll("iframe");
-      frames.forEach((frame) => {
-        try {
-          const frameDoc = frame.contentDocument;
-          if (frameDoc && !seen.has(frameDoc)) {
-            queue.push(frameDoc);
-          }
-        } catch {
-          // Ignore cross-origin frames.
-        }
-      });
-    }
-
-    return docs;
+    // This function runs once per frame via chrome.scripting.executeScript(allFrames: true),
+    // so each injection only needs to scan its own document.
+    return [document];
   };
 
   const getSearchRoots = (doc: Document): Array<Document | ShadowRoot> => {
@@ -72,8 +51,16 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
     const ownerWindow = input.ownerDocument.defaultView;
     if (!ownerWindow) return true;
 
-    const style = ownerWindow.getComputedStyle(input);
-    if (style.display === "none" || style.visibility === "hidden") return false;
+    // Walk up the ancestor chain — popups/modals often hide via display:none,
+    // visibility:hidden, or opacity:0 on a parent, not on the input itself.
+    let el: Element | null = input;
+    while (el && el !== input.ownerDocument.documentElement) {
+      const style = ownerWindow.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+      // Treat opacity:0 as hidden (covers slide-out/fade-out popups)
+      if (parseFloat(style.opacity) === 0) return false;
+      el = el.parentElement;
+    }
 
     const rect = input.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
@@ -113,6 +100,47 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           if (!label) label = input.getAttribute("aria-label") || "";
           if (!label && "placeholder" in input) label = input.placeholder || "";
 
+          // Fallback: walk ancestors looking for a sibling heading or title element.
+          // Handles form builders (Google Forms, Typeform, etc.) where the question
+          // title is a nearby div/span, not a <label> or aria-label.
+          // Also fires when aria-label is a generic placeholder like "Your answer".
+          const GENERIC_LABELS = new Set(["your answer", "jouw antwoord", "enter your answer"]);
+          if (!label || GENERIC_LABELS.has(label.toLowerCase())) {
+            let ancestor = input.parentElement;
+            for (let depth = 0; depth < 8 && ancestor; depth++, ancestor = ancestor.parentElement) {
+              for (const sibling of Array.from(ancestor.children)) {
+                if (sibling === input || sibling.contains(input)) continue;
+                const tag = sibling.tagName.toLowerCase();
+                const role = sibling.getAttribute("role") || "";
+                const isHeadingLike =
+                  tag.match(/^h[1-6]$/) ||
+                  role === "heading" ||
+                  tag === "label" ||
+                  sibling.getAttribute("aria-label") != null;
+
+                // Also look inside the sibling for a nested heading element
+                // (covers Google Forms where the question title lives inside a wrapper div)
+                const nestedHeading = !isHeadingLike
+                  ? (sibling.querySelector('[role="heading"], h1, h2, h3, h4, h5, h6, label') as Element | null)
+                  : null;
+
+                const sourceEl = isHeadingLike ? sibling : nestedHeading;
+                if (!sourceEl) continue;
+
+                const text = (sourceEl.textContent || "")
+                  .trim()
+                  .replace(/\s+/g, " ")
+                  .replace(/[\s*]+$/, "") // strip trailing asterisks (required markers)
+                  .trim();
+                if (text && text.length < 150) {
+                  label = text;
+                  break;
+                }
+              }
+              if (label && !GENERIC_LABELS.has(label.toLowerCase())) break;
+            }
+          }
+
           let options: { value: string; text: string }[] | null = null;
           if (input.tagName === "SELECT") {
             const select = input as HTMLSelectElement;
@@ -138,6 +166,123 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             options,
             pattern: "pattern" in input ? input.pattern || null : null,
           });
+        });
+      }
+    }
+
+    // Second pass: scan [data-field] containers for special fields
+    // (contenteditable rich text editors and clickable chip groups)
+    const scannedFieldIds = new Set(fields.map((f) => f.field_id));
+
+    for (const doc2 of getAccessibleDocuments()) {
+      for (const root2 of getSearchRoots(doc2)) {
+        const containers = root2.querySelectorAll<HTMLElement>("[data-field]");
+        containers.forEach((container) => {
+          const fieldName = container.getAttribute("data-field");
+          if (!fieldName || scannedFieldIds.has(fieldName)) return;
+
+          // Contenteditable rich text editor (e.g. Tiptap/ProseMirror)
+          const editor = container.querySelector('[contenteditable="true"]') as HTMLElement | null;
+          if (editor) {
+            const labelEl = container.querySelector("label");
+            const label = labelEl?.textContent?.trim() || fieldName;
+            const placeholderEl = container.querySelector("[data-placeholder]");
+            const placeholder = placeholderEl?.getAttribute("data-placeholder") || null;
+            fields.push({
+              field_id: fieldName,
+              type: "contenteditable",
+              tag: "div",
+              label,
+              placeholder,
+              required: false,
+              max_length: null,
+              options: null,
+              pattern: null,
+            });
+            scannedFieldIds.add(fieldName);
+            return;
+          }
+
+          // Clickable chip groups (no standard input inside)
+          const hasInput = container.querySelector("input, textarea, select");
+          if (hasInput) {
+            // Check for file upload
+            const fileInput = container.querySelector<HTMLInputElement>("input[type=file]");
+            if (fileInput) {
+              const labelEl = container.querySelector("label");
+              const label = labelEl?.textContent?.trim() || fieldName;
+              fields.push({
+                field_id: fieldName,
+                type: "file-upload",
+                tag: "input",
+                label,
+                placeholder: fileInput.accept || null,
+                required: false,
+                max_length: null,
+                options: null,
+                pattern: fileInput.accept || null,
+              });
+              scannedFieldIds.add(fieldName);
+              return;
+            }
+
+            // Check for tag input: a text input where typing + Enter adds a tag
+            const textInput = container.querySelector<HTMLInputElement>(
+              "input[type=text], input:not([type])"
+            );
+            if (textInput) {
+              const containerLabel = container.querySelector("label")?.textContent?.trim() || "";
+              const ph = textInput.placeholder || "";
+              if (/tag/i.test(ph) || /add/i.test(ph) || /tag/i.test(containerLabel)) {
+                const inputId = textInput.getAttribute("name")?.trim() || textInput.id || "";
+                if (inputId) {
+                  const existingIdx = fields.findIndex((f) => f.field_id === inputId);
+                  if (existingIdx !== -1) fields.splice(existingIdx, 1);
+                }
+                // Point data-dd-field-id to the semantic [data-field] name
+                textInput.setAttribute("data-dd-field-id", fieldName);
+                fields.push({
+                  field_id: fieldName,
+                  type: "tag-input",
+                  tag: "input",
+                  label: containerLabel || fieldName,
+                  placeholder: ph || null,
+                  required: textInput.required,
+                  max_length: null,
+                  options: null,
+                  pattern: null,
+                });
+                scannedFieldIds.add(fieldName);
+              }
+            }
+            return;
+          }
+
+          const chips = Array.from(container.querySelectorAll<HTMLElement>(".cursor-pointer"));
+          if (chips.length === 0) return;
+
+          const options = chips
+            .map((chip) => {
+              const text = chip.textContent?.trim() || "";
+              return { value: text, text };
+            })
+            .filter((o) => o.text.length > 0);
+          if (options.length === 0) return;
+
+          const labelEl = container.querySelector("label");
+          const label = labelEl?.textContent?.trim() || fieldName;
+          fields.push({
+            field_id: fieldName,
+            type: "clickable-chips",
+            tag: "div",
+            label,
+            placeholder: null,
+            required: false,
+            max_length: null,
+            options,
+            pattern: null,
+          });
+          scannedFieldIds.add(fieldName);
         });
       }
     }

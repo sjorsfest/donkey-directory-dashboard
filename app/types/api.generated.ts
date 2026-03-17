@@ -524,6 +524,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/directories/random": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get random directory
+         * @description Return one random directory domain and redirect URL.
+         */
+        get: operations["get_random_directory_api_v1_directories_random_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/directories/by-domain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get directory by domain
+         * @description Get a directory by normalized domain or URL.
+         */
+        get: operations["get_directory_by_domain_api_v1_directories_by_domain_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/directories/{directory_id}/vote": {
         parameters: {
             query?: never;
@@ -797,18 +837,8 @@ export interface components {
             brand_assets?: {
                 [key: string]: unknown;
             }[] | null;
-            /** Visual Style Guide */
-            visual_style_guide?: {
-                [key: string]: unknown;
-            } | null;
-            /** Visual Prompt Contract */
-            visual_prompt_contract?: {
-                [key: string]: unknown;
-            } | null;
             /** Extraction Confidence */
             extraction_confidence?: number | null;
-            /** Visual Extraction Confidence */
-            visual_extraction_confidence?: number | null;
             status: components["schemas"]["BrandExtractionStatus"];
             /** Failure Reason */
             failure_reason?: string | null;
@@ -1390,6 +1420,16 @@ export interface components {
          * @enum {string}
          */
         DirectoryNiche: "AI_TOOLS" | "B2B_SAAS" | "GENERATIVE_AI" | "PRODUCTIVITY" | "MARTECH" | "SALES_TECH" | "NO_CODE" | "SOFTWARE_ALTERNATIVES" | "SOFTWARE_REVIEWS" | "DESIGN_RESOURCES" | "STARTUP_COMMUNITY" | "INVESTOR_DATA" | "AEROSPACE" | "GENERAL" | "OTHER";
+        /**
+         * DirectoryRandomResponse
+         * @description Response containing one random directory redirect target.
+         */
+        DirectoryRandomResponse: {
+            /** Domain */
+            domain: string;
+            /** Redirect Url */
+            redirect_url: string;
+        };
         /**
          * DirectoryResponse
          * @description Response with directory information.
@@ -3173,6 +3213,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DirectoryCountResponse"];
+                };
+            };
+        };
+    };
+    get_random_directory_api_v1_directories_random_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryRandomResponse"];
+                };
+            };
+        };
+    };
+    get_directory_by_domain_api_v1_directories_by_domain_get: {
+        parameters: {
+            query: {
+                /** @description Directory domain or URL */
+                domain: string;
+                /** @description Project ID used to include this project's submission stage */
+                project_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

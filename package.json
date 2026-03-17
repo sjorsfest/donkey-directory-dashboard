@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test --experimental-strip-types app/lib/*.test.ts",
+    "ext:test": "rm -rf .tmp/ext-test && mkdir -p .tmp/ext-test && tsc --module commonjs --target es2022 --lib es2022,dom --moduleResolution node --types node,chrome --esModuleInterop --skipLibCheck --outDir .tmp/ext-test chrome-extension/src/lib/api.test.ts chrome-extension/src/lib/billing.test.ts && printf '{\"type\":\"commonjs\"}\\n' > .tmp/ext-test/package.json && node --test .tmp/ext-test/lib/api.test.js .tmp/ext-test/lib/billing.test.js",
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",

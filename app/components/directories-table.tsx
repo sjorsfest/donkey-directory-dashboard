@@ -8,6 +8,8 @@ import {
   LayoutList,
   LockKeyhole,
   SlidersHorizontal,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 
 import { cn } from "@/shared/lib/utils";
@@ -341,6 +343,47 @@ function SignupBadge({ status }: { status: SignupStatus }) {
       <span className="inline-block h-1.5 w-1.5 rounded-full bg-current opacity-30" />
       Not signed up
     </Badge>
+  );
+}
+
+function VoteButtons({ directoryId }: { directoryId: string }) {
+  const fetcher = useFetcher();
+  const [vote, setVote] = useState<"up" | "down" | null>(null);
+  const optimisticVote = fetcher.formData?.get("vote") as "up" | "down" | "" | undefined;
+  const activeVote = optimisticVote !== undefined ? (optimisticVote || null) : vote;
+
+  function handleVote(next: "up" | "down") {
+    const newVote = activeVote === next ? null : next;
+    setVote(newVote);
+    fetcher.submit(
+      { intent: "directory_vote", directory_id: directoryId, vote: newVote ?? "" },
+      { method: "post" }
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={() => handleVote("up")}
+        className={cn(
+          "rounded p-1 transition-colors hover:bg-primary/10",
+          activeVote === "up" ? "text-green-600" : "text-muted-foreground"
+        )}
+        aria-label="Thumbs up"
+      >
+        <ThumbsUp className="h-3.5 w-3.5" />
+      </button>
+      <button
+        onClick={() => handleVote("down")}
+        className={cn(
+          "rounded p-1 transition-colors hover:bg-primary/10",
+          activeVote === "down" ? "text-red-500" : "text-muted-foreground"
+        )}
+        aria-label="Thumbs down"
+      >
+        <ThumbsDown className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 
@@ -899,6 +942,16 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
                 </TableRow>
               );
             })}
+            {isAuthenticated && (
+              <TableRow className="cursor-pointer hover:bg-primary/10 transition-colors border-t-2 border-foreground">
+                <TableCell colSpan={6} className="py-4 text-center text-sm font-semibold text-accent hover:bg-accent-100">
+                  <Link to="/dashboard" className="block w-full group">
+                    View all directories and track where you&apos;ve launched{" "}
+                    <span className="inline-block animate-[nudge_2s_ease-in-out_infinite] group-hover:animate-none">→</span>
+                  </Link>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
 
@@ -1038,6 +1091,9 @@ export type DirectoryWithStage = {
   name: string;
   domain: string;
   url: string;
+  category?: string | null;
+  pricing_model?: string | null;
+  link_type?: string | null;
   submission_stage: DirectorySubmissionStage;
 };
 
@@ -1077,7 +1133,6 @@ export function ProjectSubmissionsTable(props: {
           Submission tracker
         </p>
         <h2 className="m-0 text-lg font-extrabold leading-tight">
-          Directory submissions
           {directoriesTotal > directories.length ? (
             <span className="ml-2 text-sm font-normal text-muted-foreground">
               (showing {directories.length} of {directoriesTotal})
@@ -1086,11 +1141,6 @@ export function ProjectSubmissionsTable(props: {
         </h2>
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-3 max-[640px]:grid-cols-1">
-        <SubmissionStatCard label="Submitted" count={submitted} color="emerald" />
-        <SubmissionStatCard label="In progress" count={inProgress} color="amber" />
-        <SubmissionStatCard label="Not submitted" count={notSubmitted} color="muted" />
-      </div>
 
       {directories.length === 0 ? (
         <div className="grid gap-2 rounded-lg border-2 border-foreground border-l-4 border-l-muted-foreground bg-card p-4">
@@ -1109,10 +1159,22 @@ export function ProjectSubmissionsTable(props: {
                     Directory
                   </th>
                   <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
-                    Domain
+                    Category
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
+                    Pricing
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
+                    Dofollow
                   </th>
                   <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
                     Status
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
+                    Vote
+                  </th>
+                  <th className="px-4 py-2.5 text-right text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
+                    Visit
                   </th>
                 </tr>
               </thead>
@@ -1125,21 +1187,54 @@ export function ProjectSubmissionsTable(props: {
                       index === directories.length - 1 && "border-b-0",
                     )}
                   >
-                    <td className="px-4 py-3">
-                      <a
-                        href={directory.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-foreground no-underline hover:underline"
-                      >
-                        {directory.name}
-                      </a>
+                    <td className="px-4 py-3 font-semibold">
+                      {directory.name}
                     </td>
-                    <td className="px-4 py-3 font-['IBM_Plex_Mono',monospace] text-[0.75rem] text-muted-foreground hidden sm:table-cell">
-                      {directory.domain}
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      {directory.category ? (
+                        <Badge variant="outline" className="text-xs font-medium">
+                          {formatEnumToken(directory.category)}
+                        </Badge>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      {directory.pricing_model === "FREE" ? (
+                        <Badge variant="default">Free</Badge>
+                      ) : directory.pricing_model === "PAID" ? (
+                        <Badge variant="accent">Paid</Badge>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      {directory.link_type === "DOFOLLOW" ? (
+                        <Badge variant="default" className="gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                          Yes
+                        </Badge>
+                      ) : directory.link_type === "CONDITIONAL_DOFOLLOW" ? (
+                        <Badge variant="secondary" className="gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                          Conditional
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1.5 text-muted-foreground">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-current opacity-50" />
+                          No
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <SubmissionStageSelector directory={directory} projectId={projectId} />
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <VoteButtons directoryId={directory.id} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button asChild size="sm" variant="outline">
+                        <a href={directory.url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Visit
+                        </a>
+                      </Button>
                     </td>
                   </tr>
                 ))}

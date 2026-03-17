@@ -287,7 +287,7 @@ export function HowItWorks() {
               rel="noopener noreferrer"
             >
               <Chrome className="mr-1.5 h-4 w-4" />
-              Install the Extension (5 free submissions)
+              Install the Extension
             </a>
           </Button>
           <Button
@@ -296,7 +296,7 @@ export function HowItWorks() {
             size="default"
             className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
           >
-            <Link to="/#directories">Browse Directories →</Link>
+            <Link to="/dashboard">Browse Directories →</Link>
           </Button>
         </div>
       </div>

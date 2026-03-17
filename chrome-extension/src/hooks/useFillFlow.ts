@@ -1,44 +1,37 @@
 import { useState, useCallback } from "react";
-import { fillForm } from "../lib/api";
+import {
+  fillForm,
+  getCredits,
+  isInsufficientCreditsError,
+  resolveDirectoryIdForHostname,
+} from "../lib/api";
+import { getTargetTab, toHostname } from "../lib/tab-utils";
 import { scanFormFields } from "../content-scripts/scan-form-fields";
 import { fillFormFields } from "../content-scripts/fill-form-fields";
-import type { StepInfo, FilledField, FillResult, ScannedField } from "../types";
+import type { BillingPack, StepInfo, FilledField, FillResult, ScannedField } from "../types";
 
 interface FillResults {
   fields: FilledField[];
+  fieldLabels: Record<string, string>;
   filled: number;
   skipped: number;
+  outcomes: Record<string, "filled" | "not_filled">;
+  chargedNow: boolean;
+  alreadyChargedForPair: boolean;
+  creditsRemaining: number | null;
+  lifetimeUnlimited: boolean;
 }
 
-function isRestrictedTabUrl(url?: string): boolean {
-  if (!url) return false;
-
-  return (
-    url.startsWith("chrome://") ||
-    url.startsWith("chrome-extension://") ||
-    url.startsWith("edge://") ||
-    url.startsWith("about:") ||
-    url.startsWith("devtools://") ||
-    url.startsWith("view-source:")
-  );
+interface FillPaywallState {
+  message: string;
+  creditBalance: number;
+  lifetimeUnlimited: boolean;
+  availablePacks: BillingPack[];
 }
 
-async function getTargetTab(): Promise<chrome.tabs.Tab | undefined> {
-  const strategies: chrome.tabs.QueryInfo[] = [
-    { active: true, currentWindow: true },
-    { active: true, lastFocusedWindow: true },
-    { active: true },
-  ];
-
-  for (const query of strategies) {
-    const tabs = await chrome.tabs.query(query);
-    const usableTab = tabs.find(
-      (tab) => tab.id !== undefined && !isRestrictedTabUrl(tab.url)
-    );
-    if (usableTab) return usableTab;
-  }
-
-  return undefined;
+interface FrameScanResult {
+  frameId: number;
+  fields: ScannedField[];
 }
 
 function normalizeKey(value: string): string {
@@ -130,9 +123,60 @@ function mapReturnedFieldsToScannedFields(
   });
 }
 
+function asFrameScanResults(
+  value: chrome.scripting.InjectionResult<ScannedField[]>[]
+): FrameScanResult[] {
+  return value
+    .filter(
+      (
+        entry
+      ): entry is chrome.scripting.InjectionResult<ScannedField[]> & { frameId: number } =>
+        typeof entry.frameId === "number"
+    )
+    .map((entry) => ({
+      frameId: entry.frameId,
+      fields: Array.isArray(entry.result) ? entry.result : [],
+    }))
+    .filter((entry) => entry.fields.length > 0);
+}
+
+function toFillResult(value: unknown): FillResult {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "filled" in value &&
+    "skipped" in value &&
+    typeof (value as { filled: unknown }).filled === "number" &&
+    typeof (value as { skipped: unknown }).skipped === "number"
+  ) {
+    const raw = value as { filled: number; skipped: number; outcomes?: unknown };
+    const outcomes =
+      raw.outcomes !== null &&
+      typeof raw.outcomes === "object"
+        ? (raw.outcomes as Record<string, "filled" | "not_filled">)
+        : {};
+    return { filled: raw.filled, skipped: raw.skipped, outcomes };
+  }
+
+  return { filled: 0, skipped: 0, outcomes: {} };
+}
+
+function uniqueFieldsById(fields: FilledField[]): FilledField[] {
+  const unique = new Map<string, FilledField>();
+
+  for (const field of fields) {
+    if (!unique.has(field.field_id)) {
+      unique.set(field.field_id, field);
+    }
+  }
+
+  return Array.from(unique.values());
+}
+
 export function useFillFlow(onSessionExpired?: () => void) {
   const [steps, setSteps] = useState<StepInfo[]>([]);
   const [results, setResults] = useState<FillResults | null>(null);
+  const [paywall, setPaywall] = useState<FillPaywallState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -142,6 +186,10 @@ export function useFillFlow(onSessionExpired?: () => void) {
 
   const updateLastStep = (text: string, state: StepInfo["state"]) => {
     setSteps((prev) => {
+      if (prev.length === 0) {
+        return prev;
+      }
+
       const updated = [...prev];
       updated[updated.length - 1] = { text, state };
       return updated;
@@ -152,17 +200,19 @@ export function useFillFlow(onSessionExpired?: () => void) {
     async (projectId: string) => {
       setSteps([]);
       setResults(null);
+      setPaywall(null);
       setError(null);
       setIsRunning(true);
 
       try {
         // Step 1: Get active tab
         const tab = await getTargetTab();
-        if (!tab?.id) {
+        if (tab?.id === undefined) {
           throw new Error(
             "Cannot access this page. Navigate to a directory submission form."
           );
         }
+        const tabId = tab.id;
 
         // In side panel context, tab.url may be unavailable without extra permissions.
         // Read page metadata directly from the tab so the backend still receives URL/title.
@@ -170,7 +220,7 @@ export function useFillFlow(onSessionExpired?: () => void) {
         let pageTitle = tab.title || "";
         if (!pageUrl || !pageTitle) {
           const metadata = await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
+            target: { tabId },
             func: () => ({
               url: window.location.href,
               title: document.title,
@@ -181,28 +231,49 @@ export function useFillFlow(onSessionExpired?: () => void) {
           pageTitle = metadata?.[0]?.result?.title || pageTitle;
         }
 
+        const hostname = toHostname(pageUrl);
+        if (!hostname) {
+          throw new Error("Could not determine the active tab domain.");
+        }
+
+        addStep("Resolving directory identity...");
+        const directoryId = await resolveDirectoryIdForHostname(hostname, onSessionExpired);
+        if (!directoryId) {
+          updateLastStep(`No directory found for ${hostname}.`, "error");
+          return;
+        }
+        updateLastStep("Directory identity resolved", "done");
+
         // Step 2: Scan form fields
-        addStep("Scanning form fields (including lazy-loaded fields)...");
+        addStep("Scanning form fields (including iframe fields)...");
         const scanResults = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
+          target: { tabId, allFrames: true },
           func: scanFormFields,
           args: [12000],
         });
 
-        const fields = scanResults?.[0]?.result;
-        if (!fields || fields.length === 0) {
+        const frameScanResults = asFrameScanResults(scanResults);
+        const fields = frameScanResults.flatMap((entry) => entry.fields);
+
+        if (fields.length === 0) {
           updateLastStep("No form fields found on this page.", "error");
           return;
         }
-        updateLastStep(`Found ${fields.length} form fields`, "done");
+        updateLastStep(
+          `Found ${fields.length} form fields across ${frameScanResults.length} frame${frameScanResults.length === 1 ? "" : "s"}`,
+          "done"
+        );
 
         // Step 3: Send to backend
         addStep("Generating fill values...");
         const data = await fillForm(
-          projectId,
-          pageUrl,
-          pageTitle,
-          fields,
+          {
+            project_id: projectId,
+            directory_id: directoryId,
+            page_url: pageUrl,
+            page_title: pageTitle,
+            fields,
+          },
           onSessionExpired
         );
 
@@ -211,29 +282,83 @@ export function useFillFlow(onSessionExpired?: () => void) {
           updateLastStep("Backend returned no fill values.", "error");
           return;
         }
+
         const mappedFields = mapReturnedFieldsToScannedFields(filledFields, fields);
         updateLastStep(`Generated ${mappedFields.length} values`, "done");
 
         // Step 4: Fill the form
-        addStep("Filling form fields (waiting for delayed inputs)...");
-        const fillResults = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: fillFormFields,
-          args: [mappedFields, 8000],
-        });
+        addStep("Filling form fields across frames (waiting for delayed inputs)...");
+        const fillResultsByFrame = await Promise.all(
+          frameScanResults.map(async ({ frameId, fields: frameFields }) => {
+            const frameFieldIdSet = new Set(frameFields.map((field) => field.field_id));
+            const frameMappedFields = uniqueFieldsById(
+              mappedFields.filter((field) => frameFieldIdSet.has(field.field_id))
+            );
 
-        const fillResult: FillResult = fillResults?.[0]?.result || {
-          filled: 0,
-          skipped: 0,
-        };
+            if (frameMappedFields.length === 0) {
+              return { filled: 0, skipped: 0, outcomes: {} as Record<string, "filled" | "not_filled"> };
+            }
+
+            try {
+              const frameFillResults = await chrome.scripting.executeScript({
+                target: { tabId, frameIds: [frameId] },
+                func: fillFormFields,
+                args: [frameMappedFields, 8000],
+              });
+
+              return toFillResult(frameFillResults?.[0]?.result);
+            } catch {
+              // Frame injection failed (e.g. cross-origin iframe blocked by the site).
+              // Mark every field that was destined for this frame as not_filled.
+              const outcomes: Record<string, "filled" | "not_filled"> = {};
+              for (const f of frameMappedFields) outcomes[f.field_id] = "not_filled";
+              return { filled: 0, skipped: frameMappedFields.length, outcomes };
+            }
+          })
+        );
+
+        const mergedOutcomes: Record<string, "filled" | "not_filled"> = {};
+        const fillResult: FillResult = fillResultsByFrame.reduce(
+          (acc, current) => {
+            Object.assign(mergedOutcomes, current.outcomes);
+            return {
+              filled: acc.filled + current.filled,
+              skipped: acc.skipped + current.skipped,
+              outcomes: mergedOutcomes,
+            };
+          },
+          { filled: 0, skipped: 0, outcomes: mergedOutcomes }
+        );
         updateLastStep(`Filled ${fillResult.filled} fields`, "done");
+
+        const fieldLabels: Record<string, string> = {};
+        for (const f of fields) {
+          if (f.label) fieldLabels[f.field_id] = f.label;
+        }
 
         setResults({
           fields: mappedFields,
+          fieldLabels,
           filled: fillResult.filled,
           skipped: fillResult.skipped,
+          outcomes: mergedOutcomes,
+          chargedNow: data.charged_now,
+          alreadyChargedForPair: data.already_charged_for_pair,
+          creditsRemaining: data.credits_remaining,
+          lifetimeUnlimited: data.lifetime_unlimited,
         });
       } catch (err) {
+        if (isInsufficientCreditsError(err)) {
+          updateLastStep("Insufficient credits. Choose a pack to continue.", "error");
+          setPaywall({
+            message: err.message,
+            creditBalance: err.creditBalance,
+            lifetimeUnlimited: err.lifetimeUnlimited,
+            availablePacks: err.availablePacks,
+          });
+          return;
+        }
+
         setError(err instanceof Error ? err.message : "An error occurred.");
       } finally {
         setIsRunning(false);
@@ -242,11 +367,23 @@ export function useFillFlow(onSessionExpired?: () => void) {
     [onSessionExpired]
   );
 
+  const refreshPaywall = useCallback(async () => {
+    const wallet = await getCredits(onSessionExpired);
+    setPaywall((current) => ({
+      message: current?.message || "Insufficient credits. Choose a billing pack to continue.",
+      creditBalance: wallet.credit_balance,
+      lifetimeUnlimited: wallet.lifetime_unlimited,
+      availablePacks: wallet.available_packs,
+    }));
+    return wallet;
+  }, [onSessionExpired]);
+
   const reset = useCallback(() => {
     setSteps([]);
     setResults(null);
+    setPaywall(null);
     setError(null);
   }, []);
 
-  return { steps, results, error, isRunning, run, reset };
+  return { steps, results, paywall, error, isRunning, run, refreshPaywall, reset };
 }

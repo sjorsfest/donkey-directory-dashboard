@@ -8,8 +8,8 @@
 body {
   margin: 0;
   width: 380px;
-  min-height: 220px;
-  max-height: 580px;
+  min-height: 300px;
+  max-height: 620px;
   overflow-y: auto;
   font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
   background: hsl(var(--background));

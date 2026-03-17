@@ -267,9 +267,9 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
             <button
               type="button"
               onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
-              className="w-fit text-sm font-medium text-foreground/45 hover:text-foreground/70 transition-colors flex items-center gap-1"
+              className="w-fit ml-2 text-sm font-medium text-foreground/45 hover:text-foreground/70 transition-colors flex items-center gap-1"
             >
-              How does it work? ↓
+              How does it work?
             </button>
           </div>
 

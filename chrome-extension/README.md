@@ -17,3 +17,9 @@ Then load unpacked from:
 2. Open `http://localhost:5173/connect-extension`.
 3. Generate a one-time code.
 4. In the extension popup, choose **Connect with code** and paste the code.
+
+## Migration note (billing update)
+
+- `directory_id` is now required for fill-form.
+- Billing UI and EUR pricing added.
+- Lifetime plan updated to `€50`.

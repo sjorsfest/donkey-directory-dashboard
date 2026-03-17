@@ -32,18 +32,20 @@ import {
   Music2,
   Twitter,
   Youtube,
-  ArrowLeft,
   Plus,
-  CheckCircle2,
   ExternalLink,
-  User,
   Facebook,
 } from "lucide-react";
 import {
   API_ROUTES,
   type ApiBrandExtractRequest,
+  isApiDirectoryVoteChoice,
 } from "~/lib/api-contract";
-import { listDirectoriesRequest } from "~/lib/directories-api.server";
+import {
+  listDirectoriesRequest,
+  putDirectoryVoteRequest,
+  deleteDirectoryVoteRequest,
+} from "~/lib/directories-api.server";
 import { ProjectSubmissionsTable } from "~/components/directories-table";
 import { normalizeDomainInput } from "~/lib/domain-input";
 import {
@@ -67,6 +69,9 @@ type DirectoryWithStage = {
   name: string;
   domain: string;
   url: string;
+  category?: string | null;
+  pricing_model?: string | null;
+  link_type?: string | null;
   submission_stage: DirectorySubmissionStage;
 };
 
@@ -119,7 +124,8 @@ type CreatorDraft = {
 type LaunchActionIntent =
   | "project_extract"
   | "creator_create_quick"
-  | "submission_stage_update";
+  | "submission_stage_update"
+  | "directory_vote";
 
 type LaunchActionData = {
   intent: LaunchActionIntent;
@@ -182,17 +188,11 @@ const BRAND_SOCIAL_KEYS = [
 
 const STUDIO_SHELL_CLASS =
   "mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]";
-const STUDIO_PANEL_CLASS = "rounded-lg border-2 border-foreground bg-card p-5 shadow-[var(--shadow-md)]";
-const STUDIO_PANEL_HEADING_CLASS = "mb-4 flex flex-wrap items-start justify-between gap-4";
-const STUDIO_SECTION_LABEL_CLASS =
-  "text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground";
 const STUDIO_KICKER_CLASS =
   "text-[0.8rem] font-bold uppercase tracking-[0.05em] text-muted-foreground";
 const MUTED_TEXT_CLASS = "text-muted-foreground";
 const AUTH_ERROR_CLASS =
   "m-0 rounded-lg border-2 border-foreground border-l-4 border-l-destructive bg-destructive/12 p-3 text-sm font-semibold text-destructive";
-const AUTH_SUCCESS_CLASS =
-  "m-0 rounded-lg border-2 border-foreground border-l-4 border-l-accent-foreground bg-accent/30 p-3 text-sm font-semibold";
 const EMPTY_STATE_CLASS =
   "grid gap-2 rounded-lg border-2 border-foreground border-l-4 border-l-muted-foreground bg-card p-4";
 const DASHBOARD_LINK_BUTTON_CLASS =
@@ -206,7 +206,6 @@ const SOCIAL_ICON_LINK_CLASS =
   "inline-flex h-8 w-8 items-center justify-center rounded-sm border-2 border-foreground bg-card text-foreground no-underline transition-[background,color,transform] duration-100 hover:-translate-x-px hover:-translate-y-px hover:bg-primary hover:text-primary-foreground";
 const FIELD_CLASS = "grid gap-1.5";
 const FIELD_LABEL_CLASS = "text-[0.8rem] font-bold uppercase tracking-[0.03em]";
-const STEP_SUCCESS_ICON_CLASS = "animate-[scale-in_0.2s_ease-out]";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -388,6 +387,15 @@ export async function action({ request }: Route.ActionArgs) {
     });
   }
 
+  if (intent === "directory_vote") {
+    return runDirectoryVoteAction({
+      session,
+      apiBaseUrl,
+      directoryId: toOptionalString(formData.get("directory_id")) ?? "",
+      vote: toOptionalString(formData.get("vote")),
+    });
+  }
+
   // submission_stage_update
   return runSubmissionStageUpdateAction({
     session,
@@ -498,6 +506,9 @@ export default function LaunchPage() {
           <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1">
             {projects.map((project) => {
               const isActive = project.id === selectedProjectId;
+              const submittedCount = isActive ? directories.filter((d) => d.submission_stage === "submitted").length : null;
+              const inProgressCount = isActive ? directories.filter((d) => d.submission_stage === "in_progress").length : null;
+              const notSubmittedCount = isActive ? directories.filter((d) => d.submission_stage === "not_submitted").length : null;
               return (
                 <Link
                   key={project.id}
@@ -511,9 +522,24 @@ export default function LaunchPage() {
                   <p className={cn("m-0 font-['IBM_Plex_Mono',monospace] text-[0.8rem]", isActive ? "text-primary-foreground/70" : "text-muted-foreground")}>
                     {project.domain}
                   </p>
-                  <div className="mt-auto flex items-center justify-between text-xs">
-                    <Badge variant={isActive ? "outline" : "secondary"} className={isActive ? "border-primary-foreground/40 text-primary-foreground" : ""}>{project.status}</Badge>
-                    <small className={isActive ? "text-primary-foreground/70" : ""}>Updated {formatDate(project.updated_at)}</small>
+                  {isActive && submittedCount !== null ? (
+                    <div className="mt-1 flex items-center gap-3 text-[0.7rem]">
+                      <span className="flex items-center gap-1 text-primary-foreground/80">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        {submittedCount} submitted
+                      </span>
+                      <span className="flex items-center gap-1 text-primary-foreground/80">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                        {inProgressCount} in progress
+                      </span>
+                      <span className="flex items-center gap-1 text-primary-foreground/60">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/30" />
+                        {notSubmittedCount} pending
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="mt-auto flex items-center justify-end text-xs">
+                    <small className={isActive ? "text-primary-foreground/70" : "text-muted-foreground"}>Updated {formatDate(project.updated_at)}</small>
                   </div>
                 </Link>
               );
@@ -810,7 +836,7 @@ function CreateProjectDialog(props: {
 
             <div className="col-span-full flex justify-end pt-2">
               <Button type="submit" disabled={props.isExtracting}>
-                {props.isExtracting ? "Extracting..." : "Extract & create project"}
+                {props.isExtracting ? "Loading..." : "Start submitting!"}
               </Button>
             </div>
           </Form>
@@ -967,10 +993,6 @@ function DirectorySubmissionsSection(props: {
 }) {
   const { directories, directoriesTotal, projectId } = props;
 
-  const submitted = directories.filter((d) => d.submission_stage === "submitted").length;
-  const inProgress = directories.filter((d) => d.submission_stage === "in_progress").length;
-  const notSubmitted = directories.filter((d) => d.submission_stage === "not_submitted").length;
-
   return (
     <section className="mt-5 mb-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -985,25 +1007,6 @@ function DirectorySubmissionsSection(props: {
             ) : null}
           </h2>
         </div>
-      </div>
-
-      {/* Summary stats */}
-      <div className="mb-4 grid grid-cols-3 gap-3 max-[640px]:grid-cols-1">
-        <StatCard
-          label="Submitted"
-          count={submitted}
-          color="emerald"
-        />
-        <StatCard
-          label="In progress"
-          count={inProgress}
-          color="amber"
-        />
-        <StatCard
-          label="Not submitted"
-          count={notSubmitted}
-          color="muted"
-        />
       </div>
 
       {/* Directory table */}
@@ -1070,29 +1073,6 @@ function DirectorySubmissionsSection(props: {
   );
 }
 
-function StatCard(props: {
-  label: string;
-  count: number;
-  color: "emerald" | "amber" | "muted";
-}) {
-  const colorClasses = {
-    emerald: "border-l-emerald-500 bg-emerald-50 text-emerald-700",
-    amber: "border-l-amber-500 bg-amber-50 text-amber-700",
-    muted: "border-l-foreground/20 bg-card text-muted-foreground",
-  };
-
-  return (
-    <div
-      className={cn(
-        "rounded-lg border-2 border-foreground border-l-4 p-4 shadow-[var(--shadow-sm)]",
-        colorClasses[props.color],
-      )}
-    >
-      <p className="m-0 text-2xl font-extrabold">{props.count}</p>
-      <p className="m-0 text-xs font-semibold mt-0.5">{props.label}</p>
-    </div>
-  );
-}
 
 function DirectoryStageSelector(props: {
   directory: DirectoryWithStage;
@@ -1462,7 +1442,48 @@ function isLaunchActionIntent(value: string | undefined): value is LaunchActionI
   return (
     value === "project_extract" ||
     value === "creator_create_quick" ||
-    value === "submission_stage_update"
+    value === "submission_stage_update" ||
+    value === "directory_vote"
+  );
+}
+
+async function runDirectoryVoteAction(options: {
+  session: SessionType;
+  apiBaseUrl: string;
+  directoryId: string;
+  vote: string | undefined;
+}) {
+  const { session, apiBaseUrl, directoryId, vote } = options;
+
+  if (!directoryId) {
+    return data<LaunchActionData>(
+      { intent: "directory_vote", feedback: { kind: "error", message: "Missing directory ID." } },
+      { status: 400 },
+    );
+  }
+
+  const result = isApiDirectoryVoteChoice(vote)
+    ? await putDirectoryVoteRequest({ session, apiBaseUrl, directoryId, vote })
+    : await deleteDirectoryVoteRequest({ session, apiBaseUrl, directoryId });
+
+  const headers = result.setCookie ? { "Set-Cookie": result.setCookie } : undefined;
+
+  if (!result.response.ok && result.response.status !== 404) {
+    return data<LaunchActionData>(
+      {
+        intent: "directory_vote",
+        feedback: {
+          kind: "error",
+          message: parseApiErrorMessage(result.responseData, `Failed to save vote (HTTP ${result.response.status}).`),
+        },
+      },
+      { status: result.response.status, headers },
+    );
+  }
+
+  return data<LaunchActionData>(
+    { intent: "directory_vote", feedback: { kind: "success", message: "Vote saved." } },
+    { headers },
   );
 }
 

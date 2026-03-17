@@ -45,30 +45,9 @@ export async function fillFormFields(
   };
 
   const getAccessibleDocuments = (): Document[] => {
-    const docs: Document[] = [];
-    const queue: Document[] = [document];
-    const seen = new Set<Document>();
-
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      if (seen.has(current)) continue;
-      seen.add(current);
-      docs.push(current);
-
-      const frames = current.querySelectorAll("iframe");
-      frames.forEach((frame) => {
-        try {
-          const frameDoc = frame.contentDocument;
-          if (frameDoc && !seen.has(frameDoc)) {
-            queue.push(frameDoc);
-          }
-        } catch {
-          // Ignore cross-origin frames.
-        }
-      });
-    }
-
-    return docs;
+    // This function runs once per frame via chrome.scripting.executeScript(allFrames: true),
+    // so each injection only needs to operate on its own document.
+    return [document];
   };
 
   const getSearchRoots = (doc: Document): Array<Document | ShadowRoot> => {
@@ -218,12 +197,136 @@ export async function fillFormFields(
     });
   };
 
+  // Fill a contenteditable editor (Tiptap/ProseMirror) via execCommand
+  const fillContentEditable = (container: Element, value: string): boolean => {
+    const editor = container.querySelector('[contenteditable="true"]') as HTMLElement | null;
+    if (!editor) return false;
+    editor.focus();
+    const ownerDoc = editor.ownerDocument;
+    ownerDoc.execCommand("selectAll", false, "");
+    ownerDoc.execCommand("insertText", false, value);
+    return true;
+  };
+
+  // Fill clickable chip groups by clicking chips whose text matches the value(s)
+  const fillClickableChips = (container: Element, value: string | string[]): boolean => {
+    const rawValues = Array.isArray(value)
+      ? (value as string[])
+      : String(value).split(",");
+    const targets = rawValues.map((v) => normalize(String(v).trim())).filter(Boolean);
+    if (targets.length === 0) return false;
+
+    let clickedCount = 0;
+    container.querySelectorAll<HTMLElement>(".cursor-pointer").forEach((chip) => {
+      const chipNorm = normalize(chip.textContent?.trim() || "");
+      if (targets.some((t) => chipNorm === t)) {
+        chip.click();
+        clickedCount++;
+      }
+    });
+    return clickedCount > 0;
+  };
+
   let filled = 0;
   let skipped = 0;
+  const outcomes: Record<string, "filled" | "not_filled"> = {};
   const deadline = Date.now() + timeoutMs;
 
   for (const { field_id, value } of filledFields) {
     try {
+      // Handle special [data-field] containers before standard input lookup
+      const dataContainer = queryFirst(`[data-field="${CSS.escape(field_id)}"]`);
+      if (dataContainer) {
+        const editor = dataContainer.querySelector('[contenteditable="true"]');
+        if (editor) {
+          if (value == null || value === "") { outcomes[field_id] = "not_filled"; skipped++; continue; }
+          if (fillContentEditable(dataContainer, String(value))) { outcomes[field_id] = "filled"; filled++; }
+          else { outcomes[field_id] = "not_filled"; skipped++; }
+          continue;
+        }
+
+        // Check for file upload
+        const fileInput = dataContainer.querySelector<HTMLInputElement>("input[type=file]");
+        if (fileInput) {
+          const url = value == null ? "" : String(value).trim();
+          if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            outcomes[field_id] = "not_filled";
+            skipped++;
+            continue;
+          }
+          try {
+            const response = await fetch(url);
+            if (!response.ok) { outcomes[field_id] = "not_filled"; skipped++; continue; }
+            const blob = await response.blob();
+            const filename = new URL(url).pathname.split("/").pop() || "upload";
+            const file = new File([blob], filename, {
+              type: blob.type || "application/octet-stream",
+            });
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+            fileInput.dispatchEvent(new Event("input", { bubbles: true }));
+            outcomes[field_id] = "filled";
+            filled++;
+          } catch {
+            outcomes[field_id] = "not_filled";
+            skipped++;
+          }
+          continue;
+        }
+
+        // Check for tag input (text input where Enter commits each tag)
+        const tagInputEl = dataContainer.querySelector<HTMLInputElement>(
+          "input[type=text], input:not([type])"
+        );
+        const containerLabel = dataContainer.querySelector("label")?.textContent || "";
+        const isTagInput =
+          tagInputEl &&
+          (/tag/i.test(tagInputEl.placeholder || "") ||
+            /add/i.test(tagInputEl.placeholder || "") ||
+            /tag/i.test(containerLabel));
+        if (isTagInput && tagInputEl) {
+          if (value == null || value === "") { outcomes[field_id] = "not_filled"; skipped++; continue; }
+          const tags = Array.isArray(value)
+            ? (value as string[]).map((t) => String(t).trim()).filter(Boolean)
+            : String(value).split(",").map((t) => t.trim()).filter(Boolean);
+          const nativeSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            "value"
+          )?.set;
+          let added = 0;
+          for (const tag of tags) {
+            if (nativeSetter) nativeSetter.call(tagInputEl, tag);
+            else tagInputEl.value = tag;
+            tagInputEl.dispatchEvent(new Event("input", { bubbles: true }));
+            tagInputEl.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true })
+            );
+            tagInputEl.dispatchEvent(
+              new KeyboardEvent("keypress", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true })
+            );
+            tagInputEl.dispatchEvent(
+              new KeyboardEvent("keyup", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true })
+            );
+            added++;
+          }
+          if (added > 0) { outcomes[field_id] = "filled"; filled++; }
+          else { outcomes[field_id] = "not_filled"; skipped++; }
+          continue;
+        }
+
+        const hasInput = dataContainer.querySelector(
+          "input:not([type=hidden]):not([type=file]), textarea, select"
+        );
+        if (!hasInput) {
+          if (value == null || value === "") { outcomes[field_id] = "not_filled"; skipped++; continue; }
+          if (fillClickableChips(dataContainer, value as string | string[])) { outcomes[field_id] = "filled"; filled++; }
+          else { outcomes[field_id] = "not_filled"; skipped++; }
+          continue;
+        }
+      }
+
       let el = findElementForField(field_id);
       const remainingWaitMs = Math.max(0, deadline - Date.now());
       if (!el && remainingWaitMs > 0) {
@@ -231,6 +334,7 @@ export async function fillFormFields(
       }
 
       if (!el || value == null || value === "") {
+        outcomes[field_id] = "not_filled";
         skipped++;
         continue;
       }
@@ -245,14 +349,17 @@ export async function fillFormFields(
         );
         if (match) {
           select.value = match.value;
+          outcomes[field_id] = "filled";
           filled++;
         } else {
+          outcomes[field_id] = "not_filled";
           skipped++;
           continue;
         }
       } else if ((el as HTMLInputElement).type === "checkbox") {
         (el as HTMLInputElement).checked =
           value === true || value === "true" || value === "1";
+        outcomes[field_id] = "filled";
         filled++;
       } else if ((el as HTMLInputElement).type === "radio") {
         const radioName = (el as HTMLInputElement).name;
@@ -271,11 +378,12 @@ export async function fillFormFields(
             matched = true;
           }
         });
-        if (matched) filled++;
-        else skipped++;
+        if (matched) { outcomes[field_id] = "filled"; filled++; }
+        else { outcomes[field_id] = "not_filled"; skipped++; }
         continue;
       } else {
         (el as HTMLInputElement | HTMLTextAreaElement).value = String(value);
+        outcomes[field_id] = "filled";
         filled++;
       }
 
@@ -305,9 +413,10 @@ export async function fillFormFields(
         }
       }
     } catch {
+      outcomes[field_id] = "not_filled";
       skipped++;
     }
   }
 
-  return { filled, skipped };
+  return { filled, skipped, outcomes };
 }

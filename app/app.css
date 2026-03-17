@@ -46,6 +46,12 @@ h3 {
   }
 }
 
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  60% { transform: translateX(4px); }
+  80% { transform: translateX(2px); }
+}
+
 @keyframes scale-in {
   from {
     transform: scale(0.5);

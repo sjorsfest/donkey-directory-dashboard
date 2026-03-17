@@ -186,7 +186,7 @@ export default function NavLayout() {
                   className={launchNewClasses}
                   onClick={handleOpenLaunchNewDialog}
                 >
-                  Launch New
+                  Launch Project 🚀
                 </button>
 
                 <Link to="/dashboard" className={dashboardClasses}>
