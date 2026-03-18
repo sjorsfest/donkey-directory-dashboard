@@ -533,7 +533,7 @@ export interface paths {
         };
         /**
          * Get random directory
-         * @description Return one random directory domain and redirect URL.
+         * @description Return one random directory domain and redirect URL. When project_id is provided, excludes directories already marked submitted or skipped.
          */
         get: operations["get_random_directory_api_v1_directories_random_get"];
         put?: never;
@@ -612,6 +612,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/directories/admin/{directory_id}/logo/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create signed directory logo upload URL (admin)
+         * @description Mint a short-lived signed PUT URL for client-side directory logo upload.
+         */
+        post: operations["create_admin_directory_logo_upload_url_api_v1_directories_admin__directory_id__logo_upload_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/directories/admin/{directory_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete directory (admin)
+         * @description Delete a directory by ID (admin-only).
+         */
+        delete: operations["delete_directory_api_v1_directories_admin__directory_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update curated directory fields (admin)
+         * @description Admin-only endpoint to update curated directory fields. Set `logo_object_key` after a successful client-side upload to persist the new logo.
+         */
+        patch: operations["update_directory_admin_api_v1_directories_admin__directory_id__patch"];
+        trace?: never;
+    };
     "/api/v1/directories/{directory_id}": {
         parameters: {
             query?: never;
@@ -626,11 +670,7 @@ export interface paths {
         get: operations["get_directory_api_v1_directories__directory_id__get"];
         put?: never;
         post?: never;
-        /**
-         * Delete directory
-         * @description Delete a directory by ID.
-         */
-        delete: operations["delete_directory_api_v1_directories__directory_id__delete"];
+        delete?: never;
         options?: never;
         head?: never;
         /**
@@ -674,6 +714,86 @@ export interface paths {
         get: operations["get_directory_stats_api_v1_directories_stats_summary_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/checkout-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Stripe checkout session
+         * @description Create a Stripe Checkout session for a EUR credit pack or lifetime purchase.
+         */
+        post: operations["create_billing_checkout_session_api_v1_billing_checkout_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get wallet balance
+         * @description Return the current user's credit wallet state and available EUR purchase packs.
+         */
+        get: operations["get_credit_balance_api_v1_billing_credits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List billed submissions
+         * @description List project-directory pairs that have consumed credits for this user.
+         */
+        get: operations["list_credit_submissions_api_v1_billing_submissions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/stripe/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stripe webhook
+         * @description Handle Stripe checkout webhook events for idempotent credit grants.
+         */
+        post: operations["stripe_webhook_api_v1_billing_stripe_webhook_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -734,6 +854,12 @@ export interface components {
          * @enum {string}
          */
         BenefitTag: "SEO_BACKLINK" | "TRAFFIC_EXPOSURE" | "BRAND_AWARENESS" | "LEAD_GENERATION" | "COMMUNITY_FEEDBACK" | "SOCIAL_PROOF" | "CREDIBILITY" | "NETWORKING" | "PRODUCT_DISCOVERY" | "OTHER";
+        /**
+         * BillingPackCode
+         * @description Supported one-time billing pack codes.
+         * @enum {string}
+         */
+        BillingPackCode: "credits_30" | "credits_100" | "lifetime";
         /**
          * BrandExtractionRequest
          * @description Request to extract brand profile from domain.
@@ -852,6 +978,25 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * CheckoutSessionCreateRequest
+         * @description Create a Stripe Checkout session for a selected pack.
+         */
+        CheckoutSessionCreateRequest: {
+            pack_code: components["schemas"]["BillingPackCode"];
+        };
+        /**
+         * CheckoutSessionCreateResponse
+         * @description Checkout session data returned to the frontend.
+         */
+        CheckoutSessionCreateResponse: {
+            /** Checkout Url */
+            checkout_url: string;
+            /** Session Id */
+            session_id: string;
+            /** Expires At */
+            expires_at?: string | null;
         };
         /**
          * CreateExtensionConnectCodeRequest
@@ -1056,6 +1201,84 @@ export interface components {
             }[] | null;
             /** Expertise Tags */
             expertise_tags?: string[] | null;
+        };
+        /**
+         * CreditBalanceResponse
+         * @description Current wallet state and available packs.
+         */
+        CreditBalanceResponse: {
+            /** Credit Balance */
+            credit_balance: number;
+            /** Lifetime Unlimited */
+            lifetime_unlimited: boolean;
+            /** Available Packs */
+            available_packs?: components["schemas"]["CreditPackOption"][];
+        };
+        /**
+         * CreditPackOption
+         * @description Static metadata for one purchase option.
+         */
+        CreditPackOption: {
+            pack_code: components["schemas"]["BillingPackCode"];
+            /** Label */
+            label: string;
+            /** Amount Eur */
+            amount_eur: number;
+            /**
+             * Currency
+             * @default eur
+             */
+            currency: string;
+            /** Credits */
+            credits?: number | null;
+            /**
+             * Lifetime Unlimited
+             * @default false
+             */
+            lifetime_unlimited: boolean;
+        };
+        /**
+         * CreditSubmissionUsageResponse
+         * @description Single project-directory usage record.
+         */
+        CreditSubmissionUsageResponse: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Directory Id */
+            directory_id: string;
+            /** Source */
+            source: string;
+            /** Credits Used */
+            credits_used: number;
+            /**
+             * First Used At
+             * Format: date-time
+             */
+            first_used_at: string;
+        };
+        /**
+         * DirectoryAdminUpdateRequest
+         * @description Admin request to update curated directory fields.
+         */
+        DirectoryAdminUpdateRequest: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Is Free */
+            is_free?: boolean | null;
+            /** Is Dofollow */
+            is_dofollow?: boolean | null;
+            /** Domain Authority */
+            domain_authority?: number | null;
+            /** Logo Object Key */
+            logo_object_key?: string | null;
+            /** Logo Content Type */
+            logo_content_type?: string | null;
+            /** Logo Source Url */
+            logo_source_url?: string | null;
         };
         /**
          * DirectoryCategory
@@ -1416,6 +1639,34 @@ export interface components {
             total_pages: number;
         };
         /**
+         * DirectoryLogoUploadUrlRequest
+         * @description Request a signed upload URL for a directory logo.
+         */
+        DirectoryLogoUploadUrlRequest: {
+            /** File Name */
+            file_name: string;
+            /** Content Type */
+            content_type: string;
+        };
+        /**
+         * DirectoryLogoUploadUrlResponse
+         * @description Signed upload URL response for a directory logo.
+         */
+        DirectoryLogoUploadUrlResponse: {
+            /** Upload Url */
+            upload_url: string;
+            /** Object Key */
+            object_key: string;
+            /** Storage Location */
+            storage_location: string;
+            /** Public Url */
+            public_url?: string | null;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /** Max Bytes */
+            max_bytes: number;
+        };
+        /**
          * DirectoryNiche
          * @enum {string}
          */
@@ -1630,7 +1881,7 @@ export interface components {
          * @description Submission stage for a project-directory pair.
          * @enum {string}
          */
-        DirectorySubmissionStage: "not_submitted" | "in_progress" | "submitted";
+        DirectorySubmissionStage: "not_submitted" | "in_progress" | "skipped" | "submitted";
         /**
          * DirectorySubmissionStageResponse
          * @description Response with the submission stage for one project-directory pair.
@@ -1913,6 +2164,11 @@ export interface components {
              */
             project_id: string;
             /**
+             * Directory Id
+             * @description Directory ID for billing and submission tracking
+             */
+            directory_id: string;
+            /**
              * Page Url
              * @description URL of the page containing the form
              */
@@ -1938,6 +2194,29 @@ export interface components {
              * @description List of filled fields; fields that cannot be filled are omitted
              */
             filled_fields?: components["schemas"]["FilledField"][];
+            /**
+             * Charged Now
+             * @description Whether this request consumed one credit
+             * @default false
+             */
+            charged_now: boolean;
+            /**
+             * Already Charged For Pair
+             * @description Whether this project-directory pair had already consumed a credit previously
+             * @default false
+             */
+            already_charged_for_pair: boolean;
+            /**
+             * Credits Remaining
+             * @description Remaining credit balance after this request for non-lifetime users
+             */
+            credits_remaining?: number | null;
+            /**
+             * Lifetime Unlimited
+             * @description Whether the user has lifetime unlimited submissions
+             * @default false
+             */
+            lifetime_unlimited: boolean;
         };
         /**
          * FilledField
@@ -2112,6 +2391,17 @@ export interface components {
             updated_at: string;
         };
         /**
+         * StripeWebhookResponse
+         * @description Ack payload for Stripe webhook calls.
+         */
+        StripeWebhookResponse: {
+            /**
+             * Received
+             * @default true
+             */
+            received: boolean;
+        };
+        /**
          * SubmissionProcess
          * @enum {string}
          */
@@ -2183,6 +2473,11 @@ export interface components {
             email: string;
             /** Full Name */
             full_name: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "standard" | "admin";
             /** Is Active */
             is_active: boolean;
             /** Is Superuser */
@@ -3219,7 +3514,10 @@ export interface operations {
     };
     get_random_directory_api_v1_directories_random_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Project ID used to exclude submitted/skipped directories */
+                project_id?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3233,6 +3531,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DirectoryRandomResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3402,6 +3709,105 @@ export interface operations {
             };
         };
     };
+    create_admin_directory_logo_upload_url_api_v1_directories_admin__directory_id__logo_upload_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                directory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DirectoryLogoUploadUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryLogoUploadUrlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_directory_api_v1_directories_admin__directory_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                directory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_directory_admin_api_v1_directories_admin__directory_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                directory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DirectoryAdminUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_directory_api_v1_directories__directory_id__get: {
         parameters: {
             query?: {
@@ -3424,35 +3830,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DirectoryResponse"];
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_directory_api_v1_directories__directory_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                directory_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3551,6 +3928,99 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    create_billing_checkout_session_api_v1_billing_checkout_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutSessionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutSessionCreateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_credit_balance_api_v1_billing_credits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditBalanceResponse"];
+                };
+            };
+        };
+    };
+    list_credit_submissions_api_v1_billing_submissions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditSubmissionUsageResponse"][];
+                };
+            };
+        };
+    };
+    stripe_webhook_api_v1_billing_stripe_webhook_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StripeWebhookResponse"];
                 };
             };
         };

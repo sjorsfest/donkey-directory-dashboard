@@ -1,28 +1,50 @@
 import { useState } from "react";
 import { fetchRandomDirectory } from "../lib/api";
+import { getTargetTab } from "../lib/tab-utils";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 
 interface NotListedViewProps {
   domain: string;
+  selectedProjectId: string | null;
+  projectsLoading: boolean;
   onSessionExpired: () => void;
 }
 
-export function NotListedView({ domain, onSessionExpired }: NotListedViewProps) {
+export function NotListedView({
+  domain,
+  selectedProjectId,
+  projectsLoading,
+  onSessionExpired,
+}: NotListedViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const canVisitRandom = !isLoading && !projectsLoading && Boolean(selectedProjectId);
+  const helperMessage = projectsLoading
+    ? "Loading projects before we can pick a random directory."
+    : !selectedProjectId
+      ? "Select a project to get a random pending directory."
+      : null;
 
   async function handleVisitRandom() {
+    if (!selectedProjectId) {
+      setError("Select a project before visiting a random directory.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
-      const result = await fetchRandomDirectory(onSessionExpired);
+      const result = await fetchRandomDirectory(selectedProjectId, onSessionExpired);
       if (!result) {
         setError("Could not find a random directory. Try again.");
         return;
       }
-      await chrome.tabs.create({ url: result.redirect_url });
+      const tab = await getTargetTab();
+      if (tab?.id !== undefined) {
+        await chrome.tabs.update(tab.id, { url: result.redirect_url });
+      }
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -45,12 +67,15 @@ export function NotListedView({ domain, onSessionExpired }: NotListedViewProps) 
         </div>
         <Button
           onClick={handleVisitRandom}
-          disabled={isLoading}
+          disabled={!canVisitRandom}
           variant="outline"
           className="w-full"
         >
           {isLoading ? "Finding a directory..." : "✨ Visit Random Directory"}
         </Button>
+        {helperMessage && (
+          <p className="text-xs text-muted-foreground">{helperMessage}</p>
+        )}
         {error && (
           <Alert variant="destructive">
             <AlertDescription className="text-xs">{error}</AlertDescription>

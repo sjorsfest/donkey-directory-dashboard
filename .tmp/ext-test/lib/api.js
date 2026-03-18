@@ -484,9 +484,16 @@ async function resolveDirectoryIdForHostname(hostname, onSessionExpired) {
 function __clearDirectoryIdCacheForTests() {
     directoryIdByHostnameCache.clear();
 }
-async function fetchRandomDirectory(onSessionExpired) {
+async function fetchRandomDirectory(projectId, onSessionExpired) {
     try {
-        const res = await fetchWithAuth(API_ROUTES.directoriesRandom, {}, onSessionExpired);
+        const params = new URLSearchParams();
+        if (projectId) {
+            params.set("project_id", projectId);
+        }
+        const path = params.toString()
+            ? `${API_ROUTES.directoriesRandom}?${params.toString()}`
+            : API_ROUTES.directoriesRandom;
+        const res = await fetchWithAuth(path, {}, onSessionExpired);
         if (!res.ok)
             return null;
         const data = await res.json();

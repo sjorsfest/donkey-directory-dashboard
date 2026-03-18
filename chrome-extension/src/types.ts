@@ -67,7 +67,7 @@ export interface DirectoryDetails {
   quality_score: number | null;
   is_free: boolean;
   is_dofollow: boolean;
-  submission_stage: "not_submitted" | "in_progress" | "submitted";
+  submission_stage: "not_submitted" | "in_progress" | "submitted" | "skipped";
   thumbs_up_count: number;
   thumbs_down_count: number;
   total_votes: number;
@@ -106,4 +106,22 @@ export interface CheckoutSessionResponse {
 export interface InsufficientCreditsPayload extends CreditsWalletResponse {
   error: "insufficient_credits";
   message: string;
+}
+
+export interface AdminDirectoryUpdate {
+  name?: string;
+  description?: string;
+  is_free?: boolean;
+  is_dofollow?: boolean;
+  domain_authority?: number | null;
+  logo_object_key?: string;
+  logo_content_type?: string;
+  logo_source_url?: string;
+}
+
+export interface LogoUploadUrlResponse {
+  upload_url: string;
+  object_key: string;
+  public_url: string;
+  max_bytes: number;
 }

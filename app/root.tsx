@@ -5,10 +5,12 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useSearchParams,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { SupportWidget } from "./components/SupportWidget";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -59,7 +61,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const [searchParams] = useSearchParams();
+
+  const widgetOpen = searchParams.get("supportWidgetOpen") === "true";
+  const supportName = searchParams.get("supportName") ?? undefined;
+  const supportEmail = searchParams.get("supportEmail") ?? undefined;
+
+  return (
+    <>
+      <SupportWidget
+        accountId="cmko8jp0i0000lo09ghgzcul5"
+        name={supportName}
+        email={supportEmail}
+        controlledByHost={widgetOpen || undefined}
+        widgetIsOpen={widgetOpen || undefined}
+      />
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

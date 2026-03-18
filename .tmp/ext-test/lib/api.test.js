@@ -158,6 +158,46 @@ const REQUEST_BASE = {
     const requestBody = JSON.parse(String(fetchCalls[0]?.init?.body || "{}"));
     strict_1.default.equal(requestBody.pack_code, "lifetime");
 });
+(0, node_test_1.default)("fetchRandomDirectory appends project_id when provided", async () => {
+    installChromeMock();
+    const fetchCalls = queueFetchResponses([
+        makeResponse({
+            status: 200,
+            body: {
+                domain: "directory.example.com",
+                redirect_url: "https://directory.example.com/submit",
+            },
+        }),
+    ]);
+    const result = await (0, api_1.fetchRandomDirectory)("project_123");
+    strict_1.default.deepEqual(result, {
+        domain: "directory.example.com",
+        redirect_url: "https://directory.example.com/submit",
+    });
+    const requestUrl = new URL(fetchCalls[0]?.url || "");
+    strict_1.default.equal(requestUrl.pathname, "/api/v1/directories/random");
+    strict_1.default.equal(requestUrl.searchParams.get("project_id"), "project_123");
+});
+(0, node_test_1.default)("fetchRandomDirectory omits project_id when project is null", async () => {
+    installChromeMock();
+    const fetchCalls = queueFetchResponses([
+        makeResponse({
+            status: 200,
+            body: {
+                domain: "directory.example.com",
+                redirect_url: "https://directory.example.com/submit",
+            },
+        }),
+    ]);
+    const result = await (0, api_1.fetchRandomDirectory)(null);
+    strict_1.default.deepEqual(result, {
+        domain: "directory.example.com",
+        redirect_url: "https://directory.example.com/submit",
+    });
+    const requestUrl = new URL(fetchCalls[0]?.url || "");
+    strict_1.default.equal(requestUrl.pathname, "/api/v1/directories/random");
+    strict_1.default.equal(requestUrl.searchParams.has("project_id"), false);
+});
 (0, node_test_1.default)("resolveDirectoryIdForHostname caches backend lookup", async () => {
     installChromeMock();
     (0, api_1.__clearDirectoryIdCacheForTests)();

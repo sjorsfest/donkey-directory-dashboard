@@ -18,6 +18,8 @@ import type {
   CreditsWalletResponse,
   CheckoutSessionResponse,
   InsufficientCreditsPayload,
+  AdminDirectoryUpdate,
+  LogoUploadUrlResponse,
 } from "../types";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -37,6 +39,10 @@ const API_ROUTES = {
   directories: "/api/v1/directories/",
   directoriesByDomain: "/api/v1/directories/by-domain",
   directoriesRandom: "/api/v1/directories/random",
+  adminDirectory: (id: string) => `/api/v1/directories/admin/${encodeURIComponent(id)}`,
+  adminLogoUploadUrl: (id: string) => `/api/v1/directories/admin/${encodeURIComponent(id)}/logo/upload-url`,
+  submissionStage: (projectId: string, directoryId: string) =>
+    `/api/v1/directories/projects/${encodeURIComponent(projectId)}/directories/${encodeURIComponent(directoryId)}/submission-stage`,
 } as const;
 
 const COMMON_SECOND_LEVEL_TLDS = new Set([
@@ -239,7 +245,7 @@ export async function connectWithCode(code: string): Promise<string> {
 
 export async function fetchUserInfo(
   onSessionExpired?: () => void
-): Promise<{ email: string } | null> {
+): Promise<{ email: string; role?: string; is_superuser?: boolean } | null> {
   const res = await fetchWithAuth(API_ROUTES.me, {}, onSessionExpired);
   if (!res.ok) return null;
   return res.json();
@@ -670,11 +676,123 @@ export function __clearDirectoryIdCacheForTests(): void {
   directoryIdByHostnameCache.clear();
 }
 
+export async function getLogoUploadUrl(
+  directoryId: string,
+  fileName: string,
+  contentType: string,
+  onSessionExpired?: () => void
+): Promise<LogoUploadUrlResponse> {
+  const res = await fetchWithAuth(
+    API_ROUTES.adminLogoUploadUrl(directoryId),
+    {
+      method: "POST",
+      body: JSON.stringify({ file_name: fileName, content_type: contentType }),
+    },
+    onSessionExpired
+  );
+
+  if (!res.ok) {
+    const msg = await parseErrorMessage(res, "Failed to get upload URL.");
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  if (
+    !isRecord(data) ||
+    typeof data.upload_url !== "string" ||
+    typeof data.object_key !== "string" ||
+    typeof data.public_url !== "string"
+  ) {
+    throw new Error("Unexpected upload URL response format.");
+  }
+
+  return {
+    upload_url: data.upload_url,
+    object_key: data.object_key,
+    public_url: data.public_url,
+    max_bytes: typeof data.max_bytes === "number" ? data.max_bytes : 3_000_000,
+  };
+}
+
+export async function deleteAdminDirectory(
+  directoryId: string,
+  onSessionExpired?: () => void
+): Promise<void> {
+  const res = await fetchWithAuth(
+    API_ROUTES.adminDirectory(directoryId),
+    { method: "DELETE" },
+    onSessionExpired
+  );
+
+  if (!res.ok) {
+    const msg = await parseErrorMessage(res, "Failed to delete directory.");
+    throw new Error(msg);
+  }
+}
+
+export async function updateAdminDirectory(
+  directoryId: string,
+  fields: AdminDirectoryUpdate,
+  onSessionExpired?: () => void
+): Promise<DirectoryDetails> {
+  const res = await fetchWithAuth(
+    API_ROUTES.adminDirectory(directoryId),
+    {
+      method: "PATCH",
+      body: JSON.stringify(fields),
+    },
+    onSessionExpired
+  );
+
+  if (!res.ok) {
+    const msg = await parseErrorMessage(res, "Failed to update directory.");
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  if (!isDirectoryDetails(data)) {
+    throw new Error("Unexpected directory response format.");
+  }
+
+  return data;
+}
+
+export async function updateSubmissionStage(
+  projectId: string,
+  directoryId: string,
+  stage: "submitted" | "skipped" | "not_submitted" | "in_progress",
+  onSessionExpired?: () => void
+): Promise<void> {
+  const res = await fetchWithAuth(
+    API_ROUTES.submissionStage(projectId, directoryId),
+    {
+      method: "PUT",
+      body: JSON.stringify({ submission_stage: stage }),
+    },
+    onSessionExpired
+  );
+
+  if (!res.ok) {
+    const msg = await parseErrorMessage(res, "Failed to update submission stage.");
+    throw new Error(msg);
+  }
+}
+
 export async function fetchRandomDirectory(
+  projectId: string | null,
   onSessionExpired?: () => void
 ): Promise<DirectoryRandomResponse | null> {
   try {
-    const res = await fetchWithAuth(API_ROUTES.directoriesRandom, {}, onSessionExpired);
+    const params = new URLSearchParams();
+    if (projectId) {
+      params.set("project_id", projectId);
+    }
+
+    const path = params.toString()
+      ? `${API_ROUTES.directoriesRandom}?${params.toString()}`
+      : API_ROUTES.directoriesRandom;
+
+    const res = await fetchWithAuth(path, {}, onSessionExpired);
     if (!res.ok) return null;
     const data = await res.json();
     if (

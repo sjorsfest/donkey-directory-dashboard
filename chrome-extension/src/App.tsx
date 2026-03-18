@@ -116,7 +116,7 @@ export function App() {
     };
   }, []);
 
-  const { isLoading, isAuthenticated, userEmail, onLoginSuccess, logout, onSessionExpired } =
+  const { isLoading, isAuthenticated, userEmail, isAdmin, onLoginSuccess, logout, onSessionExpired } =
     useAuth();
 
   if (isLoading) {
@@ -140,6 +140,7 @@ export function App() {
   return (
     <MainView
       userEmail={userEmail!}
+      isAdmin={isAdmin}
       onLogout={logout}
       onSessionExpired={onSessionExpired}
     />

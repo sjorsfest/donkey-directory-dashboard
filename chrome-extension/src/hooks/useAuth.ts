@@ -6,6 +6,7 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   userEmail: string | null;
+  isAdmin: boolean;
 }
 
 export function useAuth() {
@@ -13,10 +14,11 @@ export function useAuth() {
     isLoading: true,
     isAuthenticated: false,
     userEmail: null,
+    isAdmin: false,
   });
 
   const handleSessionExpired = useCallback(() => {
-    setState({ isLoading: false, isAuthenticated: false, userEmail: null });
+    setState({ isLoading: false, isAuthenticated: false, userEmail: null, isAdmin: false });
   }, []);
 
   useEffect(() => {
@@ -30,6 +32,7 @@ export function useAuth() {
             isLoading: false,
             isAuthenticated: false,
             userEmail: null,
+            isAdmin: false,
           });
         return;
       }
@@ -43,15 +46,18 @@ export function useAuth() {
           isLoading: false,
           isAuthenticated: false,
           userEmail: null,
+          isAdmin: false,
         });
         return;
       }
 
       const storedEmail = await getUserEmail();
+      const isAdmin = user.role === "admin" || user.is_superuser === true;
       setState({
         isLoading: false,
         isAuthenticated: true,
         userEmail: storedEmail || user.email,
+        isAdmin,
       });
     }
 
@@ -62,12 +68,12 @@ export function useAuth() {
   }, [handleSessionExpired]);
 
   const onLoginSuccess = useCallback((email: string) => {
-    setState({ isLoading: false, isAuthenticated: true, userEmail: email });
+    setState({ isLoading: false, isAuthenticated: true, userEmail: email, isAdmin: false });
   }, []);
 
   const logout = useCallback(async () => {
     await clearTokens();
-    setState({ isLoading: false, isAuthenticated: false, userEmail: null });
+    setState({ isLoading: false, isAuthenticated: false, userEmail: null, isAdmin: false });
   }, []);
 
   return {

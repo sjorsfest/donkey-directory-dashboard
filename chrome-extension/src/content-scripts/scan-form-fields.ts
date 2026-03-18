@@ -11,7 +11,6 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
     "button",
     "image",
     "reset",
-    "file",
   ]);
 
   const getAccessibleDocuments = (): Document[] => {
@@ -283,6 +282,50 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             pattern: null,
           });
           scannedFieldIds.add(fieldName);
+        });
+      }
+    }
+
+    // Third pass: scan [role="combobox"] buttons (Radix UI and similar custom selects)
+    for (const doc3 of getAccessibleDocuments()) {
+      for (const root3 of getSearchRoots(doc3)) {
+        root3.querySelectorAll<HTMLElement>('[role="combobox"]').forEach((button) => {
+          let fieldId = button.getAttribute("name")?.trim() || "";
+          let label = "";
+
+          if (button.id) {
+            const labelEl = (button.ownerDocument || document).querySelector(
+              `label[for="${CSS.escape(button.id)}"]`
+            );
+            if (labelEl?.textContent) label = labelEl.textContent.trim();
+          }
+          if (!label) label = button.getAttribute("aria-label") || "";
+
+          // Derive a fieldId from the label text if no name attribute
+          if (!fieldId && label) {
+            fieldId = label
+              .replace(/\(.*?\)/g, "")
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "_")
+              .replace(/^_+|_+$/g, "");
+          }
+
+          if (!fieldId || scannedFieldIds.has(fieldId)) return;
+
+          button.setAttribute("data-dd-field-id", fieldId);
+          fields.push({
+            field_id: fieldId,
+            type: "combobox",
+            tag: "button",
+            label,
+            placeholder: null,
+            required: false,
+            max_length: null,
+            options: null,
+            pattern: null,
+          });
+          scannedFieldIds.add(fieldId);
         });
       }
     }

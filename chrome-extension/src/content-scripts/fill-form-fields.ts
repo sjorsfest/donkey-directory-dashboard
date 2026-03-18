@@ -227,6 +227,82 @@ export async function fillFormFields(
     return clickedCount > 0;
   };
 
+  // Fill a Radix UI / custom combobox: click to open, wait for popup, click matching options
+  const fillCombobox = async (button: HTMLElement, value: string | string[]): Promise<boolean> => {
+    const rawValues = Array.isArray(value) ? (value as string[]) : String(value).split(",");
+    const targets = rawValues.map((v) => normalize(String(v).trim())).filter(Boolean);
+    if (targets.length === 0) return false;
+
+    button.click();
+
+    const controlsId = button.getAttribute("aria-controls");
+    const popup = await new Promise<HTMLElement | null>((resolve) => {
+      let resolved = false;
+      const finish = (el: HTMLElement | null) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeoutId);
+        clearInterval(intervalId);
+        obs.disconnect();
+        resolve(el);
+      };
+
+      const check = (): HTMLElement | null => {
+        if (controlsId) {
+          const el = document.getElementById(controlsId);
+          if (el) return el as HTMLElement;
+        }
+        return document.querySelector<HTMLElement>(
+          '[role="dialog"][data-state="open"], [role="listbox"][data-state="open"]'
+        );
+      };
+
+      const obs = new MutationObserver(() => {
+        const found = check();
+        if (found) finish(found);
+      });
+      obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+      const intervalId = setInterval(() => {
+        const found = check();
+        if (found) finish(found);
+      }, 100);
+      const timeoutId = setTimeout(() => finish(null), 3000);
+
+      const immediate = check();
+      if (immediate) finish(immediate);
+    });
+
+    if (!popup) return false;
+
+    let clickedCount = 0;
+    const optionSelectors = '[role="option"], [role="menuitemcheckbox"], [role="menuitem"], [data-radix-collection-item]';
+    popup.querySelectorAll<HTMLElement>(optionSelectors).forEach((opt) => {
+      const optNorm = normalize(opt.textContent?.trim() || "");
+      if (targets.some((t) => optNorm === t || optNorm.includes(t) || t.includes(optNorm))) {
+        opt.click();
+        clickedCount++;
+      }
+    });
+
+    if (clickedCount === 0) {
+      popup.querySelectorAll<HTMLElement>(".cursor-pointer").forEach((opt) => {
+        const optNorm = normalize(opt.textContent?.trim() || "");
+        if (targets.some((t) => optNorm === t)) {
+          opt.click();
+          clickedCount++;
+        }
+      });
+    }
+
+    if (button.getAttribute("aria-expanded") === "true") {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", code: "Escape", keyCode: 27, which: 27, bubbles: true })
+      );
+    }
+
+    return clickedCount > 0;
+  };
+
   let filled = 0;
   let skipped = 0;
   const outcomes: Record<string, "filled" | "not_filled"> = {};
@@ -379,6 +455,36 @@ export async function fillFormFields(
           }
         });
         if (matched) { outcomes[field_id] = "filled"; filled++; }
+        else { outcomes[field_id] = "not_filled"; skipped++; }
+        continue;
+      } else if (el.tagName === "INPUT" && (el as HTMLInputElement).type === "file") {
+        const url = String(value).trim();
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          outcomes[field_id] = "not_filled";
+          skipped++;
+          continue;
+        }
+        try {
+          const response = await fetch(url);
+          if (!response.ok) { outcomes[field_id] = "not_filled"; skipped++; continue; }
+          const blob = await response.blob();
+          const filename = new URL(url).pathname.split("/").pop() || "upload";
+          const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          (el as HTMLInputElement).files = dt.files;
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          outcomes[field_id] = "filled";
+          filled++;
+        } catch {
+          outcomes[field_id] = "not_filled";
+          skipped++;
+        }
+        continue;
+      } else if (el.tagName === "BUTTON" && el.getAttribute("role") === "combobox") {
+        const ok = await fillCombobox(el, value as string | string[]);
+        if (ok) { outcomes[field_id] = "filled"; filled++; }
         else { outcomes[field_id] = "not_filled"; skipped++; }
         continue;
       } else {

@@ -21,41 +21,41 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  /* Green (primary) scale — base: hsl(78 72% 68%) */
-  --color-primary-50: hsl(78 70% 97%);
-  --color-primary-100: hsl(78 70% 94%);
-  --color-primary-200: hsl(78 70% 88%);
-  --color-primary-300: hsl(78 71% 80%);
-  --color-primary-400: hsl(78 71% 74%);
-  --color-primary-500: hsl(78 72% 68%);
-  --color-primary-600: hsl(78 65% 55%);
-  --color-primary-700: hsl(78 60% 42%);
-  --color-primary-800: hsl(78 55% 30%);
-  --color-primary-900: hsl(78 50% 18%);
+  /* Green (primary) scale — base: #C5E873 */
+  --color-primary-50: #FAFDF2;
+  --color-primary-100: #F4FAE5;
+  --color-primary-200: #E9F6CB;
+  --color-primary-300: #DBF0A8;
+  --color-primary-400: #D0EC8E;
+  --color-primary-500: #C5E873;
+  --color-primary-600: #AAD742;
+  --color-primary-700: #85AB2B;
+  --color-primary-800: #5D7722;
+  --color-primary-900: #374517;
 
-  /* Secondary scale — base: hsl(38 30% 93%) creamy off-white */
-  --color-secondary-50: hsl(38 40% 99%);
-  --color-secondary-100: hsl(38 38% 97%);
-  --color-secondary-200: hsl(38 32% 92%);
-  --color-secondary-300: hsl(38 28% 84%);
-  --color-secondary-400: hsl(38 25% 73%);
-  --color-secondary-500: hsl(38 22% 60%);
-  --color-secondary-600: hsl(38 20% 47%);
-  --color-secondary-700: hsl(38 20% 35%);
-  --color-secondary-800: hsl(38 20% 24%);
-  --color-secondary-900: hsl(38 20% 14%);
+  /* Secondary scale — base: #F1ECE4 creamy off-white */
+  --color-secondary-50: #FDFDFB;
+  --color-secondary-100: #FAF8F4;
+  --color-secondary-200: #F1ECE4;
+  --color-secondary-300: #E2D9CB;
+  --color-secondary-400: #CBBFA9;
+  --color-secondary-500: #AF9F83;
+  --color-secondary-600: #907E60;
+  --color-secondary-700: #6B5E47;
+  --color-secondary-800: #494131;
+  --color-secondary-900: #2B261D;
 
-  /* Accent (terracotta) scale — base: hsl(17 51% 57%) = #C97A5A */
-  --color-accent-50: hsl(17 50% 97%);
-  --color-accent-100: hsl(17 50% 94%);
-  --color-accent-200: hsl(17 51% 86%);
-  --color-accent-300: hsl(17 51% 76%);
-  --color-accent-400: hsl(17 51% 66%);
-  --color-accent-500: hsl(17 51% 57%);
-  --color-accent-600: hsl(17 47% 47%);
-  --color-accent-700: hsl(17 44% 37%);
-  --color-accent-800: hsl(17 40% 28%);
-  --color-accent-900: hsl(17 38% 18%);
+  /* Accent (terracotta) scale — base: #C97959 */
+  --color-accent-50: #FBF6F4;
+  --color-accent-100: #F7ECE8;
+  --color-accent-200: #EED3C9;
+  --color-accent-300: #E1B4A3;
+  --color-accent-400: #D5957C;
+  --color-accent-500: #C97959;
+  --color-accent-600: #B05F40;
+  --color-accent-700: #884C35;
+  --color-accent-800: #643B2B;
+  --color-accent-900: #3F261D;
 
   /* Terracotta alias (same as accent scale) */
   --color-terracotta-100: var(--color-accent-100);
