@@ -34,3 +34,12 @@ export async function getUserEmail(): Promise<string | null> {
 export async function setUserEmail(email: string): Promise<void> {
   await chrome.storage.local.set({ userEmail: email });
 }
+
+export async function getSelectedProjectId(): Promise<string | null> {
+  const data = await chrome.storage.local.get("selectedProjectId");
+  return (data.selectedProjectId as string) ?? null;
+}
+
+export async function setSelectedProjectId(id: string): Promise<void> {
+  await chrome.storage.local.set({ selectedProjectId: id });
+}

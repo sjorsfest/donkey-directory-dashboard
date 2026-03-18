@@ -524,6 +524,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/directories/projects/{project_id}/submission-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get project directory submission counts
+         * @description Get total directories plus submitted/skipped submission counts for a project. Useful for frontend progress bars.
+         */
+        get: operations["get_project_directory_submission_counts_api_v1_directories_projects__project_id__submission_counts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/directories/random": {
         parameters: {
             query?: never;
@@ -2355,6 +2375,20 @@ export interface components {
             posts_per_week: number;
         };
         /**
+         * ProjectDirectorySubmissionCountsResponse
+         * @description Project submission counts for progress tracking.
+         */
+        ProjectDirectorySubmissionCountsResponse: {
+            /** Total Directories */
+            total_directories: number;
+            /** Submitted Directories */
+            submitted_directories: number;
+            /** Skipped Directories */
+            skipped_directories: number;
+            /** Completed Directories */
+            completed_directories: number;
+        };
+        /**
          * ProjectResponse
          * @description Response with project information.
          */
@@ -3508,6 +3542,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DirectoryCountResponse"];
+                };
+            };
+        };
+    };
+    get_project_directory_submission_counts_api_v1_directories_projects__project_id__submission_counts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDirectorySubmissionCountsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

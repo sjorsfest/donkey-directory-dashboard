@@ -27,6 +27,7 @@ interface DirectoryViewProps {
   projectsLoading: boolean;
   projectsError: string | null;
   onSessionExpired: () => void;
+  onStageUpdated?: () => void;
 }
 
 interface VoteDisplayState {
@@ -83,6 +84,7 @@ export function DirectoryView({
   projectsLoading,
   projectsError,
   onSessionExpired,
+  onStageUpdated,
 }: DirectoryViewProps) {
   const [localDir, setLocalDir] = useState<DirectoryDetails>(directory);
   const [editing, setEditing] = useState<"name" | "logo" | "dr" | "cost" | "dofollow" | null>(null);
@@ -181,6 +183,7 @@ export function DirectoryView({
     try {
       await updateSubmissionStage(selectedProjectId, localDir.id, stage, onSessionExpired);
       setLocalDir((prev) => ({ ...prev, submission_stage: stage }));
+      onStageUpdated?.();
       const next = await fetchRandomDirectory(selectedProjectId, onSessionExpired);
       if (next) {
         await navigateCurrentTabTo(next.redirect_url);

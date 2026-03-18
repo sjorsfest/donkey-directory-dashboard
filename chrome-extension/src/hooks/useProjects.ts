@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { loadProjects } from "../lib/api";
+import { getSelectedProjectId, setSelectedProjectId as persistSelectedProjectId } from "../lib/storage";
 import type { Project } from "../types";
 
 export function useProjects(onSessionExpired?: () => void) {
@@ -13,11 +14,15 @@ export function useProjects(onSessionExpired?: () => void) {
 
     async function fetch() {
       try {
-        const data = await loadProjects(onSessionExpired);
+        const [data, storedId] = await Promise.all([
+          loadProjects(onSessionExpired),
+          getSelectedProjectId(),
+        ]);
         if (cancelled) return;
         setProjects(data);
         if (data.length > 0) {
-          setSelectedProjectId(data[0].id);
+          const valid = storedId && data.some((p) => p.id === storedId);
+          setSelectedProjectId(valid ? storedId : data[0].id);
         }
         setError(null);
       } catch (err) {
@@ -37,10 +42,15 @@ export function useProjects(onSessionExpired?: () => void) {
     };
   }, [onSessionExpired]);
 
+  const handleSetSelectedProjectId = useCallback((id: string) => {
+    setSelectedProjectId(id);
+    void persistSelectedProjectId(id);
+  }, []);
+
   return {
     projects,
     selectedProjectId,
-    setSelectedProjectId,
+    setSelectedProjectId: handleSetSelectedProjectId,
     isLoading,
     error,
   };

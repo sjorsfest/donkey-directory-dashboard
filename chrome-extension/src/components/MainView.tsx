@@ -1,8 +1,11 @@
+import { useEffect, useState, useCallback } from "react";
 import { Header } from "./Header";
 import { DirectoryView } from "./DirectoryView";
 import { NotListedView } from "./NotListedView";
 import { useProjects } from "../hooks/useProjects";
 import { useDirectoryForTab } from "../hooks/useDirectoryForTab";
+import { fetchSubmissionCounts, type SubmissionCounts } from "../lib/api";
+import type { Project } from "../types";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
@@ -27,6 +30,21 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
   const { isLoading, directory, domain, isRestricted, error } =
     useDirectoryForTab(selectedProjectId || null, onSessionExpired);
 
+  const [counts, setCounts] = useState<SubmissionCounts | null>(null);
+  const [countsRefreshKey, setCountsRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setCounts(null);
+      return;
+    }
+    fetchSubmissionCounts(selectedProjectId, onSessionExpired).then(setCounts);
+  }, [selectedProjectId, countsRefreshKey, onSessionExpired]);
+
+  const handleStageUpdated = useCallback(() => {
+    setCountsRefreshKey((k) => k + 1);
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Sticky header */}
@@ -39,6 +57,15 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
       {/* Main content */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
       <div className="mx-auto w-full max-w-lg space-y-3">
+        {counts && selectedProjectId && (
+          <ProgressStrip
+            counts={counts}
+            projects={projects}
+            selectedProjectId={selectedProjectId}
+            onSwitchProject={setSelectedProjectId}
+          />
+        )}
+
         {isLoading && <DirectoryLoadingSkeleton />}
 
         {!isLoading && isRestricted && (
@@ -72,6 +99,7 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
             projectsLoading={projectsLoading}
             projectsError={projectsError}
             onSessionExpired={onSessionExpired}
+            onStageUpdated={handleStageUpdated}
           />
         )}
 
@@ -112,6 +140,131 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
             </Button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ProgressStrip({
+  counts,
+  projects,
+  selectedProjectId,
+  onSwitchProject,
+}: {
+  counts: SubmissionCounts;
+  projects: Project[];
+  selectedProjectId: string;
+  onSwitchProject: (id: string) => void;
+}) {
+  const { completed_directories, total_directories } = counts;
+  const pct = total_directories > 0 ? Math.round((completed_directories / total_directories) * 100) : 0;
+  const isComplete = pct === 100;
+  const project = projects.find((p) => p.id === selectedProjectId);
+
+  function handleSwitch() {
+    if (projects.length < 2) return;
+    const idx = projects.findIndex((p) => p.id === selectedProjectId);
+    const next = projects[(idx + 1) % projects.length];
+    onSwitchProject(next.id);
+  }
+
+  return (
+    <div
+      className="relative rounded-xl border-2 bg-card px-3.5 py-2.5 transition-all duration-700"
+      style={isComplete ? {
+        borderColor: "#C3F73A",
+        boxShadow: "var(--shadow-sm)",
+      } : {
+        borderColor: "#1A1A1A",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      {isComplete && (
+        <style>{`
+          @keyframes shimmer {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+          @keyframes glint {
+            0%   { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+            15%  { opacity: 0.45; }
+            85%  { opacity: 0.45; }
+            100% { transform: translateX(600%) skewX(-20deg); opacity: 0; }
+          }
+        `}</style>
+      )}
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[11px] font-semibold text-muted-foreground shrink-0">Progress for</span>
+          <span className="text-[11px] font-bold text-foreground truncate">{project?.domain ?? "your project"}</span>
+          {projects.length > 1 && (
+            <button
+              type="button"
+              onClick={handleSwitch}
+              title="Switch project"
+              className="shrink-0 inline-flex items-center justify-center h-4 w-4 rounded border border-foreground/20 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 16V4m0 0L3 8m4-4 4 4" />
+                <path d="M17 8v12m0 0 4-4m-4 4-4-4" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <span
+          className="text-[11px] font-bold shrink-0 transition-colors duration-700"
+          style={isComplete ? { color: "#3D3BF3" } : undefined}
+        >
+          {isComplete ? "🏆 " : ""}{completed_directories} / {total_directories}
+        </span>
+      </div>
+
+      <div className="relative h-2 w-full rounded-full border border-foreground/15 bg-secondary overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={isComplete ? {
+            width: "100%",
+            background: "linear-gradient(90deg, #C3F73A, #E8F73A, #A8E632, #C3F73A)",
+            backgroundSize: "250% 100%",
+            animation: "shimmer 4s ease infinite",
+          } : {
+            width: `${pct}%`,
+            background: "#C3F73A",
+          }}
+        />
+        {isComplete && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              overflow: "hidden",
+              borderRadius: "9999px",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "15%",
+                height: "100%",
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+                animation: "glint 4s ease-in-out 1s infinite",
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between mt-1">
+        <span className="text-[10px] text-muted-foreground">{counts.submitted_directories} submitted · {counts.skipped_directories} skipped</span>
+        <span
+          className="text-[10px] font-semibold transition-colors duration-700"
+          style={isComplete ? { color: "#3D3BF3" } : { color: "var(--muted-foreground)" }}
+        >
+          {pct}%
+        </span>
       </div>
     </div>
   );

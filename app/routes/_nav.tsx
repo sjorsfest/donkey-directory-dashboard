@@ -164,7 +164,7 @@ export default function NavLayout() {
                 className="block h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110 sm:h-12 sm:w-12"
               />
               <span>
-                <strong className="font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill] sm:text-3xl">
+                <strong className="select-none font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill] sm:text-3xl">
                   Donkey Directories
                 </strong>
               </span>

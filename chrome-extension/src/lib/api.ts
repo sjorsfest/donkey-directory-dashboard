@@ -43,6 +43,8 @@ const API_ROUTES = {
   adminLogoUploadUrl: (id: string) => `/api/v1/directories/admin/${encodeURIComponent(id)}/logo/upload-url`,
   submissionStage: (projectId: string, directoryId: string) =>
     `/api/v1/directories/projects/${encodeURIComponent(projectId)}/directories/${encodeURIComponent(directoryId)}/submission-stage`,
+  submissionCounts: (projectId: string) =>
+    `/api/v1/directories/projects/${encodeURIComponent(projectId)}/submission-counts`,
 } as const;
 
 const COMMON_SECOND_LEVEL_TLDS = new Set([
@@ -775,6 +777,39 @@ export async function updateSubmissionStage(
   if (!res.ok) {
     const msg = await parseErrorMessage(res, "Failed to update submission stage.");
     throw new Error(msg);
+  }
+}
+
+export interface SubmissionCounts {
+  total_directories: number;
+  submitted_directories: number;
+  skipped_directories: number;
+  completed_directories: number;
+}
+
+export async function fetchSubmissionCounts(
+  projectId: string,
+  onSessionExpired?: () => void
+): Promise<SubmissionCounts | null> {
+  try {
+    const res = await fetchWithAuth(API_ROUTES.submissionCounts(projectId), {}, onSessionExpired);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (
+      isRecord(data) &&
+      typeof data.total_directories === "number" &&
+      typeof data.completed_directories === "number"
+    ) {
+      return {
+        total_directories: data.total_directories,
+        submitted_directories: typeof data.submitted_directories === "number" ? data.submitted_directories : 0,
+        skipped_directories: typeof data.skipped_directories === "number" ? data.skipped_directories : 0,
+        completed_directories: data.completed_directories,
+      };
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
