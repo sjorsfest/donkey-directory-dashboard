@@ -25,6 +25,10 @@ export const API_ROUTES = {
     count: "/api/v1/directories/count",
     statsSummary: "/api/v1/directories/stats/summary",
   },
+  billing: {
+    credits: "/api/v1/billing/credits",
+    checkoutSession: "/api/v1/billing/checkout-session",
+  },
 } as const satisfies {
   auth: {
     register: ApiPath;
@@ -42,6 +46,10 @@ export const API_ROUTES = {
     list: ApiPath;
     count: ApiPath;
     statsSummary: ApiPath;
+  };
+  billing: {
+    credits: ApiPath;
+    checkoutSession: ApiPath;
   };
 };
 
@@ -185,6 +193,30 @@ export function directorySubmissionCountsPath(projectId: string): string {
 
 export type ApiProjectSubmissionCountsResponse =
   components["schemas"]["ProjectDirectorySubmissionCountsResponse"];
+
+export type ApiBillingPackCode = components["schemas"]["BillingPackCode"];
+export type ApiCreditBalanceResponse = components["schemas"]["CreditBalanceResponse"];
+export type ApiCreditPackOption = components["schemas"]["CreditPackOption"];
+export type ApiCheckoutSessionCreateRequest = components["schemas"]["CheckoutSessionCreateRequest"];
+export type ApiCheckoutSessionCreateResponse = components["schemas"]["CheckoutSessionCreateResponse"];
+
+export function isApiCreditBalanceResponse(
+  value: unknown
+): value is ApiCreditBalanceResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return typeof value.credit_balance === "number" && typeof value.lifetime_unlimited === "boolean";
+}
+
+export function isApiCheckoutSessionCreateResponse(
+  value: unknown
+): value is ApiCheckoutSessionCreateResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return typeof value.checkout_url === "string" && typeof value.session_id === "string";
+}
 
 export function isApiDirectoryVoteChoice(
   value: unknown

@@ -259,7 +259,7 @@ export function HowItWorks() {
             <div className="pt-1">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/30">Progress</span>
-                <span className="text-[0.65rem] font-bold text-foreground/50">12 / 84</span>
+                <span className="text-[0.65rem] font-bold text-foreground/50">12 / 250</span>
               </div>
               <div className="h-2 rounded-full bg-foreground/10 overflow-hidden">
                 <div className="h-full w-[14%] rounded-full bg-primary" />

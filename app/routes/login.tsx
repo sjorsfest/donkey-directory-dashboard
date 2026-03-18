@@ -1,4 +1,4 @@
-import { Form, Link, data, redirect, useActionData, useNavigation } from "react-router";
+import { Form, Link, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/login";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { API_ROUTES, type ApiLoginRequest, isApiToken } from "~/lib/api-contract";
@@ -25,12 +25,13 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   const accessToken = session.get("accessToken");
+  const next = safeNextParam(new URL(request.url).searchParams.get("next"));
 
   if (typeof accessToken === "string" && accessToken.length > 0) {
-    return redirect("/");
+    return redirect(next);
   }
 
-  return null;
+  return { next };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -84,7 +85,9 @@ export async function action({ request }: Route.ActionArgs) {
   session.set("accessToken", loginPayload.access_token);
   session.set("refreshToken", loginPayload.refresh_token);
 
-  return redirect("/", {
+  const next = safeNextParam(String(formData.get("next") ?? ""));
+
+  return redirect(next, {
     headers: {
       "Set-Cookie": await commitSession(session),
     },
@@ -92,6 +95,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function LoginPage() {
+  const loaderData = useLoaderData<typeof loader>();
+  const next = loaderData?.next ?? "/";
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const activeIntent = String(navigation.formData?.get("intent") ?? "");
@@ -143,6 +148,7 @@ export default function LoginPage() {
           <Separator />
 
           <Form method="post" className="grid gap-4">
+            <input type="hidden" name="next" value={next} />
             <div className="grid gap-2">
               <Label htmlFor="login-email">Email</Label>
               <Input id="login-email" type="email" name="email" autoComplete="email" required />
@@ -213,6 +219,13 @@ function parseApiErrorMessage(payload: unknown, fallback: string): string {
 
   const message = payload.message ?? payload.error ?? payload.detail;
   return typeof message === "string" ? message : fallback;
+}
+
+function safeNextParam(value: string | null | undefined): string {
+  if (typeof value === "string" && value.startsWith("/") && !value.startsWith("//")) {
+    return value;
+  }
+  return "/";
 }
 
 function parseMaybeJson(value: string): unknown {

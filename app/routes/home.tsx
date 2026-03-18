@@ -8,6 +8,7 @@ import { getSession } from "~/lib/session.server";
 import { HomeHero } from "~/components/home-hero";
 import { MockDirectoriesTable, DIRECTORIES } from "~/components/directories-table";
 import { HowItWorks } from "~/components/how-it-works";
+import { PricingSection } from "~/components/pricing-section";
 
 type LoaderData = {
   isAuthenticated: boolean;
@@ -76,6 +77,7 @@ export default function HomePage() {
         directoryCount={directoryCount}
       />
       <HowItWorks />
+      <PricingSection isAuthenticated={isAuthenticated} />
     </div>
   );
 }

@@ -168,7 +168,7 @@ function DotRippleCanvas() {
 
 const HERO_PHRASES = [
   { text: "everywhere it matters",     emoji: "🚀" },
-  { text: "across 80+ directories",    emoji: "📋" },
+  { text: "across 250+ directories",    emoji: "📋" },
   { text: "without the copy-paste",    emoji: "⚡" },
   { text: "and get discovered",        emoji: "🌍" },
 ];
