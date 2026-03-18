@@ -28,6 +28,7 @@ interface DirectoryViewProps {
   projectsError: string | null;
   onSessionExpired: () => void;
   onStageUpdated?: () => void;
+  allCompleted?: boolean;
 }
 
 interface VoteDisplayState {
@@ -85,6 +86,7 @@ export function DirectoryView({
   projectsError,
   onSessionExpired,
   onStageUpdated,
+  allCompleted = false,
 }: DirectoryViewProps) {
   const [localDir, setLocalDir] = useState<DirectoryDetails>(directory);
   const [editing, setEditing] = useState<"name" | "logo" | "dr" | "cost" | "dofollow" | null>(null);
@@ -165,7 +167,7 @@ export function DirectoryView({
     if (!selectedProjectId) return;
     setIsNavigatingNext(true);
     try {
-      const next = await fetchRandomDirectory(selectedProjectId, onSessionExpired);
+      const next = await fetchRandomDirectory(allCompleted ? null : selectedProjectId, onSessionExpired);
       if (next) {
         await navigateCurrentTabTo(next.redirect_url);
       }
@@ -184,7 +186,7 @@ export function DirectoryView({
       await updateSubmissionStage(selectedProjectId, localDir.id, stage, onSessionExpired);
       setLocalDir((prev) => ({ ...prev, submission_stage: stage }));
       onStageUpdated?.();
-      const next = await fetchRandomDirectory(selectedProjectId, onSessionExpired);
+      const next = await fetchRandomDirectory(allCompleted ? null : selectedProjectId, onSessionExpired);
       if (next) {
         await navigateCurrentTabTo(next.redirect_url);
       }
@@ -678,23 +680,33 @@ export function DirectoryView({
           )}
 
           {/* Submission stage actions */}
-          {selectedProjectId && localDir.submission_stage !== "submitted" && localDir.submission_stage !== "skipped" && (
+          {selectedProjectId && (
             <div className="flex items-center justify-between gap-2 border-t-2 border-foreground/10 px-4 py-2.5">
-              <span className="text-[11px] font-semibold text-muted-foreground">Did you submit?</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">
+                {localDir.submission_stage === "submitted" || localDir.submission_stage === "skipped" ? "Change status?" : "Did you submit?"}
+              </span>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  disabled={stageUpdating !== null}
+                  disabled={stageUpdating !== null || localDir.submission_stage === "submitted"}
                   onClick={() => handleStageUpdate("submitted")}
-                  className="rounded border border-foreground bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground hover:brightness-95 transition-all active:translate-y-px disabled:opacity-50"
+                  className={`rounded border px-2.5 py-1 text-[11px] font-bold transition-all active:translate-y-px disabled:opacity-50 ${
+                    localDir.submission_stage === "submitted"
+                      ? "border-foreground bg-accent text-accent-foreground ring-2 ring-foreground ring-offset-1 cursor-default"
+                      : "border-foreground bg-accent text-accent-foreground hover:brightness-95"
+                  }`}
                 >
                   {stageUpdating === "submitted" ? "Saving…" : "Submitted"}
                 </button>
                 <button
                   type="button"
-                  disabled={stageUpdating !== null}
+                  disabled={stageUpdating !== null || localDir.submission_stage === "skipped"}
                   onClick={() => handleStageUpdate("skipped")}
-                  className="rounded border border-foreground/20 bg-card px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition-colors active:translate-y-px disabled:opacity-50"
+                  className={`rounded border px-2.5 py-1 text-[11px] font-semibold transition-colors active:translate-y-px disabled:opacity-50 ${
+                    localDir.submission_stage === "skipped"
+                      ? "border-destructive/40 bg-destructive/10 text-destructive ring-2 ring-destructive/40 ring-offset-1 cursor-default"
+                      : "border-foreground/20 bg-card text-muted-foreground hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
+                  }`}
                 >
                   {stageUpdating === "skipped" ? "Saving…" : "Skip"}
                 </button>

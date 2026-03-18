@@ -1,7 +1,9 @@
+import { WEB_APP_ORIGIN } from "../lib/api";
+
 export function Header() {
   return (
 
-      <a className="flex items-center gap-2.5" href="https://donkey.directory" target="_blank" rel="noopener noreferrer">
+      <a className="flex items-center gap-2.5" href={WEB_APP_ORIGIN} target="_blank" rel="noopener noreferrer">
       <img
         src="./icons/donkey.png"
         alt="Donkey Directories"

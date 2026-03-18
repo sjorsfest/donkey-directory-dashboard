@@ -4,7 +4,11 @@ import { DirectoryView } from "./DirectoryView";
 import { NotListedView } from "./NotListedView";
 import { useProjects } from "../hooks/useProjects";
 import { useDirectoryForTab } from "../hooks/useDirectoryForTab";
-import { fetchSubmissionCounts, type SubmissionCounts } from "../lib/api";
+import {
+  fetchSubmissionCounts,
+  WEB_APP_ORIGIN,
+  type SubmissionCounts,
+} from "../lib/api";
 import type { Project } from "../types";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -86,6 +90,11 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
             selectedProjectId={selectedProjectId || null}
             projectsLoading={projectsLoading}
             onSessionExpired={onSessionExpired}
+            allCompleted={
+              counts != null &&
+              counts.total_directories > 0 &&
+              counts.completed_directories >= counts.total_directories
+            }
           />
         )}
 
@@ -100,6 +109,11 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
             projectsError={projectsError}
             onSessionExpired={onSessionExpired}
             onStageUpdated={handleStageUpdated}
+            allCompleted={
+              counts != null &&
+              counts.total_directories > 0 &&
+              counts.completed_directories >= counts.total_directories
+            }
           />
         )}
 
@@ -125,7 +139,7 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
                   supportWidgetOpen: "true",
                   supportEmail: userEmail,
                 });
-                chrome.tabs.create({ url: `https://donkey.directory/?${params}` });
+                chrome.tabs.create({ url: `${WEB_APP_ORIGIN}/?${params}` });
               }}
             >
               Need help?

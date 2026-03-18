@@ -39,6 +39,8 @@ import {
 import {
   API_ROUTES,
   type ApiBrandExtractRequest,
+  type ApiProjectSubmissionCountsResponse,
+  directorySubmissionCountsPath,
   isApiDirectoryVoteChoice,
 } from "~/lib/api-contract";
 import {
@@ -68,10 +70,9 @@ type DirectoryWithStage = {
   id: string;
   name: string;
   domain: string;
-  url: string;
   category?: string | null;
-  pricing_model?: string | null;
-  link_type?: string | null;
+  is_free: boolean;
+  is_dofollow: boolean;
   submission_stage: DirectorySubmissionStage;
 };
 
@@ -85,6 +86,7 @@ type LoaderData = {
   projectDetailError: string | null;
   directories: DirectoryWithStage[];
   directoriesTotal: number;
+  submissionCounts: ApiProjectSubmissionCountsResponse | null;
 };
 
 type ActionFeedback = {
@@ -139,12 +141,7 @@ type LaunchActionData = {
 };
 
 const STAPLE_SOCIAL_CONFIGS: StapleSocialConfig[] = [
-  {
-    key: "website",
-    label: "Website",
-    placeholder: "https://example.com",
-    Icon: Globe,
-  },
+
   {
     key: "instagram",
     label: "Instagram",
@@ -209,7 +206,7 @@ const FIELD_LABEL_CLASS = "text-[0.8rem] font-bold uppercase tracking-[0.03em]";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Launch Workspace | Donkey Directories Dashboard" },
+    { title: "Project Dashboard | Donkey Directories Dashboard" },
     {
       name: "description",
       content:
@@ -275,9 +272,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   let projectDetailError: string | null = null;
   let directories: DirectoryWithStage[] = [];
   let directoriesTotal = 0;
+  let submissionCounts: ApiProjectSubmissionCountsResponse | null = null;
 
   if (selectedProjectId) {
-    const [brandProfileResult, creatorsResult, directoriesResult] = await Promise.all([
+    const [brandProfileResult, creatorsResult, directoriesResult, submissionCountsResult] = await Promise.all([
       sendAuthenticatedRequest({
         session,
         apiBaseUrl,
@@ -294,6 +292,12 @@ export async function loader({ request }: Route.LoaderArgs) {
         session,
         apiBaseUrl,
         query: { project_id: selectedProjectId, page_size: 100 },
+      }),
+      sendAuthenticatedRequest({
+        session,
+        apiBaseUrl,
+        path: directorySubmissionCountsPath(selectedProjectId),
+        method: "GET",
       }),
     ]);
 
@@ -319,6 +323,20 @@ export async function loader({ request }: Route.LoaderArgs) {
       }
     }
 
+    if (submissionCountsResult.response.ok && isRecord(submissionCountsResult.responseData)) {
+      const payload = submissionCountsResult.responseData as Record<string, unknown>;
+      if (
+        typeof payload.total_directories === "number" &&
+        typeof payload.submitted_directories === "number" &&
+        typeof payload.skipped_directories === "number" &&
+        typeof payload.completed_directories === "number"
+      ) {
+        submissionCounts = payload as ApiProjectSubmissionCountsResponse;
+      }
+    }
+
+    latestSetCookie = pickSetCookie(latestSetCookie, submissionCountsResult.setCookie);
+
     if (!brandProfileResult.response.ok || !creatorsResult.response.ok) {
       const errResult = !brandProfileResult.response.ok
         ? brandProfileResult
@@ -341,6 +359,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       projectDetailError,
       directories,
       directoriesTotal,
+      submissionCounts,
     },
     {
       headers: latestSetCookie ? { "Set-Cookie": latestSetCookie } : undefined,
@@ -407,7 +426,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function LaunchPage() {
-  const { projects, selectedProjectId, projectsError, directories, directoriesTotal } =
+  const { projects, selectedProjectId, projectsError, directories, directoriesTotal, submissionCounts } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -431,7 +450,7 @@ export default function LaunchPage() {
 
   const creatorWasCreated = searchParams.get("creator") === "created";
 
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(projects.length === 0);
   const [dialogStep, setDialogStep] = useState<1 | 2>(1);
   const [dialogProjectId, setDialogProjectId] = useState<string | null>(null);
   const [creatorFullName, setCreatorFullName] = useState("");
@@ -506,9 +525,17 @@ export default function LaunchPage() {
           <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1">
             {projects.map((project) => {
               const isActive = project.id === selectedProjectId;
-              const submittedCount = isActive ? directories.filter((d) => d.submission_stage === "submitted").length : null;
-              const inProgressCount = isActive ? directories.filter((d) => d.submission_stage === "in_progress").length : null;
-              const notSubmittedCount = isActive ? directories.filter((d) => d.submission_stage === "not_submitted").length : null;
+              const submittedCount = isActive
+                ? (submissionCounts?.submitted_directories ?? directories.filter((d) => d.submission_stage === "submitted").length)
+                : null;
+              const skippedCount = isActive
+                ? (submissionCounts?.skipped_directories ?? directories.filter((d) => d.submission_stage === "in_progress").length)
+                : null;
+              const notSubmittedCount = isActive
+                ? (submissionCounts != null
+                    ? submissionCounts.total_directories - submissionCounts.completed_directories
+                    : directories.filter((d) => d.submission_stage === "not_submitted").length)
+                : null;
               return (
                 <Link
                   key={project.id}
@@ -530,7 +557,7 @@ export default function LaunchPage() {
                       </span>
                       <span className="flex items-center gap-1 text-primary-foreground/80">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                        {inProgressCount} in progress
+                        {skippedCount} skipped
                       </span>
                       <span className="flex items-center gap-1 text-primary-foreground/60">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/30" />
@@ -562,6 +589,7 @@ export default function LaunchPage() {
               projectId={selectedProject.id}
               directories={directories}
               directoriesTotal={directoriesTotal}
+              submissionCounts={submissionCounts}
             />
           ) : (
             <SkeletonSubmissionsTable />
@@ -589,172 +617,6 @@ export default function LaunchPage() {
   );
 }
 
-// ─── Brand Profile Section ───────────────────────────────────────────────────
-
-function BrandProfileSection(props: { profile: BrandProfile; project: Project }) {
-  const { profile } = props;
-  const displayName = profile.company_name ?? props.project.name;
-
-  const socialLinks = BRAND_SOCIAL_KEYS.filter(({ key }) => {
-    const val = profile[key as keyof BrandProfile];
-    return typeof val === "string" && val.length > 0;
-  });
-
-  return (
-    <div className="grid gap-4">
-      <div>
-        <strong style={{ fontSize: "1.05rem" }}>{displayName}</strong>
-        {profile.tagline ? (
-          <p className="mt-1 text-sm italic text-muted-foreground">{profile.tagline}</p>
-        ) : null}
-        {typeof profile.extraction_confidence === "number" ? (
-          <span className="mt-1 inline-flex items-center gap-1.5 rounded-sm border-2 border-foreground bg-secondary px-2 py-[0.2rem] font-['IBM_Plex_Mono',monospace] text-[0.7rem] font-bold">
-            {Math.round(profile.extraction_confidence * 100)}% extraction confidence
-          </span>
-        ) : null}
-      </div>
-
-      {profile.email || profile.website || profile.phone ? (
-        <div className={DETAIL_SECTION_CLASS}>
-          <p className={DETAIL_SECTION_LABEL_CLASS}>Contact</p>
-          <div className="grid gap-1">
-            {profile.website ? (
-              <a
-                href={profile.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm"
-              >
-                <Globe className="h-3.5 w-3.5 shrink-0" />
-                {profile.display_website ?? profile.website}
-                <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
-              </a>
-            ) : null}
-            {profile.email ? (
-              <span className="text-sm text-muted-foreground">{profile.email}</span>
-            ) : null}
-            {profile.phone ? (
-              <span className="text-sm text-muted-foreground">{profile.phone}</span>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      {socialLinks.length > 0 ? (
-        <div className={DETAIL_SECTION_CLASS}>
-          <p className={DETAIL_SECTION_LABEL_CLASS}>Social</p>
-          <div className="flex flex-wrap gap-1.5">
-            {socialLinks.map(({ key, label, Icon }) => {
-              const url = profile[key as keyof BrandProfile] as string;
-              return (
-                <a
-                  key={key}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={SOCIAL_ICON_LINK_CLASS}
-                  title={label}
-                >
-                  <Icon style={{ width: "1rem", height: "1rem" }} />
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {profile.business_tags && profile.business_tags.length > 0 ? (
-        <div className={DETAIL_SECTION_CLASS}>
-          <p className={DETAIL_SECTION_LABEL_CLASS}>Tags</p>
-          <div className={TAG_LIST_CLASS}>
-            {profile.business_tags.map((tag) => (
-              <Badge key={tag} variant="accent">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {profile.tone_attributes && profile.tone_attributes.length > 0 ? (
-        <div className={DETAIL_SECTION_CLASS}>
-          <p className={DETAIL_SECTION_LABEL_CLASS}>Tone</p>
-          <div className={TAG_LIST_CLASS}>
-            {profile.tone_attributes.map((tone) => (
-              <Badge key={tone} variant="secondary">
-                {tone}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-// ─── Creator Card ─────────────────────────────────────────────────────────────
-
-function CreatorCard(props: { creator: Creator; projectId: string }) {
-  const { creator } = props;
-
-  const socialLinks = [
-    { key: "instagram", Icon: Instagram, url: creator.instagram },
-    { key: "linkedin", Icon: Linkedin, url: creator.linkedin },
-    { key: "twitter", Icon: Twitter, url: creator.twitter },
-    { key: "youtube", Icon: Youtube, url: creator.youtube },
-    { key: "tiktok", Icon: Music2, url: creator.tiktok },
-    { key: "website", Icon: Globe, url: creator.website },
-  ].filter((s): s is typeof s & { url: string } => typeof s.url === "string" && s.url.length > 0);
-
-  return (
-    <div className="grid gap-2 rounded-lg border-2 border-foreground bg-card p-4 transition-[transform,box-shadow] duration-100 hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-sm)]">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="m-0 text-[0.95rem] font-extrabold">{creator.full_name}</p>
-          {creator.role ? <small className={MUTED_TEXT_CLASS}>{creator.role}</small> : null}
-        </div>
-        <Link
-          to={`/creators?project=${encodeURIComponent(props.projectId)}`}
-          className={DASHBOARD_LINK_BUTTON_SMALL_CLASS}
-        >
-          Edit
-        </Link>
-      </div>
-
-      {creator.bio ? (
-        <p className="m-0 overflow-hidden text-sm text-muted-foreground [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
-          {creator.bio}
-        </p>
-      ) : null}
-
-      {socialLinks.length > 0 ? (
-        <div className="mt-0.5 flex flex-wrap gap-1.5">
-          {socialLinks.map(({ key, Icon, url }) => (
-            <a
-              key={key}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={SOCIAL_ICON_LINK_CLASS}
-            >
-              <Icon className="h-3.5 w-3.5" />
-            </a>
-          ))}
-        </div>
-      ) : null}
-
-      {creator.expertise_tags && creator.expertise_tags.length > 0 ? (
-        <div className={`${TAG_LIST_CLASS} mt-0.5`}>
-          {creator.expertise_tags.map((tag) => (
-            <Badge key={tag} variant="secondary" style={{ fontSize: "0.7rem" }}>
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 // ─── Create Project Dialog ────────────────────────────────────────────────────
 
@@ -805,11 +667,11 @@ function CreateProjectDialog(props: {
             />
           </div>
           <DialogTitle>
-            {props.step === 1 ? "Create new project" : "Add creator (optional)"}
+            {props.step === 1 ? "Add your domain" : "Add creator (optional)"}
           </DialogTitle>
           <DialogDescription>
             {props.step === 1
-              ? "Enter a domain URL to extract brand details and create a project."
+              ? "Add your domain so you can track where you've submitted your product across directories."
               : "Add a creator to associate with this project. You can skip this step."}
           </DialogDescription>
         </DialogHeader>
@@ -986,137 +848,6 @@ const STAGE_LABELS: Record<DirectorySubmissionStage, string> = {
   submitted: "Submitted",
 };
 
-function DirectorySubmissionsSection(props: {
-  projectId: string;
-  directories: DirectoryWithStage[];
-  directoriesTotal: number;
-}) {
-  const { directories, directoriesTotal, projectId } = props;
-
-  return (
-    <section className="mt-5 mb-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className={STUDIO_KICKER_CLASS}>Submission tracker</p>
-          <h2 className="m-0 text-lg font-extrabold leading-tight">
-            Directory submissions
-            {directoriesTotal > directories.length ? (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                (showing {directories.length} of {directoriesTotal})
-              </span>
-            ) : null}
-          </h2>
-        </div>
-      </div>
-
-      {/* Directory table */}
-      {directories.length === 0 ? (
-        <div className={EMPTY_STATE_CLASS}>
-          <strong className="text-[0.9rem]">No directories found.</strong>
-          <p className="m-0 text-sm text-muted-foreground">
-            Directories will appear here once they are available.
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-lg border-2 border-foreground overflow-hidden shadow-[var(--shadow-md)]">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b-2 border-foreground bg-secondary">
-                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
-                    Directory
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
-                    Domain
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {directories.map((directory, index) => (
-                  <tr
-                    key={directory.id}
-                    className={cn(
-                      "border-b border-foreground/10 bg-card transition-colors hover:bg-secondary/40",
-                      index === directories.length - 1 && "border-b-0",
-                    )}
-                  >
-                    <td className="px-4 py-3">
-                      <a
-                        href={directory.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-foreground no-underline hover:underline"
-                      >
-                        {directory.name}
-                      </a>
-                    </td>
-                    <td className="px-4 py-3 font-['IBM_Plex_Mono',monospace] text-[0.75rem] text-muted-foreground hidden sm:table-cell">
-                      {directory.domain}
-                    </td>
-                    <td className="px-4 py-3">
-                      <DirectoryStageSelector
-                        directory={directory}
-                        projectId={projectId}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-
-function DirectoryStageSelector(props: {
-  directory: DirectoryWithStage;
-  projectId: string;
-}) {
-  const fetcher = useFetcher<typeof action>();
-  const optimisticStage = fetcher.formData?.get("submission_stage") as DirectorySubmissionStage | null;
-  const stage = optimisticStage ?? props.directory.submission_stage;
-  const isPending = fetcher.state !== "idle";
-
-  const stageClasses: Record<DirectorySubmissionStage, string> = {
-    submitted: "border-emerald-500 bg-emerald-50 text-emerald-700",
-    in_progress: "border-amber-500 bg-amber-50 text-amber-700",
-    not_submitted: "border-foreground/20 bg-card text-muted-foreground",
-  };
-
-  return (
-    <select
-      value={stage}
-      disabled={isPending}
-      className={cn(
-        "rounded-lg border-2 px-2 py-1 text-xs font-bold cursor-pointer transition-opacity",
-        stageClasses[stage],
-        isPending && "opacity-50",
-      )}
-      onChange={(e) => {
-        const formData = new FormData();
-        formData.set("intent", "submission_stage_update");
-        formData.set("project_id", props.projectId);
-        formData.set("directory_id", props.directory.id);
-        formData.set("submission_stage", e.target.value);
-        fetcher.submit(formData, { method: "post" });
-      }}
-    >
-      {(["not_submitted", "in_progress", "submitted"] as DirectorySubmissionStage[]).map(
-        (s) => (
-          <option key={s} value={s}>
-            {STAGE_LABELS[s]}
-          </option>
-        ),
-      )}
-    </select>
-  );
-}
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 

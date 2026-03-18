@@ -6,7 +6,7 @@ import { sendAuthenticatedRequest } from "~/lib/authenticated-api.server";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { getSession } from "~/lib/session.server";
 import { HomeHero } from "~/components/home-hero";
-import { DirectoriesTable, DIRECTORIES } from "~/components/directories-table";
+import { MockDirectoriesTable, DIRECTORIES } from "~/components/directories-table";
 import { HowItWorks } from "~/components/how-it-works";
 
 type LoaderData = {
@@ -71,7 +71,7 @@ export default function HomePage() {
         directoryCount={directoryCount}
         localDirectoryCount={DIRECTORIES.length}
       />
-      <DirectoriesTable
+      <MockDirectoriesTable
         isAuthenticated={isAuthenticated}
         directoryCount={directoryCount}
       />

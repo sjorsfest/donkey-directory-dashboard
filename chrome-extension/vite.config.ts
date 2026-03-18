@@ -7,6 +7,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [tailwindcss(), react(), tsconfigPaths()],
   root: __dirname,
+  envDir: resolve(__dirname, ".."),
   // Relative asset URLs are required so popup/side panel works from extension files.
   base: "./",
   build: {

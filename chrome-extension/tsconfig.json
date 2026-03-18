@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "types": ["chrome"],
+    "types": ["chrome", "vite/client"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["../*"]

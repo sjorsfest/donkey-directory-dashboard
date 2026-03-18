@@ -10,6 +10,7 @@ interface NotListedViewProps {
   selectedProjectId: string | null;
   projectsLoading: boolean;
   onSessionExpired: () => void;
+  allCompleted?: boolean;
 }
 
 export function NotListedView({
@@ -17,6 +18,7 @@ export function NotListedView({
   selectedProjectId,
   projectsLoading,
   onSessionExpired,
+  allCompleted = false,
 }: NotListedViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function NotListedView({
     setIsLoading(true);
     setError(null);
     try {
-      const result = await fetchRandomDirectory(selectedProjectId, onSessionExpired);
+      const result = await fetchRandomDirectory(allCompleted ? null : selectedProjectId, onSessionExpired);
       if (!result) {
         setError("Could not find a random directory. Try again.");
         return;

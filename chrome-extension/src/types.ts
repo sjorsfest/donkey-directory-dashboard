@@ -62,18 +62,33 @@ export interface DirectoryDetails {
   id: string;
   name: string;
   domain: string;
-  description: string | null;
-  domain_authority: number | null;
-  quality_score: number | null;
+  url?: string | null;
+  description?: string | null;
+  category?: string | null;
+  domain_authority?: number | null;
+  quality_score?: number | null;
   is_free: boolean;
   is_dofollow: boolean;
+  pricing_model?: string | null;
+  price_usd?: number | null;
+  pricing_details?: string | null;
+  requires_approval?: boolean | null;
+  typical_approval_time_days?: number | null;
+  monthly_traffic?: number | null;
+  submission_url?: string | null;
+  submission_guidelines?: string | null;
+  status?: string | null;
+  language?: string | null;
+  country?: string | null;
+  logo_url?: string | null;
   submission_stage: "not_submitted" | "in_progress" | "submitted" | "skipped";
   thumbs_up_count: number;
   thumbs_down_count: number;
   total_votes: number;
+  thumbs_up_percentage?: number | null;
   my_vote: "up" | "down" | null;
-  submission_url: string | null;
-  logo_url: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface DirectoryRandomResponse {

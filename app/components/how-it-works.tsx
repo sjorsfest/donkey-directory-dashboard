@@ -2,13 +2,14 @@ import { motion } from "framer-motion";
 import { Check, Chrome, CheckCheck, ListChecks } from "lucide-react";
 import { Link } from "react-router";
 
+import { MAIN_DOMAIN } from "@/shared/lib/main-domain";
 import { Button } from "@/shared/ui/button";
 
 // ─── Extension popup mockup ──────────────────────────────────────────────────
 
 const EXTENSION_FIELDS = [
   { label: "App name",  value: "Donkey Directories",          done: true  },
-  { label: "Website",   value: "donkey.directory",            done: true  },
+  { label: "Website",   value: MAIN_DOMAIN,                   done: true  },
   { label: "Tagline",   value: "Submit to 100+ dirs without", done: false },
   { label: "Tags",      value: "SaaS · Productivity · Tools", done: true  },
 ] as const;
@@ -160,7 +161,7 @@ export function HowItWorks() {
             </p>
             <div className="flex items-center gap-2 rounded-lg border border-foreground/20 bg-card px-3 py-2 mb-4">
               <span className="text-xs font-mono font-semibold text-foreground/70 flex-1">
-                donkey.directory
+                {MAIN_DOMAIN}
               </span>
               <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
             </div>

@@ -5,7 +5,8 @@
       "Bash(npm install:*)",
       "Bash(npm run ext:build:*)",
       "WebFetch(domain:jobalert.world)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(head -c 3000 \"/Users/jeroenmeij/Desktop/personal/donkey-directory-dashboard/public/directories \\(3\\).json\")"
     ]
   }
 }

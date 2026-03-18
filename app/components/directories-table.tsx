@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link, useFetcher } from "react-router";
+import type { ApiProjectSubmissionCountsResponse } from "~/lib/api-contract";
 import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   LayoutList,
   LockKeyhole,
   SlidersHorizontal,
@@ -91,6 +91,7 @@ type Directory = {
   pricingLabel: PricingBadgeLabel;
   linkType: LinkType;
   domainAuthority: number;
+  logoUrl?: string | null;
   language: string;
   country: string;
   status: DirectoryStatus;
@@ -107,7 +108,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "FREE",
     pricingLabel: "Free",
     linkType: "NOFOLLOW",
-    domainAuthority: 92,
+    domainAuthority: 91,
+    logoUrl: "https://public.donkey.directory/directories/producthunt.com/logos/manual/20260318T135154Z_c4dede0491f223be.png",
     language: "English",
     country: "United States",
     status: "ACTIVE",
@@ -115,14 +117,15 @@ export const DIRECTORIES: Directory[] = [
   {
     name: "Hacker News",
     url: "https://news.ycombinator.com/show",
-    domain: "ycombinator.com",
+    domain: "news.ycombinator.com",
     description: "Community-driven tech and startup discussions.",
     category: "COMMUNITY",
     categoryLabel: "Tech",
     pricingModel: "FREE",
     pricingLabel: "Free",
     linkType: "NOFOLLOW",
-    domainAuthority: 94,
+    domainAuthority: 91,
+    logoUrl: "https://public.donkey.directory/directories/news.ycombinator.com/logos/manual/20260318T134906Z_ced6a2c2fca2d349.svg",
     language: "English",
     country: "United States",
     status: "ACTIVE",
@@ -137,7 +140,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "PAID",
     pricingLabel: "Freemium",
     linkType: "DOFOLLOW",
-    domainAuthority: 90,
+    domainAuthority: 91,
+    logoUrl: "https://public.donkey.directory/directories/g2.com/logos/manual/20260318T135014Z_d1df4a696d585a04.png",
     language: "English",
     country: "United States",
     status: "ACTIVE",
@@ -167,7 +171,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "PAID",
     pricingLabel: "Paid",
     linkType: "CONDITIONAL_DOFOLLOW",
-    domainAuthority: 79,
+    domainAuthority: 83,
+    logoUrl: "https://public.donkey.directory/directories/appsumo.com/logos/20260317T090757Z_5dc43d57575191cd8d2b.webp",
     language: "English",
     country: "United States",
     status: "ACTIVE",
@@ -182,7 +187,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "PAID",
     pricingLabel: "Freemium",
     linkType: "NOFOLLOW",
-    domainAuthority: 72,
+    domainAuthority: 75,
+    logoUrl: "https://public.donkey.directory/directories/betalist.com/logos/20260317T090803Z_1c4f48482c6a33e43567.webp",
     language: "English",
     country: "United Kingdom",
     status: "ACTIVE",
@@ -197,7 +203,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "FREE",
     pricingLabel: "Free",
     linkType: "DOFOLLOW",
-    domainAuthority: 58,
+    domainAuthority: 52,
+    logoUrl: "https://public.donkey.directory/directories/launchingnext.com/logos/20260317T090920Z_f0178b3b447ab7b6874c.webp",
     language: "English",
     country: "United States",
     status: "PENDING_REVIEW",
@@ -212,7 +219,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "FREE",
     pricingLabel: "Free",
     linkType: "DOFOLLOW",
-    domainAuthority: 67,
+    domainAuthority: 77,
+    logoUrl: "https://public.donkey.directory/directories/saashub.com/logos/20260317T090955Z_b9b2a9df86e9265f6169.webp",
     language: "English",
     country: "Netherlands",
     status: "ACTIVE",
@@ -227,7 +235,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "PAID",
     pricingLabel: "Freemium",
     linkType: "NOFOLLOW",
-    domainAuthority: 64,
+    domainAuthority: 77,
+    logoUrl: "https://public.donkey.directory/directories/theresanaiforthat.com/logos/20260317T091050Z_6f4a648a3e6efb1ff01f.webp",
     language: "English",
     country: "United States",
     status: "ACTIVE",
@@ -257,7 +266,8 @@ export const DIRECTORIES: Directory[] = [
     pricingModel: "FREE",
     pricingLabel: "Free",
     linkType: "DOFOLLOW",
-    domainAuthority: 55,
+    domainAuthority: 58,
+    logoUrl: "https://public.donkey.directory/directories/toolfinder.co/logos/20260317T091102Z_af20a5f1bb7506ccfc74.webp",
     language: "English",
     country: "United Kingdom",
     status: "INACTIVE",
@@ -346,11 +356,26 @@ function SignupBadge({ status }: { status: SignupStatus }) {
   );
 }
 
-function VoteButtons({ directoryId }: { directoryId: string }) {
+function VoteButtons({
+  directoryId,
+  initialVote,
+  thumbsUpCount,
+  thumbsDownCount,
+}: {
+  directoryId: string;
+  initialVote: "up" | "down" | null;
+  thumbsUpCount: number;
+  thumbsDownCount: number;
+}) {
   const fetcher = useFetcher();
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
+  const [vote, setVote] = useState<"up" | "down" | null>(initialVote);
   const optimisticVote = fetcher.formData?.get("vote") as "up" | "down" | "" | undefined;
   const activeVote = optimisticVote !== undefined ? (optimisticVote || null) : vote;
+
+  const upCount = optimisticVote === "up" ? thumbsUpCount + (initialVote === "up" ? 0 : 1) :
+    optimisticVote === "" && initialVote === "up" ? thumbsUpCount - 1 : thumbsUpCount;
+  const downCount = optimisticVote === "down" ? thumbsDownCount + (initialVote === "down" ? 0 : 1) :
+    optimisticVote === "" && initialVote === "down" ? thumbsDownCount - 1 : thumbsDownCount;
 
   function handleVote(next: "up" | "down") {
     const newVote = activeVote === next ? null : next;
@@ -362,26 +387,28 @@ function VoteButtons({ directoryId }: { directoryId: string }) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2">
       <button
         onClick={() => handleVote("up")}
         className={cn(
-          "rounded p-1 transition-colors hover:bg-primary/10",
+          "flex items-center gap-1 rounded p-1 transition-colors hover:bg-primary/10",
           activeVote === "up" ? "text-green-600" : "text-muted-foreground"
         )}
         aria-label="Thumbs up"
       >
         <ThumbsUp className="h-3.5 w-3.5" />
+        {upCount > 0 && <span className="text-xs font-medium">{upCount}</span>}
       </button>
       <button
         onClick={() => handleVote("down")}
         className={cn(
-          "rounded p-1 transition-colors hover:bg-primary/10",
+          "flex items-center gap-1 rounded p-1 transition-colors hover:bg-primary/10",
           activeVote === "down" ? "text-red-500" : "text-muted-foreground"
         )}
         aria-label="Thumbs down"
       >
         <ThumbsDown className="h-3.5 w-3.5" />
+        {downCount > 0 && <span className="text-xs font-medium">{downCount}</span>}
       </button>
     </div>
   );
@@ -392,7 +419,7 @@ type Props = {
   directoryCount: number | null;
 };
 
-export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
+export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props) {
   const [statuses, setStatuses] = useState<Record<string, SignupStatus>>({});
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -844,12 +871,12 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
         <Table>
           <TableHeader>
             <TableRow className="border-b-2 border-foreground">
+              <TableHead className="hidden sm:table-cell w-14">DR</TableHead>
               <TableHead>Name</TableHead>
               <TableHead className="hidden sm:table-cell">Category</TableHead>
               <TableHead className="hidden sm:table-cell">Pricing</TableHead>
               <TableHead className="hidden sm:table-cell">Dofollow</TableHead>
               <TableHead className="hidden sm:table-cell">Signed up</TableHead>
-              <TableHead className="text-right pr-5">Visit</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -885,8 +912,20 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
                     STATUS_ROW_CLASS[status] || (i % 2 === 0 ? "" : "bg-secondary/30")
                   }`}
                 >
+                  <TableCell className="hidden py-3 sm:table-cell w-14">
+                    <DaCircle value={dir.domainAuthority} />
+                  </TableCell>
                   <TableCell className="font-semibold py-3.5">
-                    {dir.name}
+                    <a
+                      href={buildDirectoryHref(dir.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 hover:underline underline-offset-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DirectoryLogo name={dir.name} logoUrl={dir.logoUrl} />
+                      {dir.name}
+                    </a>
                   </TableCell>
                   <TableCell className="hidden py-3.5 sm:table-cell">
                     <Badge variant="outline" className="text-xs font-medium">
@@ -925,19 +964,6 @@ export function DirectoriesTable({ isAuthenticated, directoryCount }: Props) {
                   </TableCell>
                   <TableCell className="hidden py-3.5 sm:table-cell">
                     <SignupBadge status={status} />
-                  </TableCell>
-                  <TableCell className="py-3.5 text-right pr-5">
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <a href={dir.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Visit
-                      </a>
-                    </Button>
                   </TableCell>
                 </TableRow>
               );
@@ -1084,29 +1110,42 @@ function formatEnumToken(token: string): string {
 
 // ─── Project Submissions Table ────────────────────────────────────────────────
 
-export type DirectorySubmissionStage = "not_submitted" | "in_progress" | "submitted";
+export type DirectorySubmissionStage = "not_submitted" | "in_progress" | "submitted" | "skipped";
 
 export type DirectoryWithStage = {
   id: string;
   name: string;
   domain: string;
-  url: string;
   category?: string | null;
-  pricing_model?: string | null;
-  link_type?: string | null;
+  is_free: boolean;
+  is_dofollow: boolean;
   submission_stage: DirectorySubmissionStage;
+  domain_authority?: number | null;
+  logo_url?: string | null;
+  my_vote?: "up" | "down" | null;
+  thumbs_up_count?: number;
+  thumbs_down_count?: number;
 };
 
 const SUBMISSION_STAGE_LABELS: Record<DirectorySubmissionStage, string> = {
   not_submitted: "Not submitted",
   in_progress: "In progress",
   submitted: "Submitted",
+  skipped: "Skipped",
 };
 
 const SUBMISSION_STAGE_CLASSES: Record<DirectorySubmissionStage, string> = {
   submitted: "border-emerald-500 bg-emerald-50 text-emerald-700",
   in_progress: "border-amber-500 bg-amber-50 text-amber-700",
   not_submitted: "border-foreground/20 bg-card text-muted-foreground",
+  skipped: "border-foreground/20 bg-card text-muted-foreground",
+};
+
+const SUBMISSION_STAGE_ROW_CLASS: Record<DirectorySubmissionStage, string> = {
+  submitted: "bg-emerald-50/50 hover:bg-emerald-50",
+  in_progress: "bg-amber-50/50 hover:bg-amber-50",
+  not_submitted: "bg-card hover:bg-secondary/40",
+  skipped: "bg-foreground/[0.03] hover:bg-foreground/[0.06]",
 };
 
 const STAT_CARD_COLORS = {
@@ -1115,46 +1154,350 @@ const STAT_CARD_COLORS = {
   muted: "border-l-foreground/20 bg-card text-muted-foreground",
 } as const;
 
+function daScoreColor(value: number): string {
+  // hue 0 = red, 120 = green; scale linearly with score
+  const hue = Math.round((value / 100) * 120);
+  return `hsl(${hue}, 72%, 42%)`;
+}
+
+function DaCircle({ value }: { value: number | null | undefined }) {
+  const size = 32;
+  const stroke = 3.5;
+  const r = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * r;
+  const pct = value != null ? Math.min(Math.max(value, 0), 100) / 100 : 0;
+  const dash = circumference * pct;
+  const hasValue = value != null;
+  const color = hasValue ? daScoreColor(value) : undefined;
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          className="stroke-foreground/10"
+        />
+        {hasValue && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            strokeWidth={stroke}
+            strokeDasharray={`${dash} ${circumference}`}
+            strokeLinecap="round"
+            style={{ stroke: color }}
+          />
+        )}
+        <text
+          x={size / 2}
+          y={size / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          transform={`rotate(90, ${size / 2}, ${size / 2})`}
+          className="font-bold"
+          style={{ fontSize: 9, fill: color ?? "currentColor" }}
+        >
+          {hasValue ? value : "—"}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+function buildDirectoryHref(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set("ref", "donkeydirectories");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function DirectoryLogo({ name, logoUrl }: { name: string; logoUrl?: string | null }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const src = logoUrl && !imgFailed ? logoUrl : null;
+  const letter = name.charAt(0).toUpperCase();
+
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        onError={() => setImgFailed(true)}
+        className="h-6 w-6 rounded-full border border-foreground/10 object-contain bg-card flex-shrink-0"
+      />
+    );
+  }
+
+  return (
+    <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-foreground/10 bg-secondary text-[10px] font-bold text-foreground">
+      {letter}
+    </span>
+  );
+}
+
+type SubmissionFilters = {
+  name: string;
+  category: string;
+  isFree: "ALL" | "true" | "false";
+  isDofollow: "ALL" | "true" | "false";
+  stage: DirectorySubmissionStage | "ALL";
+};
+
+const DEFAULT_SUBMISSION_FILTERS: SubmissionFilters = {
+  name: "",
+  category: "ALL",
+  isFree: "ALL",
+  isDofollow: "ALL",
+  stage: "ALL",
+};
+
+function getSubmissionFilterCount(filters: SubmissionFilters): number {
+  let count = 0;
+  if (filters.name.trim().length > 0) count++;
+  if (filters.category !== "ALL") count++;
+  if (filters.isFree !== "ALL") count++;
+  if (filters.isDofollow !== "ALL") count++;
+  if (filters.stage !== "ALL") count++;
+  return count;
+}
+
 export function ProjectSubmissionsTable(props: {
   projectId: string;
   directories: DirectoryWithStage[];
   directoriesTotal: number;
+  submissionCounts: ApiProjectSubmissionCountsResponse | null;
 }) {
-  const { directories, directoriesTotal, projectId } = props;
+  const { directories, directoriesTotal, projectId, submissionCounts } = props;
 
-  const submitted = directories.filter((d) => d.submission_stage === "submitted").length;
-  const inProgress = directories.filter((d) => d.submission_stage === "in_progress").length;
-  const notSubmitted = directories.filter((d) => d.submission_stage === "not_submitted").length;
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<SubmissionFilters>(DEFAULT_SUBMISSION_FILTERS);
+  const [draftFilters, setDraftFilters] = useState<SubmissionFilters>(DEFAULT_SUBMISSION_FILTERS);
+
+  const activeFilterCount = useMemo(() => getSubmissionFilterCount(filters), [filters]);
+
+  const visibleDirectories = useMemo(() => {
+    const nameNeedle = normalizeForSearch(filters.name);
+    return directories.filter((d) => {
+      if (nameNeedle.length > 0 && !normalizeForSearch(d.name).includes(nameNeedle)) return false;
+      if (filters.category !== "ALL" && d.category !== filters.category) return false;
+      if (filters.isFree !== "ALL" && String(d.is_free) !== filters.isFree) return false;
+      if (filters.isDofollow !== "ALL" && String(d.is_dofollow) !== filters.isDofollow) return false;
+      if (filters.stage !== "ALL" && d.submission_stage !== filters.stage) return false;
+      return true;
+    });
+  }, [directories, filters]);
+
+  const totalCount = submissionCounts?.total_directories ?? directoriesTotal;
+  const submittedCount = submissionCounts?.submitted_directories ?? null;
+  const skippedCount = submissionCounts?.skipped_directories ?? null;
+  const notSubmittedCount =
+    submissionCounts != null
+      ? submissionCounts.total_directories - submissionCounts.completed_directories
+      : null;
+
+  function openFilterDialog(open: boolean) {
+    setIsFilterDialogOpen(open);
+    if (open) setDraftFilters(filters);
+  }
+
+  function applyFilters() {
+    setFilters(draftFilters);
+    setIsFilterDialogOpen(false);
+  }
+
+  function clearFilters() {
+    setFilters(DEFAULT_SUBMISSION_FILTERS);
+    setDraftFilters(DEFAULT_SUBMISSION_FILTERS);
+  }
 
   return (
-    <section>
-      <div className="mb-4">
-        <p className="text-[0.8rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
-          Submission tracker
-        </p>
-        <h2 className="m-0 text-lg font-extrabold leading-tight">
-          {directoriesTotal > directories.length ? (
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
+    <div className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
+      {/* Table header bar */}
+      <div className="flex items-center justify-between gap-4 border-b-2 border-foreground px-5 py-4">
+        <div className="flex items-center gap-3">
+          <LayoutList size={18} />
+          <h2 className="text-base font-bold">Submission tracker</h2>
+          <span className="inline-flex items-center rounded-full border-2 border-foreground bg-secondary px-2.5 py-0.5 text-xs font-bold">
+            {totalCount}
+          </span>
+          {directoriesTotal > directories.length && (
+            <span className="text-xs text-muted-foreground">
               (showing {directories.length} of {directoriesTotal})
             </span>
-          ) : null}
-        </h2>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {submissionCounts != null && (
+            <div className="hidden sm:flex items-center gap-3 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 text-emerald-700">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                {submittedCount} submitted
+              </span>
+              <span className="flex items-center gap-1.5 text-amber-700">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+                {skippedCount} skipped
+              </span>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-foreground/30" />
+                {notSubmittedCount} not submitted
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                Clear
+              </Button>
+            )}
+            <Dialog open={isFilterDialogOpen} onOpenChange={openFilterDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Badge variant="secondary" className="min-w-5 justify-center px-1.5 py-0">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Filter directories</DialogTitle>
+                  <DialogDescription>
+                    Narrow down the list by name, category, pricing, link type, or submission status.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="sf-name">Name</Label>
+                    <Input
+                      id="sf-name"
+                      value={draftFilters.name}
+                      onChange={(e) => setDraftFilters((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Partial match"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select
+                      value={draftFilters.category}
+                      onValueChange={(v) => setDraftFilters((prev) => ({ ...prev, category: v }))}
+                    >
+                      <SelectTrigger><SelectValue placeholder="All categories" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All categories</SelectItem>
+                        {CATEGORY_OPTIONS.map((c) => (
+                          <SelectItem key={c} value={c}>{formatEnumToken(c)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Pricing</Label>
+                    <Select
+                      value={draftFilters.isFree}
+                      onValueChange={(v) => setDraftFilters((prev) => ({ ...prev, isFree: v as SubmissionFilters["isFree"] }))}
+                    >
+                      <SelectTrigger><SelectValue placeholder="All pricing" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All pricing</SelectItem>
+                        <SelectItem value="true">Free</SelectItem>
+                        <SelectItem value="false">Paid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Dofollow</Label>
+                    <Select
+                      value={draftFilters.isDofollow}
+                      onValueChange={(v) => setDraftFilters((prev) => ({ ...prev, isDofollow: v as SubmissionFilters["isDofollow"] }))}
+                    >
+                      <SelectTrigger><SelectValue placeholder="All types" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All types</SelectItem>
+                        <SelectItem value="true">Dofollow</SelectItem>
+                        <SelectItem value="false">Nofollow</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select
+                      value={draftFilters.stage}
+                      onValueChange={(v) =>
+                        setDraftFilters((prev) => ({ ...prev, stage: v as SubmissionFilters["stage"] }))
+                      }
+                    >
+                      <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All statuses</SelectItem>
+                        {(["not_submitted", "in_progress", "submitted", "skipped"] as DirectorySubmissionStage[]).map((s) => (
+                          <SelectItem key={s} value={s}>{SUBMISSION_STAGE_LABELS[s]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" onClick={clearFilters}>Reset</Button>
+                  <Button onClick={applyFilters}>Apply filters</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       </div>
 
+      {submissionCounts != null && (notSubmittedCount ?? 0) > 0 && (
+        <div className="border-b border-border/60 bg-muted/40 px-5 py-2 text-xs text-muted-foreground">
+          <a
+            href="https://chromewebstore.google.com/detail/donkey-directories/blphoelcahjoemkagpmeabpedloiepnm"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity"
+          >
+            Get the Chrome extension
+          </a>{" "}
+          to autofill forms, update statuses, and move to the next directory automatically.
+        </div>
+      )}
 
-      {directories.length === 0 ? (
-        <div className="grid gap-2 rounded-lg border-2 border-foreground border-l-4 border-l-muted-foreground bg-card p-4">
-          <strong className="text-[0.9rem]">No directories found.</strong>
+      {visibleDirectories.length === 0 ? (
+        <div className="grid gap-2 p-5 border-l-4 border-l-muted-foreground">
+          <strong className="text-[0.9rem]">
+            {directories.length === 0 ? "No directories found." : "No directories match your filters."}
+          </strong>
           <p className="m-0 text-sm text-muted-foreground">
-            Directories will appear here once they are available for this project.
+            {directories.length === 0
+              ? "Directories will appear here once they are available for this project."
+              : "Try adjusting or clearing your filters."}
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border-2 border-foreground overflow-hidden shadow-[4px_4px_0_hsl(var(--foreground))]">
+        <div className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b-2 border-foreground bg-secondary">
+                  <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell w-14">
+                    DR
+                  </th>
                   <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
                     Directory
                   </th>
@@ -1173,22 +1516,31 @@ export function ProjectSubmissionsTable(props: {
                   <th className="px-4 py-2.5 text-left text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground hidden sm:table-cell">
                     Vote
                   </th>
-                  <th className="px-4 py-2.5 text-right text-[0.7rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
-                    Visit
-                  </th>
                 </tr>
               </thead>
               <tbody>
-                {directories.map((directory, index) => (
+                {visibleDirectories.map((directory, index) => (
                   <tr
                     key={directory.id}
                     className={cn(
-                      "border-b border-foreground/10 bg-card transition-colors hover:bg-secondary/40",
-                      index === directories.length - 1 && "border-b-0",
+                      "border-b border-foreground/10 transition-colors",
+                      SUBMISSION_STAGE_ROW_CLASS[directory.submission_stage],
+                      index === visibleDirectories.length - 1 && "border-b-0",
                     )}
                   >
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <DaCircle value={directory.domain_authority} />
+                    </td>
                     <td className="px-4 py-3 font-semibold">
-                      {directory.name}
+                      <a
+                        href={buildDirectoryHref(`https://${directory.domain}`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 hover:underline underline-offset-2"
+                      >
+                        <DirectoryLogo name={directory.name} logoUrl={directory.logo_url} />
+                        {directory.name}
+                      </a>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       {directory.category ? (
@@ -1198,22 +1550,17 @@ export function ProjectSubmissionsTable(props: {
                       ) : null}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      {directory.pricing_model === "FREE" ? (
+                      {directory.is_free ? (
                         <Badge variant="default">Free</Badge>
-                      ) : directory.pricing_model === "PAID" ? (
+                      ) : (
                         <Badge variant="accent">Paid</Badge>
-                      ) : null}
+                      )}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      {directory.link_type === "DOFOLLOW" ? (
+                      {directory.is_dofollow ? (
                         <Badge variant="default" className="gap-1.5">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
                           Yes
-                        </Badge>
-                      ) : directory.link_type === "CONDITIONAL_DOFOLLOW" ? (
-                        <Badge variant="secondary" className="gap-1.5">
-                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                          Conditional
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="gap-1.5 text-muted-foreground">
@@ -1226,15 +1573,12 @@ export function ProjectSubmissionsTable(props: {
                       <SubmissionStageSelector directory={directory} projectId={projectId} />
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <VoteButtons directoryId={directory.id} />
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button asChild size="sm" variant="outline">
-                        <a href={directory.url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          Visit
-                        </a>
-                      </Button>
+                      <VoteButtons
+                        directoryId={directory.id}
+                        initialVote={directory.my_vote ?? null}
+                        thumbsUpCount={directory.thumbs_up_count ?? 0}
+                        thumbsDownCount={directory.thumbs_down_count ?? 0}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -1243,7 +1587,7 @@ export function ProjectSubmissionsTable(props: {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -1289,7 +1633,7 @@ function SubmissionStageSelector(props: { directory: DirectoryWithStage; project
         fetcher.submit(formData, { method: "post" });
       }}
     >
-      {(["not_submitted", "in_progress", "submitted"] as DirectorySubmissionStage[]).map((s) => (
+      {(["not_submitted", "in_progress", "submitted", "skipped"] as DirectorySubmissionStage[]).map((s) => (
         <option key={s} value={s}>
           {SUBMISSION_STAGE_LABELS[s]}
         </option>

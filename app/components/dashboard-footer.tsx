@@ -35,7 +35,7 @@ export function DashboardFooter() {
                 Home
               </Link>
               <Link className={FOOTER_LINK_CLASS} to="/dashboard">
-                Launch Workspace
+                Submission Tracker
               </Link>
             </div>
           </div>

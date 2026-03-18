@@ -5,6 +5,7 @@ import {
   setUserEmail,
 } from "./storage";
 import { normalizeAvailablePacks } from "./billing";
+import { MAIN_ORIGIN } from "@/shared/lib/main-domain";
 import type {
   Project,
   FillFormResponse,
@@ -22,9 +23,14 @@ import type {
   LogoUploadUrlResponse,
 } from "../types";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
-export const WEB_APP_ORIGIN = "http://localhost:5173";
-export const CONNECT_EXTENSION_URL = `${WEB_APP_ORIGIN}/connect-extension`;
+const API_BASE_URL =
+  import.meta.env.VITE_EXTENSION_API_BASE_URL ??
+  (import.meta.env.DEV ? "http://127.0.0.1:8000" : MAIN_ORIGIN);
+
+export const WEB_APP_ORIGIN =
+  import.meta.env.VITE_WEB_APP_ORIGIN ??
+  (import.meta.env.DEV ? "http://localhost:5173" : MAIN_ORIGIN);
+export const CONNECT_EXTENSION_URL = `${WEB_APP_ORIGIN}/extensions`;
 
 const API_ROUTES = {
   login: "/api/v1/auth/login",
@@ -57,11 +63,6 @@ const COMMON_SECOND_LEVEL_TLDS = new Set([
   "org",
 ]);
 
-interface DirectoryRecord {
-  id: string;
-  name: string;
-  domain: string;
-}
 
 const directoryIdByHostnameCache = new Map<string, string>();
 
@@ -431,29 +432,13 @@ export async function findDirectoryByHostname(
   hostname: string,
   onSessionExpired?: () => void
 ): Promise<DirectoryVoteTarget | null> {
-  const normalizedHost = normalizeDomain(hostname);
-  if (!normalizedHost) {
-    return null;
-  }
-
-  const candidates = buildDomainCandidates(normalizedHost);
-
-  for (const candidate of candidates) {
-    const directories = await listDirectoriesByDomain(candidate, onSessionExpired);
-    const exactMatch = directories.find((directory) =>
-      isDomainMatch(normalizedHost, directory.domain)
-    );
-
-    if (exactMatch) {
-      return {
-        id: exactMatch.id,
-        name: exactMatch.name,
-        domain: normalizeDomain(exactMatch.domain),
-      };
-    }
-  }
-
-  return null;
+  const directory = await fetchDirectoryByDomain(hostname, null, onSessionExpired);
+  if (!directory) return null;
+  return {
+    id: directory.id,
+    name: directory.name,
+    domain: normalizeDomain(directory.domain),
+  };
 }
 
 export async function voteDirectory(
@@ -478,33 +463,6 @@ export async function voteDirectory(
   }
 }
 
-async function listDirectoriesByDomain(
-  domain: string,
-  onSessionExpired?: () => void
-): Promise<DirectoryRecord[]> {
-  const params = new URLSearchParams({
-    domain,
-    page: "1",
-    page_size: "25",
-  });
-
-  const res = await fetchWithAuth(
-    `${API_ROUTES.directories}?${params.toString()}`,
-    {},
-    onSessionExpired
-  );
-
-  if (!res.ok) {
-    const msg = await parseErrorMessage(
-      res,
-      `Failed to find directory for domain ${domain}.`
-    );
-    throw new Error(msg);
-  }
-
-  const payload = await res.json();
-  return asDirectoryRecords(payload);
-}
 
 function buildDomainCandidates(hostname: string): string[] {
   const normalized = normalizeDomain(hostname);
@@ -541,20 +499,6 @@ function normalizeDomain(value: string): string {
   return withoutPort.startsWith("www.") ? withoutPort.slice(4) : withoutPort;
 }
 
-function isDomainMatch(hostname: string, directoryDomain: string): boolean {
-  const normalizedHost = normalizeDomain(hostname);
-  const normalizedDirectory = normalizeDomain(directoryDomain);
-
-  if (!normalizedHost || !normalizedDirectory) {
-    return false;
-  }
-
-  return (
-    normalizedHost === normalizedDirectory ||
-    normalizedHost.endsWith(`.${normalizedDirectory}`)
-  );
-}
-
 function rememberDirectoryIdForHostnames(
   hostnames: string[],
   directoryId: string
@@ -566,26 +510,6 @@ function rememberDirectoryIdForHostnames(
     }
     directoryIdByHostnameCache.set(normalized, directoryId);
   }
-}
-
-function asDirectoryRecords(value: unknown): DirectoryRecord[] {
-  if (!isRecord(value) || !Array.isArray(value.directories)) {
-    return [];
-  }
-
-  return value.directories.filter(isDirectoryRecord);
-}
-
-function isDirectoryRecord(value: unknown): value is DirectoryRecord {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return (
-    typeof value.id === "string" &&
-    typeof value.name === "string" &&
-    typeof value.domain === "string"
-  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

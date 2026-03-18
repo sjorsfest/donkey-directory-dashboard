@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { CheckCheck, Chrome, ListChecks, Zap } from "lucide-react";
 
+import { MAIN_DOMAIN } from "@/shared/lib/main-domain";
 import { Button } from "@/shared/ui/button";
 
 type Ripple = { x: number; y: number; t: number };
@@ -254,15 +255,26 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                   <Link to="/signup">Start your launch →</Link>
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="default"
-                type="button"
-                onClick={() => document.getElementById("directories-table")?.scrollIntoView({ behavior: "smooth" })}
-                className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
-              >
-                See all directories ↓
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="default"
+                  className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
+                >
+                  <Link to="/dashboard">See all directories ↓</Link>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="default"
+                  type="button"
+                  onClick={() => document.getElementById("directories-table")?.scrollIntoView({ behavior: "smooth" })}
+                  className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
+                >
+                  See all directories ↓
+                </Button>
+              )}
             </div>
             <button
               type="button"
@@ -342,7 +354,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                 <div className="w-2 h-2 rounded-full bg-yellow-400 border border-black/20" />
                 <div className="w-2 h-2 rounded-full bg-green-400 border border-black/20" />
                 <div className="flex-1 mx-2 h-4 rounded-sm bg-secondary-50 border border-foreground/20 flex items-center px-2">
-                  <span className="text-[0.5rem] text-muted-foreground">donkey.directory</span>
+                  <span className="text-[0.5rem] text-muted-foreground">{MAIN_DOMAIN}</span>
                 </div>
               </div>
 

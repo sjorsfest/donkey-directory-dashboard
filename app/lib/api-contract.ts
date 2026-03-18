@@ -82,12 +82,11 @@ export type ApiDirectoryResponse = components["schemas"]["DirectoryResponse"] &
     my_vote: ApiDirectoryVoteChoice | null;
   };
 
-export type ApiDirectoryListResponse = Omit<
-  components["schemas"]["DirectoryListResponse"],
-  "directories"
-> & {
-  directories: ApiDirectoryResponse[];
-};
+export type ApiDirectoryListItemResponse =
+  components["schemas"]["DirectoryListItemResponse"];
+
+export type ApiDirectoryListResponse =
+  components["schemas"]["DirectoryListResponse"];
 
 export interface CreateExtensionConnectCodeRequest {
   client: "chrome_extension";
@@ -179,6 +178,13 @@ export function directoryPath(directoryId: string): string {
 export function directoryVotePath(directoryId: string): string {
   return `${directoryPath(directoryId)}/vote`;
 }
+
+export function directorySubmissionCountsPath(projectId: string): string {
+  return `/api/v1/directories/projects/${encodeURIComponent(projectId)}/submission-counts`;
+}
+
+export type ApiProjectSubmissionCountsResponse =
+  components["schemas"]["ProjectDirectorySubmissionCountsResponse"];
 
 export function isApiDirectoryVoteChoice(
   value: unknown

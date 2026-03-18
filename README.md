@@ -26,12 +26,17 @@ Set server env var:
 
 ```bash
 API_BASE_URL=http://localhost:8000
+VITE_MAIN_DOMAIN=donkey.directory
 ```
 
 Or create `.env`:
 
 ```bash
 API_BASE_URL=http://localhost:8000
+VITE_MAIN_DOMAIN=donkey.directory
+# Optional extension overrides:
+# VITE_WEB_APP_ORIGIN=https://donkey.directory
+# VITE_EXTENSION_API_BASE_URL=https://api.yourdomain.com
 ```
 
 Then run:

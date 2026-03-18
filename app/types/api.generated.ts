@@ -504,6 +504,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/directories/by-domain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get directory by domain
+         * @description Get full details for a single directory by domain or URL.
+         */
+        get: operations["get_directory_by_domain_api_v1_directories_by_domain_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/directories/count": {
         parameters: {
             query?: never;
@@ -556,26 +576,6 @@ export interface paths {
          * @description Return one random directory domain and redirect URL. When project_id is provided, excludes directories already marked submitted or skipped.
          */
         get: operations["get_random_directory_api_v1_directories_random_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/directories/by-domain": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get directory by domain
-         * @description Get a directory by normalized domain or URL.
-         */
-        get: operations["get_directory_by_domain_api_v1_directories_by_domain_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1643,12 +1643,54 @@ export interface components {
             extraction_notes?: string | null;
         };
         /**
+         * DirectoryListItemResponse
+         * @description Slim directory response for list/table views.
+         */
+        DirectoryListItemResponse: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Domain */
+            domain: string;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Domain Authority */
+            domain_authority?: number | null;
+            category?: components["schemas"]["DirectoryCategory"] | null;
+            /** Is Free */
+            is_free: boolean;
+            /** Is Dofollow */
+            is_dofollow: boolean;
+            status: components["schemas"]["DirectoryStatus"];
+            /** @default not_submitted */
+            submission_stage: components["schemas"]["DirectorySubmissionStage"];
+            /**
+             * Thumbs Up Count
+             * @default 0
+             */
+            thumbs_up_count: number;
+            /**
+             * Thumbs Down Count
+             * @default 0
+             */
+            thumbs_down_count: number;
+            /**
+             * Total Votes
+             * @default 0
+             */
+            total_votes: number;
+            /** Thumbs Up Percentage */
+            thumbs_up_percentage?: number | null;
+            my_vote?: components["schemas"]["DirectoryVoteChoice"] | null;
+        };
+        /**
          * DirectoryListResponse
          * @description Response with list of directories and pagination.
          */
         DirectoryListResponse: {
             /** Directories */
-            directories: components["schemas"]["DirectoryResponse"][];
+            directories: components["schemas"]["DirectoryListItemResponse"][];
             /** Total */
             total: number;
             /** Page */
@@ -3371,68 +3413,14 @@ export interface operations {
                 page_size?: number;
                 /** @description Filter by name (case-insensitive partial match) */
                 name?: string | null;
-                /** @description Filter by domain (case-insensitive partial match) */
-                domain?: string | null;
-                /** @description Filter by language code */
-                language?: string | null;
-                /** @description Filter by country code */
-                country?: string | null;
                 /** @description Filter by category */
                 category?: components["schemas"]["DirectoryCategory"] | null;
-                /** @description Filter by niche */
-                niche?: components["schemas"]["DirectoryNiche"] | null;
-                /** @description Filter by link type */
-                link_type?: components["schemas"]["LinkType"] | null;
-                /** @description Filter by pricing model */
-                pricing_model?: components["schemas"]["PricingModel"] | null;
-                /** @description Filter by submission process */
-                submission_process?: components["schemas"]["SubmissionProcess"] | null;
-                /** @description Filter by tags (contains all values) */
-                tags?: components["schemas"]["DirectoryTag"][] | null;
-                /** @description Filter by target audience (contains all values) */
-                target_audience?: components["schemas"]["AudienceTag"][] | null;
-                /** @description Filter by supported industries (contains all values) */
-                supported_industries?: components["schemas"]["IndustryTag"][] | null;
-                /** @description Filter by features (contains all values) */
-                features?: components["schemas"]["FeatureTag"][] | null;
-                /** @description Filter by benefits (contains all values) */
-                benefits?: components["schemas"]["BenefitTag"][] | null;
-                /** @description Filter by submission requirements (contains all values) */
-                submission_requirements?: components["schemas"]["SubmissionRequirementTag"][] | null;
-                /** @description Filter by dofollow status */
-                is_dofollow?: boolean | null;
                 /** @description Filter by free status */
                 is_free?: boolean | null;
-                /** @description Filter by approval requirement */
-                requires_approval?: boolean | null;
+                /** @description Filter by dofollow status */
+                is_dofollow?: boolean | null;
                 /** @description Filter by status */
                 status?: components["schemas"]["DirectoryStatus"] | null;
-                /** @description Minimum domain authority */
-                min_domain_authority?: number | null;
-                /** @description Maximum domain authority */
-                max_domain_authority?: number | null;
-                /** @description Minimum monthly traffic */
-                min_monthly_traffic?: number | null;
-                /** @description Maximum monthly traffic */
-                max_monthly_traffic?: number | null;
-                /** @description Minimum price in USD */
-                min_price_usd?: number | null;
-                /** @description Maximum price in USD */
-                max_price_usd?: number | null;
-                /** @description Minimum approval time in days */
-                min_typical_approval_time_days?: number | null;
-                /** @description Maximum approval time in days */
-                max_typical_approval_time_days?: number | null;
-                /** @description Minimum spam score */
-                min_spam_score?: number | null;
-                /** @description Maximum spam score */
-                max_spam_score?: number | null;
-                /** @description Minimum quality score */
-                min_quality_score?: number | null;
-                /** @description Maximum quality score */
-                max_quality_score?: number | null;
-                /** @description Search in name, domain, or description */
-                search?: string | null;
             };
             header?: never;
             path?: never;
@@ -3526,6 +3514,40 @@ export interface operations {
             };
         };
     };
+    get_directory_by_domain_api_v1_directories_by_domain_get: {
+        parameters: {
+            query: {
+                /** @description Directory domain or URL */
+                domain: string;
+                /** @description Project ID used to include per-directory submission stage */
+                project_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_directory_count_api_v1_directories_count_get: {
         parameters: {
             query?: never;
@@ -3596,40 +3618,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DirectoryRandomResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_directory_by_domain_api_v1_directories_by_domain_get: {
-        parameters: {
-            query: {
-                /** @description Directory domain or URL */
-                domain: string;
-                /** @description Project ID used to include this project's submission stage */
-                project_id?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DirectoryResponse"];
                 };
             };
             /** @description Validation Error */
