@@ -7,7 +7,7 @@ import {
   ScrollRestoration,
   useSearchParams,
 } from "react-router";
-
+import { Analytics } from "@vercel/analytics/react"
 import type { Route } from "./+types/root";
 import "./app.css";
 import { NavigationProgress } from "./components/NavigationProgress";
@@ -56,6 +56,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
         <ScrollRestoration />
         <Scripts />
+        <Analytics />
       </body>
     </html>
   );
