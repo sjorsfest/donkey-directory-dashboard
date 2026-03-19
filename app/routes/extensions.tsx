@@ -171,7 +171,7 @@ export default function ExtensionsPage() {
   }
 
   return (
-    <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))] py-8 space-y-6">
+    <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       <div>
         <p className="text-[0.8rem] font-bold uppercase tracking-[0.05em] text-muted-foreground">
           Integrations

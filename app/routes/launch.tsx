@@ -184,7 +184,7 @@ const BRAND_SOCIAL_KEYS = [
 ];
 
 const STUDIO_SHELL_CLASS =
-  "mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]";
+  "mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8";
 const STUDIO_KICKER_CLASS =
   "text-[0.8rem] font-bold uppercase tracking-[0.05em] text-muted-foreground";
 const MUTED_TEXT_CLASS = "text-muted-foreground";
@@ -523,7 +523,7 @@ export default function LaunchPage() {
 
           {/* Project cards */}
           <div className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1 p-4">
+          <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
             {projects.map((project) => {
               const isActive = project.id === selectedProjectId;
               const submittedCount = isActive
@@ -551,16 +551,16 @@ export default function LaunchPage() {
                     {project.domain}
                   </p>
                   {isActive && submittedCount !== null ? (
-                    <div className="mt-1 flex items-center gap-3 text-[0.7rem]">
-                      <span className="flex items-center gap-1 text-primary-foreground/80">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem]">
+                      <span className="flex items-center gap-1 whitespace-nowrap text-primary-foreground/80">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                         {submittedCount} submitted
                       </span>
-                      <span className="flex items-center gap-1 text-primary-foreground/80">
+                      <span className="flex items-center gap-1 whitespace-nowrap text-primary-foreground/80">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                         {skippedCount} skipped
                       </span>
-                      <span className="flex items-center gap-1 text-primary-foreground/60">
+                      <span className="flex items-center gap-1 whitespace-nowrap text-primary-foreground/60">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/30" />
                         {notSubmittedCount} pending
                       </span>
@@ -785,7 +785,7 @@ function QuickSocialLinksInput(props: {
         {STAPLE_SOCIAL_CONFIGS.map(({ key, label, placeholder, Icon }) => (
           <label
             key={key}
-            className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-center gap-2 max-[960px]:grid-cols-1"
+            className="grid grid-cols-1 items-center gap-2 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
           >
             <span className="inline-flex items-center gap-2 text-[0.85rem] font-bold">
               <Icon className="h-4 w-4 text-muted-foreground" />

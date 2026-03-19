@@ -97,11 +97,11 @@ export default function TopupPage() {
   const isBusy = navigation.state !== "idle";
 
   return (
-    <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))] py-8">
+    <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="rounded-2xl border-2 border-foreground bg-white shadow-[var(--shadow-md)] overflow-hidden">
 
         {/* Header */}
-        <div className="px-8 py-7 border-b-2 border-foreground/10 flex items-start justify-between gap-6 flex-wrap max-[640px]:px-5">
+        <div className="px-5 py-6 border-b-2 border-foreground/10 flex items-start justify-between gap-6 flex-wrap sm:px-8 sm:py-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
               Billing
@@ -134,7 +134,7 @@ export default function TopupPage() {
         </div>
 
         {actionData?.error && (
-          <div className="px-8 pt-6 max-[640px]:px-5">
+          <div className="px-5 pt-5 sm:px-8 sm:pt-6">
             <Alert variant="destructive">
               <AlertDescription>{actionData.error}</AlertDescription>
             </Alert>
@@ -143,11 +143,11 @@ export default function TopupPage() {
 
         {/* Packs */}
         {availablePacks.length === 0 ? (
-          <div className="px-8 py-12 text-center max-[640px]:px-5">
+          <div className="px-5 py-10 text-center sm:px-8 sm:py-12">
             <p className="text-muted-foreground text-sm">No packs available at the moment.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 divide-x-2 divide-foreground/10 max-[768px]:grid-cols-1 max-[768px]:divide-x-0 max-[768px]:divide-y-2">
+          <div className="grid grid-cols-1 divide-y-2 divide-foreground/10 sm:grid-cols-3 sm:divide-y-0 sm:divide-x-2">
             {availablePacks.map((pack) => (
               <PackCard
                 key={pack.pack_code}
@@ -160,7 +160,7 @@ export default function TopupPage() {
         )}
 
         {/* Footer note */}
-        <div className="px-8 py-4 border-t-2 border-foreground/10 bg-secondary/60 max-[640px]:px-5">
+        <div className="px-5 py-4 border-t-2 border-foreground/10 bg-secondary/60 sm:px-8">
           <p className="text-xs text-muted-foreground">
             Secure payment via Stripe. All packs are one-time purchases — no subscription, no hidden fees.
           </p>
@@ -209,7 +209,7 @@ function PackCard({
     : `Buy ${pack.credits} credits`;
 
   return (
-    <div className="px-7 py-7 flex flex-col gap-5 relative max-[640px]:px-5">
+    <div className="px-5 py-6 flex flex-col gap-5 relative sm:px-7 sm:py-7">
       {/* Lime top accent on popular */}
       {isPopular && (
         <div className="absolute top-0 inset-x-0 h-[3px] bg-primary" />

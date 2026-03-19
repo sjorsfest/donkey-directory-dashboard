@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Check, Chrome, CheckCheck, ListChecks } from "lucide-react";
+import { Icon } from "@iconify/react";
+import { Check, CheckCheck, Chrome } from "lucide-react";
 import { Link } from "react-router";
 
 import { MAIN_DOMAIN } from "@/shared/lib/main-domain";
@@ -116,35 +117,29 @@ export function HowItWorks() {
     <section id="how-it-works" className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="px-8 pt-12 pb-8 text-center max-[640px]:px-5 max-[640px]:pt-8 max-[640px]:pb-6">
+      <div className="px-5 pt-8 pb-6 text-center sm:px-8 sm:pt-12 sm:pb-8">
         <span className="mb-4 inline-flex items-center rounded-full border-2 border-foreground bg-foreground px-4 py-1.5 text-xs font-bold text-background">
           How it works
         </span>
-        <h2 className="font-[Fredoka] text-[2.8rem] font-bold leading-[1.05] max-[640px]:text-[2rem]">
-          Launch everywhere.{" "}
+        <h2 className="font-[Fredoka] text-[2rem] font-bold leading-[1.05] sm:text-[2.8rem]">
+          Launch everywhere.<br className="sm:hidden" />{" "}
           <span
-            className="text-primary"
-            style={
-              {
-                WebkitTextStroke: "5px hsl(var(--foreground))",
-                paintOrder: "stroke fill",
-              } as React.CSSProperties
-            }
+            className="text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] sm:[-webkit-text-stroke:5px_hsl(var(--foreground))] [paint-order:stroke_fill]"
           >
             Do it once.
           </span>
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-base font-medium text-muted-foreground max-[640px]:text-sm">
+        <p className="mx-auto mt-3 max-w-md text-sm font-medium text-muted-foreground sm:text-base">
           Set up your product once. The Chrome extension fills every form for you.
           Your dashboard tracks it all.
         </p>
       </div>
 
       {/* ── Step cards ── */}
-      <div className="flex items-stretch gap-3 px-8 pb-10 max-[800px]:flex-col max-[640px]:px-5 max-[640px]:pb-7">
+      <div className="flex flex-col md:flex-row md:items-stretch gap-3 px-5 pb-7 sm:px-8 sm:pb-10">
 
         {/* ── Step 01 ── */}
-        <div className="flex-1 rounded-xl border-2 border-foreground bg-secondary shadow-[var(--shadow-sm)] p-7 max-[640px]:p-5 flex flex-col">
+        <div className="flex-1 rounded-xl border-2 border-foreground bg-secondary shadow-[var(--shadow-sm)] p-5 sm:p-7 flex flex-col">
           <StepChip number="01" />
           <h3 className="font-[Fredoka] text-[1.3rem] font-bold text-foreground leading-tight mb-2 mt-6">
             Just paste your URL
@@ -183,12 +178,12 @@ export function HowItWorks() {
         </div>
 
         {/* Connector */}
-        <div className="self-start mt-[52px] px-1 text-2xl font-bold text-foreground/20 shrink-0 max-[800px]:hidden">
+        <div className="self-start mt-[52px] px-1 text-2xl font-bold text-foreground/20 shrink-0 hidden md:block">
           →
         </div>
 
         {/* ── Step 02 — hero card ── */}
-        <div className="flex-1 rounded-xl border-2 border-foreground bg-foreground shadow-[6px_6px_0_hsl(var(--primary))] p-7 max-[640px]:p-5 flex flex-col">
+        <div className="flex-1 rounded-xl border-2 border-foreground bg-foreground shadow-[6px_6px_0_hsl(var(--primary))] p-5 sm:p-7 flex flex-col">
 
           {/* Top row: chip + badge */}
           <div className="flex items-center gap-2.5 mb-4">
@@ -215,12 +210,12 @@ export function HowItWorks() {
         </div>
 
         {/* Connector */}
-        <div className="self-start mt-[52px] px-1 text-2xl font-bold text-foreground/20 shrink-0 max-[800px]:hidden">
+        <div className="self-start mt-[52px] px-1 text-2xl font-bold text-foreground/20 shrink-0 hidden md:block">
           →
         </div>
 
         {/* ── Step 03 ── */}
-        <div className="flex-1 rounded-xl border-2 border-foreground bg-secondary shadow-[var(--shadow-sm)] p-7 max-[640px]:p-5 flex flex-col">
+        <div className="flex-1 rounded-xl border-2 border-foreground bg-secondary shadow-[var(--shadow-sm)] p-5 sm:p-7 flex flex-col">
           <StepChip number="03" />
           <h3 className="font-[Fredoka] text-[1.3rem] font-bold text-foreground leading-tight mb-2 mt-6">
             Watch your progress stack up
@@ -271,23 +266,23 @@ export function HowItWorks() {
       </div>
 
       {/* ── CTA bar ── */}
-      <div className="flex items-center justify-between gap-4 flex-wrap border-t-2 border-foreground/10 bg-secondary/30 px-8 py-5 max-[640px]:px-5 max-[480px]:flex-col max-[480px]:items-stretch">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t-2 border-foreground/10 bg-secondary/30 px-5 py-4 sm:px-8 sm:py-5">
         <p className="text-sm font-medium text-muted-foreground">
           First{" "}
           <span className="font-bold text-foreground">5 submissions are free</span>, no credit card needed.
         </p>
-        <div className="flex items-center gap-3 flex-wrap max-[480px]:flex-col">
+        <div className="flex items-center gap-3 flex-wrap">
           <Button
             asChild
             size="default"
-            className="shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all font-bold"
+            className="hidden sm:inline-flex shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all font-bold"
           >
             <a
               href="https://chromewebstore.google.com/detail/donkey-directories/blphoelcahjoemkagpmeabpedloiepnm"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Chrome className="mr-1.5 h-4 w-4" />
+              <Icon icon="logos:chrome" className="mr-1.5 size-4 shrink-0" />
               Install the Extension
             </a>
           </Button>

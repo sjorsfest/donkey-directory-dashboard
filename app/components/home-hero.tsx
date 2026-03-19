@@ -169,8 +169,8 @@ function DotRippleCanvas() {
 
 const HERO_PHRASES = [
   { text: "auto-filled for you",       emoji: "⚡" },
-  { text: "your progress, tracked",    emoji: "📊" },
-  { text: "always curated & fresh",    emoji: "✅" },
+  { text: "your progress, tracked",    emoji: "" },
+  { text: "curated & fresh",    emoji: "✅" },
   { text: "zero copy-paste",           emoji: "🎯" },
 ];
 
@@ -192,20 +192,20 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
 
   return (
     <div className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
-      <div className="grid max-[960px]:grid-cols-1 grid-cols-[1fr_420px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px]">
 
         {/* Left — copy */}
-        <div className="px-10 py-12 max-[960px]:px-6 max-[960px]:py-8 max-[480px]:px-4 max-[480px]:py-5 flex flex-col justify-center gap-6">
+        <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-12 flex flex-col justify-center gap-5 sm:gap-6">
           <div className="space-y-3">
-            <h1 className="text-[3.2rem] font-bold leading-[1.1] max-[960px]:text-3xl max-[480px]:text-2xl">
-              <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill] max-[960px]:text-3xl max-[480px]:text-2xl">{directoryCount ?? localDirectoryCount}+ launch directories,</span>{" "}
+            <h1 className="text-xl font-bold leading-[1.15] sm:text-3xl lg:text-[3.2rem]">
+              <span className="text-2xl sm:text-3xl lg:text-[3.4rem] text-secondary [-webkit-text-stroke:2px_hsl(var(--foreground))] sm:[-webkit-text-stroke:4px_hsl(var(--foreground))] lg:[-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]">{directoryCount ?? localDirectoryCount}+ launch directories,</span>{" "}
               <span className="relative inline-block">
                 <motion.span
                   key={activePhraseIndex}
                   initial={{ opacity: 0, y: 12, rotate: -2 }}
                   animate={{ opacity: 1, y: 0, rotate: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="inline-block text-[3.6rem] leading-[1.1] max-[960px]:text-[2.2rem] max-[480px]:text-[1.9rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]"
+                  className="inline-block text-[1.4rem] leading-[1.15] sm:text-[2.2rem] lg:text-[3.6rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:2px_hsl(var(--foreground))] sm:[-webkit-text-stroke:4px_hsl(var(--foreground))] lg:[-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]"
                 >
                   {HERO_PHRASES[activePhraseIndex].text}
                 </motion.span>
@@ -214,16 +214,16 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                   initial={{ opacity: 0, y: 12, rotate: -2 }}
                   animate={{ opacity: 1, y: 0, rotate: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="ml-2 inline-block text-[3.4rem] leading-[1.1] max-[960px]:text-[2.2rem] max-[480px]:text-[1.9rem]"
+                  className="ml-1.5 inline-block text-[1.3rem] leading-[1.15] sm:text-[2.2rem] lg:text-[3.4rem]"
                 >
                   {HERO_PHRASES[activePhraseIndex].emoji}
                 </motion.span>
               </span>
             </h1>
-            <p className="text-foreground/80 text-base font-medium max-w-md -mb-1">
-              The complete checklist for a successful product launch. 
+            <p className="hidden sm:block text-foreground/80 text-sm font-medium max-w-md -mb-1">
+              The complete checklist for a successful product launch.
             </p>
-            <p className="text-foreground/80 text-base font-medium max-w-md">
+            <p className="text-foreground/60 text-xs sm:text-sm sm:text-foreground/80 font-medium max-w-md">
               Built to get you your first customers.
             </p>
           </div>
@@ -235,7 +235,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
               { icon: Zap,        text: "Chrome extension autofills forms. Skip the copy-paste." },
               { icon: CheckCheck, text: "Track every submission: not started, in progress, or done" },
             ] as const).map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-2.5 text-sm font-medium">
+              <li key={text} className="flex items-center gap-2.5 text-xs sm:text-sm font-medium">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 border-foreground bg-accent shadow-[1px_1px_0_#1A1A1A]">
                   <Icon className="h-3.5 w-3.5 text-accent-foreground" />
                 </span>
@@ -246,7 +246,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
 
           {/* CTAs */}
           <div className="flex flex-col gap-3 pt-1">
-            <div className="flex items-center gap-4 flex-wrap max-[480px]:flex-col max-[480px]:items-stretch">
+            <div className="flex items-center gap-3 flex-wrap sm:gap-4">
               {!isAuthenticated && (
                 <Button
                   asChild
@@ -279,7 +279,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
               <Button
                 asChild
                 size="default"
-                className="bg-primary text-secondary-foreground border-2 border-foreground shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all hover:bg-secondary/90"
+                className="hidden sm:inline-flex bg-primary text-secondary-foreground border-2 border-foreground shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all hover:bg-secondary/90"
               >
                 <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                   <Icon icon="logos:chrome" className="size-5 shrink-0" />
@@ -299,7 +299,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
         </div>
 
         {/* Right — visual mockup */}
-        <div className="max-[960px]:hidden border-l-2 border-foreground bg-secondary/40 flex items-center justify-center p-8 relative overflow-hidden">
+        <div className="hidden lg:flex border-l-2 border-foreground bg-secondary/40 items-center justify-center p-8 relative overflow-hidden">
           {/* Dot grid bg */}
           <div
             className="absolute inset-0"

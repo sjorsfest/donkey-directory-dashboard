@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 const LEGAL_SHELL_CLASS =
-  "mx-auto w-[min(900px,calc(100vw-2rem))] max-[960px]:w-[min(900px,calc(100vw-1rem))] py-8";
+  "mx-auto w-full max-w-[900px] px-4 sm:px-6 py-6 sm:py-8";
 const LEGAL_CARD_CLASS = "rounded-lg border-2 border-foreground bg-card p-6 shadow-[var(--shadow-md)]";
 const LEGAL_SECTION_CLASS = "space-y-2";
 

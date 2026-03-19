@@ -88,7 +88,7 @@ export default function NavLayout() {
   const dashboardMatch = useMatch("/dashboard");
 
   const navLinkButtonBaseClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border-2 border-foreground px-4 py-2 text-sm font-bold no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]";
+    "inline-flex items-center justify-center gap-1.5 rounded-lg border-2 border-foreground px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]";
   const navLinkButtonPrimaryClass = `${navLinkButtonBaseClass}`;
   const loginClasses = `bg-primary ${navLinkButtonPrimaryClass}`;
   const signupClasses = `bg-accent text-secondary-foreground ${navLinkButtonPrimaryClass}`;
@@ -155,16 +155,16 @@ export default function NavLayout() {
   return (
     <main className="flex min-h-screen flex-col pt-4">
       <header className="sticky top-0 z-20 pt-3 pb-2 sm:pt-4 sm:pb-3">
-        <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]">
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
           <nav className="flex flex-wrap items-center justify-between gap-3 rounded-[1.25rem] border-2 border-foreground bg-card px-3 py-2.5 shadow-[var(--shadow-md)] sm:gap-4 sm:px-4 sm:py-3">
-            <Link className="group inline-flex items-center gap-2 no-underline sm:gap-3" to="/">
+            <Link className="group inline-flex items-center gap-2 no-underline" to="/">
               <img
                 src="/static/donkey.png"
                 alt="Donkey Directories"
-                className="block h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110 sm:h-12 sm:w-12"
+                className="block h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10"
               />
-              <span>
-                <strong className="select-none font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill] sm:text-3xl">
+              <span className="hidden sm:inline">
+                <strong className="select-none font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill] lg:text-2xl">
                   Donkey Directories
                 </strong>
               </span>
@@ -180,21 +180,23 @@ export default function NavLayout() {
                 </Link>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  className={launchNewClasses}
-                  onClick={handleOpenLaunchNewDialog}
-                >
-                  Launch Project 🚀
-                </button>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="hidden sm:block">
+                  <button
+                    type="button"
+                    className={launchNewClasses}
+                    onClick={handleOpenLaunchNewDialog}
+                  >
+                    Launch Project 🚀
+                  </button>
+                </div>
 
-                <Link to="/dashboard" className={dashboardClasses}>
+                <Link to="/dashboard" className={`${dashboardClasses} hidden sm:inline-flex`}>
                   Dashboard
                 </Link>
 
                 <Link to="/logout">
-                  <Button type="button" variant="destructive">
+                  <Button type="button" variant="destructive" className="px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm h-auto">
                     {isLoggingOut ? "Logging out..." : "Logout"}
                   </Button>
                 </Link>

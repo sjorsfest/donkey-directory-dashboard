@@ -6,7 +6,7 @@ import { sendAuthenticatedRequest } from "~/lib/authenticated-api.server";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { getSession } from "~/lib/session.server";
 import { HomeHero } from "~/components/home-hero";
-import { MockDirectoriesTable, DIRECTORIES } from "~/components/directories-table";
+import { MockDirectoriesTable, DIRECTORIES } from "~/components/mock-table";
 import { HowItWorks } from "~/components/how-it-works";
 import { PricingSection } from "~/components/pricing-section";
 
@@ -66,7 +66,7 @@ export default function HomePage() {
   const { isAuthenticated, directoryCount } = useLoaderData<typeof loader>();
 
   return (
-    <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))] py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
       <HomeHero
         isAuthenticated={isAuthenticated}
         directoryCount={directoryCount}

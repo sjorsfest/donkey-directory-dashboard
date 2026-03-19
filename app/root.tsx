@@ -100,7 +100,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="mx-auto my-8 w-[min(900px,calc(100vw-2rem))]">
+    <main className="mx-auto my-8 w-full max-w-[900px] px-4 sm:px-6">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (

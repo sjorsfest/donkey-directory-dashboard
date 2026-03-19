@@ -463,7 +463,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
       <div className="flex items-center justify-between gap-4 border-b-2 border-foreground px-5 py-4">
         <div className="flex items-center gap-3">
           <LayoutList size={18} />
-          <h2 className="text-base font-bold">All directories</h2>
+          <h2 className="text-base font-bold whitespace-nowrap">All directories</h2>
           <span className="inline-flex items-center rounded-full border-2 border-foreground bg-secondary px-2.5 py-0.5 text-xs font-bold">
             {directoryCount ?? DIRECTORIES.length}
           </span>
@@ -480,7 +480,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <SlidersHorizontal className="h-4 w-4" />
-                Filters
+                <span className="hidden sm:inline">Filters</span>
                 {isAuthenticated && activeFilterCount > 0 && (
                   <Badge variant="secondary" className="min-w-5 justify-center px-1.5 py-0">
                     {activeFilterCount}
@@ -701,6 +701,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
             <TableRow className="border-b-2 border-foreground">
               <TableHead className="hidden sm:table-cell w-14">DR</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead className="sm:hidden w-14">DR</TableHead>
               <TableHead className="hidden sm:table-cell">Category</TableHead>
               <TableHead className="hidden sm:table-cell">Pricing</TableHead>
               <TableHead className="hidden sm:table-cell">Dofollow</TableHead>
@@ -740,7 +741,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
                     STATUS_ROW_CLASS[status] || (i % 2 === 0 ? "" : "bg-secondary/30")
                   }`}
                 >
-                  <TableCell className="hidden py-3 sm:table-cell w-14">
+                  <TableCell className="hidden sm:table-cell py-3 w-14">
                     <DaCircle value={dir.domainAuthority} />
                   </TableCell>
                   <TableCell className="font-semibold py-3.5">
@@ -754,6 +755,9 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
                       <DirectoryLogo name={dir.name} logoUrl={dir.logoUrl} />
                       {dir.name}
                     </a>
+                  </TableCell>
+                  <TableCell className="sm:hidden py-3 w-14">
+                    <DaCircle value={dir.domainAuthority} />
                   </TableCell>
                   <TableCell className="hidden py-3.5 sm:table-cell">
                     <Badge variant="outline" className="text-xs font-medium">

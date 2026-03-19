@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 const FOOTER_CONTAINER_CLASS =
-  "mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))]";
+  "mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8";
 const FOOTER_LINK_CLASS =
   "text-sm font-semibold text-muted-foreground no-underline transition-colors hover:text-foreground";
 

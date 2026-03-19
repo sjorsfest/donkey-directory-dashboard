@@ -13,7 +13,7 @@ export function PricingSection({ isAuthenticated }: Props) {
     <section className="rounded-2xl border-2 border-foreground bg-white shadow-[var(--shadow-md)] overflow-hidden">
 
       {/* Header */}
-      <div className="px-8 py-7 border-b-2 border-foreground/10 max-[640px]:px-5">
+      <div className="px-5 py-6 border-b-2 border-foreground/10 sm:px-8 sm:py-7">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
           Pricing
         </p>
@@ -26,10 +26,10 @@ export function PricingSection({ isAuthenticated }: Props) {
       </div>
 
       {/* Tier columns */}
-      <div className="grid grid-cols-3 divide-x-2 divide-foreground/10 max-[768px]:grid-cols-1 max-[768px]:divide-x-0 max-[768px]:divide-y-2">
+      <div className="grid grid-cols-1 divide-y-2 divide-foreground/10 sm:grid-cols-3 sm:divide-y-0 sm:divide-x-2">
 
         {/* Free */}
-        <div className="px-7 py-7 flex flex-col gap-5 max-[640px]:px-5">
+        <div className="px-5 py-6 flex flex-col gap-5 sm:px-7 sm:py-7">
           <div>
             <p className="text-[0.68rem] font-bold uppercase tracking-widest text-muted-foreground mb-3">
               Free
@@ -72,7 +72,7 @@ export function PricingSection({ isAuthenticated }: Props) {
         </div>
 
         {/* 100 credits (recommended) */}
-        <div className="px-7 py-7 flex flex-col gap-5 max-[640px]:px-5 relative">
+        <div className="px-5 py-6 flex flex-col gap-5 sm:px-7 sm:py-7 relative">
           {/* Lime top accent */}
           <div className="absolute top-0 inset-x-0 h-[3px] bg-primary" />
 
@@ -118,7 +118,7 @@ export function PricingSection({ isAuthenticated }: Props) {
         </div>
 
         {/* Lifetime */}
-        <div className="px-7 py-7 flex flex-col gap-5 max-[640px]:px-5">
+        <div className="px-5 py-6 flex flex-col gap-5 sm:px-7 sm:py-7">
           <div>
             <p className="text-[0.68rem] font-bold uppercase tracking-widest text-muted-foreground mb-3">
               Lifetime
@@ -161,7 +161,7 @@ export function PricingSection({ isAuthenticated }: Props) {
       </div>
 
       {/* Bottom note */}
-      <div className="px-8 py-4 border-t-2 border-foreground/10 bg-secondary/60 max-[640px]:px-5">
+      <div className="px-5 py-4 border-t-2 border-foreground/10 bg-secondary/60 sm:px-8">
         <p className="text-xs text-muted-foreground">
           Secure payment via Stripe. No subscription, and all packs are one-time purchases.
         </p>
