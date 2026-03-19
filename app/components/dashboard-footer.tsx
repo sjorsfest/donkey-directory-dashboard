@@ -34,6 +34,9 @@ export function DashboardFooter() {
               <Link className={FOOTER_LINK_CLASS} to="/">
                 Home
               </Link>
+              <Link className={FOOTER_LINK_CLASS} to="/about">
+                About
+              </Link>
               <Link className={FOOTER_LINK_CLASS} to="/dashboard">
                 Submission Tracker
               </Link>

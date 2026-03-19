@@ -91,7 +91,7 @@ export default function NavLayout() {
     "inline-flex items-center justify-center gap-1.5 rounded-lg border-2 border-foreground px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]";
   const navLinkButtonPrimaryClass = `${navLinkButtonBaseClass}`;
   const loginClasses = `bg-primary ${navLinkButtonPrimaryClass}`;
-  const signupClasses = `bg-accent text-secondary-foreground ${navLinkButtonPrimaryClass}`;
+  const signupClasses = `bg-accent-300 text-secondary-foreground ${navLinkButtonPrimaryClass}`;
   const launchNewClasses = `bg-primary ${navLinkButtonPrimaryClass}`;
   const dashboardClasses = cn(
     navLinkButtonBaseClass,

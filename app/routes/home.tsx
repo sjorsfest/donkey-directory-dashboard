@@ -9,6 +9,8 @@ import { HomeHero } from "~/components/home-hero";
 import { MockDirectoriesTable, DIRECTORIES } from "~/components/mock-table";
 import { HowItWorks } from "~/components/how-it-works";
 import { PricingSection } from "~/components/pricing-section";
+import { FAQSection } from "~/components/faq-section";
+import { FinalCtaSection } from "~/components/final-cta-section";
 
 type LoaderData = {
   isAuthenticated: boolean;
@@ -78,6 +80,8 @@ export default function HomePage() {
       />
       <HowItWorks />
       <PricingSection isAuthenticated={isAuthenticated} />
+      <FAQSection />
+      <FinalCtaSection isAuthenticated={isAuthenticated} />
     </div>
   );
 }

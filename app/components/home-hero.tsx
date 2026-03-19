@@ -276,6 +276,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                   See all directories ↓
                 </Button>
               )}
+              {isAuthenticated && (
               <Button
                 asChild
                 size="default"
@@ -286,6 +287,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                   Autofill every directory form
                 </a>
               </Button>
+              )}
             </div>
             <button
               type="button"

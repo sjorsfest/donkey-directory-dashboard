@@ -1,8 +1,12 @@
 import { type RouteConfig, index, layout, route } from "@react-router/dev/routes";
 
 export default [
+  route("sitemap.xml", "routes/sitemap[.]xml.tsx"),
+  route("robots.txt", "routes/robots[.]txt.tsx"),
+  route("llms.txt", "routes/llms[.]txt.tsx"),
   layout("routes/_nav.tsx", [
     index("routes/home.tsx"),
+    route("about", "routes/about.tsx"),
     route("dashboard", "routes/launch.tsx"),
     route("extensions", "routes/extensions.tsx"),
     route("topup", "routes/topup.tsx"),
