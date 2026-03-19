@@ -319,7 +319,7 @@ export default function AboutPage() {
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-heading text-4xl font-bold tracking-tight text-white">€50</span>
+              <span className="font-heading text-4xl font-bold tracking-tight text-white">€69</span>
               <span className="text-sm text-white/60">once</span>
             </div>
             <p className="m-0 text-sm text-white/70">

@@ -124,7 +124,7 @@ export function PricingSection({ isAuthenticated }: Props) {
               Lifetime
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="font-heading text-4xl font-bold tracking-tight">€50</span>
+              <span className="font-heading text-4xl font-bold tracking-tight">€69</span>
               <span className="text-sm text-muted-foreground ml-1">once</span>
             </div>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">

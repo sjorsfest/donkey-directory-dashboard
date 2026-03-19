@@ -30,4 +30,4 @@ Extension builds read env vars from the repo root (`../.env`):
 
 - `directory_id` is now required for fill-form.
 - Billing UI and EUR pricing added.
-- Lifetime plan updated to `€50`.
+- Lifetime plan updated to `€69`.
