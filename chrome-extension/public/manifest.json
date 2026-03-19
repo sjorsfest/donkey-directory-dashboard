@@ -5,9 +5,6 @@
   "description": "Auto-fill directory submission forms using your brand profile.",
   "permissions": ["storage", "activeTab", "scripting", "sidePanel"],
   "host_permissions": [
-    "http://127.0.0.1:8000/*",
-    "http://localhost:8000/*",
-    "http://*/*",
     "https://*/*"
   ],
   "background": {

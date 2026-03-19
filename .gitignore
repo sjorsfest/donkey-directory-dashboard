@@ -8,3 +8,7 @@
 
 # Chrome Extension build
 /chrome-extension/dist/
+
+
+/chrome-extension/donkey-extension-prod.zip
+/.env.production

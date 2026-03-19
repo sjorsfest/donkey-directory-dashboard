@@ -11,7 +11,7 @@
     "typecheck": "react-router typegen && tsc",
     "gen:api": "openapi-typescript ${API_BASE_URL:-http://127.0.0.1:8000}/openapi.json -o app/types/api.generated.ts",
     "ext:dev": "vite build --watch --config chrome-extension/vite.config.ts",
-    "ext:build": "vite build --config chrome-extension/vite.config.ts"
+    "ext:build": "vite build --config chrome-extension/vite.config.ts && cd chrome-extension/dist && zip -r ../donkey-extension-prod.zip ."
   },
   "dependencies": {
     "@iconify-json/logos": "^1.2.10",

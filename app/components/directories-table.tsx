@@ -12,6 +12,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
+import { ChromeExtensionLink } from "~/components/chrome-extension-link";
 
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
@@ -535,15 +536,10 @@ export function ProjectSubmissionsTable(props: {
 
       {submissionCounts != null && (notSubmittedCount ?? 0) > 0 && (
         <div className="border-b border-border/60 bg-muted/40 px-5 py-2 text-xs text-muted-foreground">
-          <a
-            href="https://chromewebstore.google.com/detail/donkey-directories/blphoelcahjoemkagpmeabpedloiepnm"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity"
-          >
+          <ChromeExtensionLink className="inline-flex items-center gap-1 font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity">
             <Icon icon="logos:chrome" className="h-3 w-3 shrink-0" />
             Get the Chrome extension
-          </a>{" "}
+          </ChromeExtensionLink>{" "}
           to autofill forms, update statuses, and move to the next directory automatically.
         </div>
       )}

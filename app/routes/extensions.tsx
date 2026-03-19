@@ -5,6 +5,7 @@ import type { Route } from "./+types/extensions";
 import { Button } from "@/shared/ui/button";
 import { CheckCircle2, Zap, Puzzle } from "lucide-react";
 import { Icon } from "@iconify/react";
+import { ChromeExtensionLink } from "~/components/chrome-extension-link";
 import {
   API_ROUTES,
   isCreateExtensionConnectCodeResponse,
@@ -237,15 +238,10 @@ export default function ExtensionsPage() {
               ))}
             </ul>
             <div className="mt-2">
-              <a
-                href="https://chromewebstore.google.com/detail/donkey-directories/blphoelcahjoemkagpmeabpedloiepnm"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border-2 border-foreground bg-primary px-4 py-2 text-sm font-bold text-primary-foreground no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]"
-              >
+              <ChromeExtensionLink className="inline-flex items-center gap-2 rounded-lg border-2 border-foreground bg-primary px-4 py-2 text-sm font-bold text-primary-foreground no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]">
                 <Icon icon="logos:chrome" className="h-4 w-4" />
                 Install the Extension
-              </a>
+              </ChromeExtensionLink>
             </div>
           </div>
 

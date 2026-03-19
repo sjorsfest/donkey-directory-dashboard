@@ -11,6 +11,7 @@ import {
   useMatch,
   useNavigate,
   useNavigation,
+  useSearchParams,
 } from "react-router";
 
 import type { Route } from "./+types/_nav";
@@ -84,8 +85,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     Boolean(toOptionalString(session.get("accessToken"))) ||
     Boolean(toOptionalString(session.get("refreshToken")));
 
+  const chromeExtensionUrl = process.env.CHROME_EXTENSION_URL || null;
+
   if (!hasSessionTokens) {
-    return data({ isAuthenticated: false, userEmail: null });
+    return data({ isAuthenticated: false, userEmail: null, chromeExtensionUrl });
   }
 
   const authResult = await sendAuthenticatedRequest({
@@ -101,7 +104,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     : null;
 
   return data(
-    { isAuthenticated, userEmail },
+    { isAuthenticated, userEmail, chromeExtensionUrl },
     authResult.setCookie ? { headers: { "Set-Cookie": authResult.setCookie } } : undefined,
   );
 }
@@ -133,6 +136,7 @@ export default function NavLayout() {
   const location = useLocation();
   const navigation = useNavigation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const launchNewFetcher = useFetcher<LaunchProjectExtractActionData>();
   const [isLaunchNewDialogOpen, setIsLaunchNewDialogOpen] = useState(false);
   const [launchDomainInput, setLaunchDomainInput] = useState("");
@@ -412,6 +416,8 @@ export default function NavLayout() {
           email={userEmail}
           name={deriveNameFromEmail(userEmail)}
           metadata={{ page: location.pathname + location.search }}
+          controlledByHost
+          widgetIsOpen={searchParams.get("supportWidgetOpen") === "true"}
         />
       ) : null}
 

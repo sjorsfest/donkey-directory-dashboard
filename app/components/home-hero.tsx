@@ -6,6 +6,7 @@ import { CheckCheck, Chrome, ListChecks, Zap } from "lucide-react";
 
 import { MAIN_DOMAIN } from "@/shared/lib/main-domain";
 import { Button } from "@/shared/ui/button";
+import { ChromeExtensionLink } from "~/components/chrome-extension-link";
 
 type Ripple = { x: number; y: number; t: number };
 type Burst = { x: number; y: number; t: number };
@@ -282,10 +283,10 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                 size="default"
                 className="hidden sm:inline-flex bg-primary text-secondary-foreground border-2 border-foreground shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all hover:bg-secondary/90"
               >
-                <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <ChromeExtensionLink className="flex items-center gap-2">
                   <Icon icon="logos:chrome" className="size-5 shrink-0" />
                   Autofill every directory form
-                </a>
+                </ChromeExtensionLink>
               </Button>
               )}
             </div>

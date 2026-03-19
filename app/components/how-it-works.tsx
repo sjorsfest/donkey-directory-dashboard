@@ -5,6 +5,7 @@ import { Link } from "react-router";
 
 import { MAIN_DOMAIN } from "@/shared/lib/main-domain";
 import { Button } from "@/shared/ui/button";
+import { ChromeExtensionLink } from "~/components/chrome-extension-link";
 
 // ─── Extension popup mockup ──────────────────────────────────────────────────
 
@@ -277,14 +278,10 @@ export function HowItWorks() {
             size="default"
             className="hidden sm:inline-flex shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all font-bold"
           >
-            <a
-              href="https://chromewebstore.google.com/detail/donkey-directories/blphoelcahjoemkagpmeabpedloiepnm"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <ChromeExtensionLink>
               <Icon icon="logos:chrome" className="mr-1.5 size-4 shrink-0" />
               Install the Extension
-            </a>
+            </ChromeExtensionLink>
           </Button>
           <Button
             asChild
