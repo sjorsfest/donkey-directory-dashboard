@@ -49,9 +49,17 @@ export async function loader({ request }: Route.LoaderArgs) {
     method: "GET",
   });
 
+  const meData = authResult.responseData;
+  const emailVerified =
+    authResult.response.status === 200 &&
+    typeof meData === "object" &&
+    meData !== null &&
+    "email_verified" in meData &&
+    (meData as Record<string, unknown>).email_verified === true;
+
   return data<LoaderData>(
     {
-      isAuthenticated: authResult.response.status === 200,
+      isAuthenticated: emailVerified,
       directoryCount,
     },
     {

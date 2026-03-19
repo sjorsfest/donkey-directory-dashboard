@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { fetchRandomDirectory } from "../lib/api";
+import { fetchRandomDirectory, WEB_APP_ORIGIN } from "../lib/api";
 import { getTargetTab } from "../lib/tab-utils";
+import type { Project } from "../types";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 
 interface NotListedViewProps {
   domain: string;
+  projects: Project[];
   selectedProjectId: string | null;
   projectsLoading: boolean;
   onSessionExpired: () => void;
@@ -15,6 +17,7 @@ interface NotListedViewProps {
 
 export function NotListedView({
   domain,
+  projects,
   selectedProjectId,
   projectsLoading,
   onSessionExpired,
@@ -22,10 +25,11 @@ export function NotListedView({
 }: NotListedViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasNoProjects = !projectsLoading && projects.length === 0;
   const canVisitRandom = !isLoading && !projectsLoading && Boolean(selectedProjectId);
   const helperMessage = projectsLoading
     ? "Loading projects before we can pick a random directory."
-    : !selectedProjectId
+    : !selectedProjectId && !hasNoProjects
       ? "Select a project to get a random pending directory."
       : null;
 
@@ -67,16 +71,32 @@ export function NotListedView({
             This site hasn't been added yet.
           </p>
         </div>
-        <Button
-          onClick={handleVisitRandom}
-          disabled={!canVisitRandom}
-          variant="outline"
-          className="w-full"
-        >
-          {isLoading ? "Finding a directory..." : "✨ Visit Random Directory"}
-        </Button>
-        {helperMessage && (
-          <p className="text-xs text-muted-foreground">{helperMessage}</p>
+        {hasNoProjects ? (
+          <>
+            <p className="text-xs text-muted-foreground">
+              You don't have a project yet. Create one in the dashboard to get started.
+            </p>
+            <Button
+              onClick={() => chrome.tabs.create({ url: `${WEB_APP_ORIGIN}/dashboard` })}
+              className="w-full"
+            >
+              Go to Dashboard
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              onClick={handleVisitRandom}
+              disabled={!canVisitRandom}
+              variant="outline"
+              className="w-full"
+            >
+              {isLoading ? "Finding a directory..." : "✨ Visit Random Directory"}
+            </Button>
+            {helperMessage && (
+              <p className="text-xs text-muted-foreground">{helperMessage}</p>
+            )}
+          </>
         )}
         {error && (
           <Alert variant="destructive">

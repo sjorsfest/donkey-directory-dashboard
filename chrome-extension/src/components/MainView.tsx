@@ -87,6 +87,7 @@ export function MainView({ userEmail, isAdmin, onLogout, onSessionExpired }: Mai
         {!isLoading && !isRestricted && domain && !directory && !error && (
           <NotListedView
             domain={domain}
+            projects={projects}
             selectedProjectId={selectedProjectId || null}
             projectsLoading={projectsLoading}
             onSessionExpired={onSessionExpired}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getCredits, openCheckoutForPack, voteDirectory, getLogoUploadUrl, updateAdminDirectory, deleteAdminDirectory, updateSubmissionStage, fetchRandomDirectory } from "../lib/api";
+import { getCredits, openCheckoutForPack, voteDirectory, getLogoUploadUrl, updateAdminDirectory, deleteAdminDirectory, updateSubmissionStage, fetchRandomDirectory, WEB_APP_ORIGIN } from "../lib/api";
 import { getTargetTab } from "../lib/tab-utils";
 import { formatPackPriceEUR, getPackCredits, getPackLabel, getPackPriceEurCents } from "../lib/billing";
 import { useFillFlow } from "../hooks/useFillFlow";
@@ -98,6 +98,17 @@ export function DirectoryView({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const [infoTooltipOpen, setInfoTooltipOpen] = useState(false);
+  const infoTooltipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleInfoEnter() {
+    if (infoTooltipTimer.current) clearTimeout(infoTooltipTimer.current);
+    setInfoTooltipOpen(true);
+  }
+
+  function handleInfoLeave() {
+    infoTooltipTimer.current = setTimeout(() => setInfoTooltipOpen(false), 150);
+  }
 
   const [voteState, setVoteState] = useState<VoteDisplayState>({
     myVote: directory.my_vote,
@@ -430,6 +441,40 @@ export function DirectoryView({
               >
                 {stageConfig.label}
               </span>
+
+              {/* Data freshness info icon */}
+              <div
+                className="relative shrink-0 mt-0.5"
+                onMouseEnter={handleInfoEnter}
+                onMouseLeave={handleInfoLeave}
+              >
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="flex h-3.5 w-3.5 items-center justify-center text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors"
+                  aria-label="About directory data accuracy"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </button>
+                {infoTooltipOpen && (
+                  <div className="absolute right-0 top-5 z-50 w-52 rounded-xl border-2 border-foreground bg-card p-3 text-xs leading-relaxed shadow-[var(--shadow-md)]">
+                    <p className="text-muted-foreground">
+                      Directory data is subject to change. We do our best to keep everything up to date. If you notice any outdated info, please{" "}
+                      <button
+                        type="button"
+                        onClick={() => chrome.tabs.create({ url: `${WEB_APP_ORIGIN}/?supportWidgetOpen=true` })}
+                        className="font-semibold text-foreground underline underline-offset-2 hover:text-primary"
+                      >
+                        contact us
+                      </button>.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Description */}

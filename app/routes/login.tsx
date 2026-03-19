@@ -43,8 +43,8 @@ export async function action({ request }: Route.ActionArgs) {
     const apiBaseUrl = getServerApiBaseUrl();
     const provider = intent === "oauth:google" ? "google" : "x";
     const startPath = provider === "google"
-      ? "/auth/oauth/google/start"
-      : "/auth/oauth/twitter/start";
+      ? "/api/v1/auth/oauth/google/start"
+      : "/api/v1/auth/oauth/twitter/start";
 
     const startUrl = new URL(startPath, apiBaseUrl);
     const callbackUrl = new URL("/auth/callback", new URL(request.url).origin);

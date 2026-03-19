@@ -71,7 +71,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List extension connect code records
+         * @description Return extension_connect_codes data for the authenticated user.
+         */
+        get: operations["list_extension_connect_codes_api_v1_auth_extension_connect_codes_get"];
         put?: never;
         /**
          * Mint extension connect code
@@ -158,6 +162,50 @@ export interface paths {
         get: operations["get_current_user_info_api_v1_auth_me_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify email from link
+         * @description Consume a signed email verification token from URL query and render result page.
+         */
+        get: operations["verify_email_from_link_api_v1_auth_verify_email_get"];
+        put?: never;
+        /**
+         * Verify email address
+         * @description Consume a signed email verification token and mark the user's email as verified.
+         */
+        post: operations["verify_email_api_v1_auth_verify_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/verify-email/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend verification email
+         * @description Send another verification email for the authenticated user if not yet verified.
+         */
+        post: operations["resend_verification_email_api_v1_auth_verify_email_resend_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -869,6 +917,14 @@ export interface components {
          * @enum {string}
          */
         AudienceTag: "DEVELOPERS" | "FOUNDERS" | "MARKETERS" | "PRODUCT_MANAGERS" | "SMB_OWNERS" | "CREATORS" | "INVESTORS" | "STUDENTS" | "INDIE_HACKERS" | "AGENCIES" | "PROFESSIONALS" | "OTHER";
+        /**
+         * AuthMessageResponse
+         * @description Simple auth message response.
+         */
+        AuthMessageResponse: {
+            /** Message */
+            message: string;
+        };
         /**
          * BenefitTag
          * @enum {string}
@@ -2115,6 +2171,14 @@ export interface components {
             thumbs_up_percentage?: number | null;
         };
         /**
+         * EmailVerificationTokenRequest
+         * @description Schema for verifying email with a token.
+         */
+        EmailVerificationTokenRequest: {
+            /** Token */
+            token: string;
+        };
+        /**
          * ExchangeExtensionConnectCodeRequest
          * @description Request to exchange a one-time connect code for tokens.
          */
@@ -2157,6 +2221,44 @@ export interface components {
              * @constant
              */
             error: "invalid_or_expired_code";
+        };
+        /**
+         * ExtensionConnectCodeRecordResponse
+         * @description Single extension connect code record for a user.
+         */
+        ExtensionConnectCodeRecordResponse: {
+            /** Id */
+            id: string;
+            /** Client */
+            client: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Consumed At */
+            consumed_at?: string | null;
+            /** Created Ip */
+            created_ip?: string | null;
+            /** Consumed Ip */
+            consumed_ip?: string | null;
+            /** Consumed User Agent */
+            consumed_user_agent?: string | null;
+            /** Browser Name */
+            browser_name?: string | null;
+            /** Device Id */
+            device_id?: string | null;
+            /** Device Name */
+            device_name?: string | null;
+            /** Is Consumed */
+            is_consumed: boolean;
+            /** Is Expired */
+            is_expired: boolean;
         };
         /**
          * ExtensionConnectUserResponse
@@ -2554,6 +2656,8 @@ export interface components {
              * @enum {string}
              */
             role: "standard" | "admin";
+            /** Email Verified */
+            email_verified: boolean;
             /** Is Active */
             is_active: boolean;
             /** Is Superuser */
@@ -2690,6 +2794,26 @@ export interface operations {
             };
         };
     };
+    list_extension_connect_codes_api_v1_auth_extension_connect_codes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionConnectCodeRecordResponse"][];
+                };
+            };
+        };
+    };
     create_extension_connect_code_api_v1_auth_extension_connect_codes_post: {
         parameters: {
             query?: never;
@@ -2821,6 +2945,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    verify_email_from_link_api_v1_auth_verify_email_get: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_email_api_v1_auth_verify_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailVerificationTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_verification_email_api_v1_auth_verify_email_resend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthMessageResponse"];
                 };
             };
         };

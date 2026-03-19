@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Form, data, redirect, useActionData, useNavigation } from "react-router";
+import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import type { Route } from "./+types/extensions";
 import { Button } from "@/shared/ui/button";
-import { CheckCircle2, Chrome, Zap, Puzzle } from "lucide-react";
+import { CheckCircle2, Zap, Puzzle } from "lucide-react";
+import { Icon } from "@iconify/react";
 import {
   API_ROUTES,
   isCreateExtensionConnectCodeResponse,
@@ -17,6 +18,16 @@ import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { getSession } from "~/lib/session.server";
 
 type ActionFeedback = { kind: "success" | "error"; message: string };
+
+type ConnectCodeRecord = {
+  id: string;
+  client: string;
+  device_name: string | null;
+  browser_name: string | null;
+  consumed_at: string | null;
+  consumed_user_agent: string | null;
+  is_consumed: boolean;
+};
 
 type ConnectCode = {
   code: string;
@@ -65,8 +76,19 @@ export async function loader({ request }: Route.LoaderArgs) {
     });
   }
 
+  const codesResult = await sendAuthenticatedRequest({
+    session,
+    apiBaseUrl: getServerApiBaseUrl(),
+    path: API_ROUTES.auth.extensionConnectCodes,
+    method: "GET",
+  });
+
+  const connectCodes: ConnectCodeRecord[] = Array.isArray(codesResult.responseData)
+    ? (codesResult.responseData as ConnectCodeRecord[])
+    : [];
+
   return data(
-    {},
+    { connectCodes },
     authCheck.setCookie ? { headers: { "Set-Cookie": authCheck.setCookie } } : undefined,
   );
 }
@@ -125,6 +147,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function ExtensionsPage() {
+  const { connectCodes } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isGenerating = navigation.state !== "idle";
@@ -190,7 +213,7 @@ export default function ExtensionsPage() {
           <div className="flex flex-1 flex-col gap-3">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-foreground bg-foreground px-3 py-1 text-xs font-bold text-background">
-                <Chrome className="h-3 w-3" />
+                <Icon icon="logos:chrome" className="h-3 w-3" />
                 Chrome Extension
               </span>
             </div>
@@ -220,7 +243,7 @@ export default function ExtensionsPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-lg border-2 border-foreground bg-primary px-4 py-2 text-sm font-bold text-primary-foreground no-underline shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]"
               >
-                <Chrome className="h-4 w-4" />
+                <Icon icon="logos:chrome" className="h-4 w-4" />
                 Install the Extension
               </a>
             </div>
@@ -290,7 +313,7 @@ export default function ExtensionsPage() {
         </div>
       </div>
 
-      {/* Empty state for connected extensions — no list API yet */}
+      {/* Connected extensions list */}
       <div className={PANEL_CLASS}>
         <div className="flex items-center gap-2 mb-3">
           <Puzzle className="h-4 w-4 text-muted-foreground" />
@@ -298,12 +321,53 @@ export default function ExtensionsPage() {
             Connected extensions
           </p>
         </div>
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-foreground/20 px-4 py-8 text-center text-muted-foreground">
-          <p className="m-0 text-sm">
-            Generate a one-time code above and paste it into the extension popup to link it to
-            your account.
-          </p>
-        </div>
+        {connectCodes.filter((c) => c.is_consumed).length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-foreground/20 px-4 py-8 text-center text-muted-foreground">
+            <p className="m-0 text-sm">
+              Generate a one-time code above and paste it into the extension popup to link it to
+              your account.
+            </p>
+          </div>
+        ) : (
+          <ul className="m-0 list-none p-0 flex flex-col gap-2">
+            {connectCodes
+              .filter((c) => c.is_consumed)
+              .map((c) => (
+                <li
+                  key={c.id}
+                  className="flex items-center gap-3 rounded-lg border-2 border-foreground px-4 py-3"
+                >
+                  <Icon icon="logos:chrome" className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 text-sm font-semibold">
+                    {c.device_name ?? c.browser_name ?? c.client}
+                  </span>
+                  <span className="flex flex-col items-end gap-0.5 text-right">
+                    <span className="text-xs text-muted-foreground">
+                      {c.consumed_at
+                        ? new Date(c.consumed_at).toLocaleDateString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : null}
+                    </span>
+                    {c.consumed_user_agent ? (
+                      <span
+                        className="max-w-[200px] truncate text-[0.65rem] text-muted-foreground/60"
+                        title={c.consumed_user_agent}
+                      >
+                        {c.consumed_user_agent}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border-2 border-foreground bg-lime-100 px-2 py-0.5 text-xs font-bold text-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    Connected
+                  </span>
+                </li>
+              ))}
+          </ul>
+        )}
       </div>
     </div>
   );

@@ -243,6 +243,19 @@ export async function loader({ request }: Route.LoaderArgs) {
     });
   }
 
+  const meData = authCheck.responseData;
+  const emailVerified =
+    typeof meData === "object" &&
+    meData !== null &&
+    "email_verified" in meData &&
+    (meData as Record<string, unknown>).email_verified === true;
+
+  if (!emailVerified) {
+    return redirect("/verify-email", {
+      headers: latestSetCookie ? { "Set-Cookie": latestSetCookie } : undefined,
+    });
+  }
+
   const projectsResult = await sendAuthenticatedRequest({
     session,
     apiBaseUrl,
