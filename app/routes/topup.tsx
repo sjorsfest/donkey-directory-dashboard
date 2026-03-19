@@ -147,8 +147,8 @@ export default function TopupPage() {
             <p className="text-muted-foreground text-sm">No packs available at the moment.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 divide-y-2 divide-foreground/10 sm:grid-cols-3 sm:divide-y-0 sm:divide-x-2">
-            {availablePacks.map((pack) => (
+          <div className="grid grid-cols-1 divide-y-2 divide-foreground/10 sm:grid-cols-2 sm:divide-y-0 sm:divide-x-2">
+            {availablePacks.filter((p) => p.pack_code !== "credits_30").map((pack) => (
               <PackCard
                 key={pack.pack_code}
                 pack={pack}
@@ -188,12 +188,6 @@ function PackCard({
         "Unlimited one-click submissions",
         "Every new directory, automatically",
         "All future product launches included",
-      ]
-    : pack.pack_code === "credits_30"
-    ? [
-        "30 one-click form fills",
-        "Just 17¢ per directory submission",
-        "Credits never expire",
       ]
     : [
         "100 one-click form fills",

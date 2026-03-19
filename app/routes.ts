@@ -18,4 +18,10 @@ export default [
   route("verify-email", "routes/verify-email.tsx"),
   route("auth/callback", "routes/auth.callback.tsx"),
   route("logout", "routes/logout.tsx"),
+  route("billing/success", "routes/billing.success.tsx"),
+  route("billing/cancel", "routes/billing.cancel.tsx"),
+  // route("extension-promo/1", "routes/extension-promo.1.tsx"),
+  // route("extension-promo/2", "routes/extension-promo.2.tsx"),
+  // route("extension-promo/3", "routes/extension-promo.3.tsx"),
+  // route("extension-promo/4", "routes/extension-promo.4.tsx"),
 ] satisfies RouteConfig;
