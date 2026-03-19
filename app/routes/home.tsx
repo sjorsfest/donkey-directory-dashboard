@@ -11,18 +11,77 @@ import { HowItWorks } from "~/components/how-it-works";
 import { PricingSection } from "~/components/pricing-section";
 import { FAQSection } from "~/components/faq-section";
 import { FinalCtaSection } from "~/components/final-cta-section";
+import { MAIN_ORIGIN } from "@/shared/lib/main-domain";
 
 type LoaderData = {
   isAuthenticated: boolean;
   directoryCount: number | null;
 };
 
+const SEO_TITLE = "Donkey Directories Dashboard";
+const SEO_DESCRIPTION =
+  "Discover 250+ launch directories, autofill submissions in one click, and track every listing from one dashboard.";
+const OG_IMAGE_URL = "https://www.donkeyseo.io/og/og-image.png?v=8";
+const OG_IMAGE_ALT = "Donkey Directories AI-powered SEO page pipeline preview";
+
 export function meta({}: Route.MetaArgs) {
+  const canonicalUrl = `${MAIN_ORIGIN}/`;
+
   return [
-    { title: "Donkey Directories Dashboard" },
+    { title: SEO_TITLE },
     {
       name: "description",
-      content: "Donkey Directories dashboard — browse all directories.",
+      content: SEO_DESCRIPTION,
+    },
+    { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+    { name: "googlebot", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+    {
+      name: "keywords",
+      content:
+        "donkey directories, startup directories, product launch directories, submit startup, directory submission tool, launch marketing",
+    },
+    { tagName: "link", rel: "canonical", href: canonicalUrl },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Donkey Directories" },
+    { property: "og:title", content: SEO_TITLE },
+    { property: "og:description", content: SEO_DESCRIPTION },
+    { property: "og:url", content: canonicalUrl },
+    { property: "og:locale", content: "en_US" },
+    { property: "og:image", content: OG_IMAGE_URL },
+    { property: "og:image:secure_url", content: OG_IMAGE_URL },
+    { property: "og:image:width", content: "908" },
+    { property: "og:image:height", content: "477" },
+    { property: "og:image:alt", content: OG_IMAGE_ALT },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: SEO_TITLE },
+    { name: "twitter:description", content: SEO_DESCRIPTION },
+    { name: "twitter:image", content: OG_IMAGE_URL },
+    { name: "twitter:image:src", content: OG_IMAGE_URL },
+    { name: "twitter:image:alt", content: OG_IMAGE_ALT },
+    {
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            name: "Donkey Directories",
+            url: MAIN_ORIGIN,
+            description: SEO_DESCRIPTION,
+          },
+          {
+            "@type": "SoftwareApplication",
+            name: "Donkey Directories Dashboard",
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web",
+            url: MAIN_ORIGIN,
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "EUR",
+            },
+          },
+        ],
+      },
     },
   ];
 }

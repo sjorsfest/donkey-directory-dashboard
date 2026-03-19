@@ -34,12 +34,34 @@ export const ChromeExtensionLink = React.forwardRef<HTMLAnchorElement, ChromeExt
           {children}
         </a>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogTitle>Extension pending approval</DialogTitle>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Sorry! The Donkey Directories Chrome extension is currently awaiting approval from the
-              Chrome Web Store. We'll have it available for install very soon — check back shortly!
-            </p>
+          <DialogContent className="max-w-sm overflow-hidden p-0 gap-0 border-2 border-foreground">
+            {/* Lime accent bar */}
+            <div className="h-1.5 bg-accent w-full" />
+            <div className="p-6 flex flex-col gap-4">
+              {/* Icon + title row */}
+              <div className="flex items-start gap-3">
+                <span className="text-3xl leading-none select-none" aria-hidden>🦀</span>
+                <div className="flex flex-col gap-1">
+                  <DialogTitle className="text-base font-extrabold leading-tight">
+                    Pending Chrome Web Store approval
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+                    Almost there!
+                  </p>
+                </div>
+              </div>
+
+              {/* Body */}
+              <p className="text-sm leading-relaxed text-foreground/80">
+                We submitted the extension and are just waiting on Google's review.
+                It won't be long — check back very soon! 🚀
+              </p>
+
+              {/* Footer note */}
+              <p className="text-xs text-muted-foreground border-t border-foreground/10 pt-3">
+                Sorry for the wait. We appreciate your patience 🙏
+              </p>
+            </div>
           </DialogContent>
         </Dialog>
       </>

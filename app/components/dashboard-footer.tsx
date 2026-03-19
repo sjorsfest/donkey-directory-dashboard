@@ -1,4 +1,5 @@
-import { Link } from "react-router";
+import { Link, useLocation, useRouteLoaderData } from "react-router";
+import type { loader as navLoader } from "~/routes/_nav";
 
 const FOOTER_CONTAINER_CLASS =
   "mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8";
@@ -6,6 +7,13 @@ const FOOTER_LINK_CLASS =
   "text-sm font-semibold text-muted-foreground no-underline transition-colors hover:text-foreground";
 
 export function DashboardFooter() {
+  const navData = useRouteLoaderData<typeof navLoader>("routes/_nav");
+  const isAuthenticated = navData?.isAuthenticated ?? false;
+  const location = useLocation();
+  const submitDirectoryHref = isAuthenticated
+    ? `${location.pathname}${location.search ? location.search + "&" : "?"}supportWidgetOpen=true`
+    : "/login";
+
   return (
     <footer className="mt-10 border-t-2 border-foreground/25 bg-secondary-100">
       <div className={`${FOOTER_CONTAINER_CLASS} py-8`}>
@@ -39,6 +47,9 @@ export function DashboardFooter() {
               </Link>
               <Link className={FOOTER_LINK_CLASS} to="/dashboard">
                 Submission Tracker
+              </Link>
+              <Link className={FOOTER_LINK_CLASS} to={submitDirectoryHref}>
+                Submit your directory
               </Link>
             </div>
           </div>
