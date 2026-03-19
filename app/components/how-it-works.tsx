@@ -151,7 +151,7 @@ export function HowItWorks() {
           </p>
 
           {/* Proof: URL in → everything out */}
-          <div className="mt-6 pt-5 border-t border-foreground/10">
+          <div className="hidden sm:block mt-6 pt-5 border-t border-foreground/10">
             <p className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/30 mb-2.5">
               You type
             </p>
@@ -205,7 +205,7 @@ export function HowItWorks() {
           </p>
 
           {/* Extension mockup — pushed to the bottom */}
-          <div className="mt-auto">
+          <div className="hidden sm:block mt-auto">
             <ExtensionMockup />
           </div>
         </div>
@@ -227,7 +227,7 @@ export function HowItWorks() {
           </p>
 
           {/* Proof: tracking rows + progress */}
-          <div className="mt-6 pt-5 border-t border-foreground/10 space-y-2">
+          <div className="hidden sm:block mt-6 pt-5 border-t border-foreground/10 space-y-2">
             {([
               { name: "Product Hunt",  dot: "bg-emerald-400", label: "Submitted",   labelCls: "text-emerald-600 font-bold", icon: true  },
               { name: "BetaList",      dot: "bg-amber-400",   label: "In progress", labelCls: "text-amber-600 font-bold",   icon: false },

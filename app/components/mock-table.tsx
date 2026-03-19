@@ -826,7 +826,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
             />
 
             {/* CTA */}
-            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-3 pb-10">
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-3 pb-10 px-6">
               <p className="text-sm font-semibold text-foreground">
                 See all {directoryCount ?? DIRECTORIES.length} directories, and keep track of the ones you&apos;ve submitted to!
               </p>
