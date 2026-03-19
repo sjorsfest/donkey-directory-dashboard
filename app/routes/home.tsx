@@ -21,8 +21,8 @@ type LoaderData = {
 const SEO_TITLE = "Donkey Directories Dashboard";
 const SEO_DESCRIPTION =
   "Discover 250+ launch directories, autofill submissions in one click, and track every listing from one dashboard.";
-const OG_IMAGE_URL = "https://www.donkey.directory/og/og-image.png?v=2";
-const OG_IMAGE_ALT = "Donkey Directories dashboard — discover 250+ launch directories and track every listing in one place";
+const OG_IMAGE_URL = "https://www.donkey.directory/og/og-image.png?v=3";
+const OG_IMAGE_ALT = "Donkey Directories — discover 250+ launch directories and track every listing in one place";
 
 export function meta({}: Route.MetaArgs) {
   const canonicalUrl = `${MAIN_ORIGIN}/`;
