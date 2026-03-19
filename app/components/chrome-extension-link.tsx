@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useRouteLoaderData } from "react-router";
 import type { loader as navLoader } from "~/routes/_nav";
+import { Icon } from "@iconify/react";
 import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
 
 interface ChromeExtensionLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -40,7 +41,7 @@ export const ChromeExtensionLink = React.forwardRef<HTMLAnchorElement, ChromeExt
             <div className="p-6 flex flex-col gap-4">
               {/* Icon + title row */}
               <div className="flex items-start gap-3">
-                <span className="text-3xl leading-none select-none" aria-hidden>🦀</span>
+                <Icon icon="logos:chrome" className="size-8 shrink-0" />
                 <div className="flex flex-col gap-1">
                   <DialogTitle className="text-base font-extrabold leading-tight">
                     Pending Chrome Web Store approval
@@ -54,7 +55,7 @@ export const ChromeExtensionLink = React.forwardRef<HTMLAnchorElement, ChromeExt
               {/* Body */}
               <p className="text-sm leading-relaxed text-foreground/80">
                 We submitted the extension and are just waiting on Google's review.
-                It won't be long — check back very soon! 🚀
+                It won't be long, so check back very soon! 🚀
               </p>
 
               {/* Footer note */}
