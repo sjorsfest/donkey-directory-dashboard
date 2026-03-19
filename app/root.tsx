@@ -10,6 +10,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { NavigationProgress } from "./components/NavigationProgress";
 import { SupportWidget } from "./components/SupportWidget";
 
 export const links: Route.LinksFunction = () => [
@@ -69,6 +70,7 @@ export default function App() {
 
   return (
     <>
+      <NavigationProgress />
       <SupportWidget
         accountId="cmko8jp0i0000lo09ghgzcul5"
         name={supportName}

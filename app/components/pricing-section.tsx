@@ -21,7 +21,7 @@ export function PricingSection({ isAuthenticated }: Props) {
           Stop filling the same form 250+ times.
         </h2>
         <p className="mt-1.5 text-sm text-muted-foreground max-w-lg">
-          Tracking is always free. Credits let the extension submit your product in one click — no copy-paste, no tab-switching.
+          Tracking is always free. Credits let the extension submit your product in one click, with no copy-paste and no tab-switching.
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export function PricingSection({ isAuthenticated }: Props) {
               <span className="text-sm text-muted-foreground ml-1">forever</span>
             </div>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              Everything you need to track your launch — no card, no catch.
+              Everything you need to track your launch: no card, no catch.
             </p>
           </div>
 
@@ -71,7 +71,7 @@ export function PricingSection({ isAuthenticated }: Props) {
           </Button>
         </div>
 
-        {/* 100 credits — recommended */}
+        {/* 100 credits (recommended) */}
         <div className="px-7 py-7 flex flex-col gap-5 max-[640px]:px-5 relative">
           {/* Lime top accent */}
           <div className="absolute top-0 inset-x-0 h-[3px] bg-primary" />
@@ -163,7 +163,7 @@ export function PricingSection({ isAuthenticated }: Props) {
       {/* Bottom note */}
       <div className="px-8 py-4 border-t-2 border-foreground/10 bg-secondary/60 max-[640px]:px-5">
         <p className="text-xs text-muted-foreground">
-          Secure payment via Stripe. No subscription — all packs are one-time purchases.
+          Secure payment via Stripe. No subscription, and all packs are one-time purchases.
         </p>
       </div>
 

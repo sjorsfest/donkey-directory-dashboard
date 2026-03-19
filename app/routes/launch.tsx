@@ -522,7 +522,8 @@ export default function LaunchPage() {
           {projectsError ? <p className={AUTH_ERROR_CLASS}>{projectsError}</p> : null}
 
           {/* Project cards */}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1">
+          <div className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 max-[960px]:grid-cols-1 p-4">
             {projects.map((project) => {
               const isActive = project.id === selectedProjectId;
               const submittedCount = isActive
@@ -581,6 +582,7 @@ export default function LaunchPage() {
               <strong>New project</strong>
               <small>Start from a domain URL</small>
             </button>
+          </div>
           </div>
 
           {/* Submissions table or skeleton */}

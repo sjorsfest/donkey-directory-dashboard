@@ -743,7 +743,7 @@ export function DirectoryView({
       <Card className="border-2 border-foreground shadow-[var(--shadow-md)]">
         <CardContent className="px-4 pt-4 pb-4 space-y-2.5">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-bold text-foreground">Fill submission form</p>
+            <p className="text-xs font-bold text-foreground">Which project are you submitting?</p>
             {creditsInfo && (
               creditsInfo.unlimited ? (
                 <Badge variant="outline">Lifetime unlimited</Badge>
@@ -773,7 +773,7 @@ export function DirectoryView({
             </SelectContent>
           </Select>
           <Button disabled={!canFill} onClick={handleFill} className="w-full">
-            {isRunning ? "Filling..." : "Fill Forms"}
+            {isRunning ? "Filling..." : "Autofill This Form"}
           </Button>
 
           {paywall ? (

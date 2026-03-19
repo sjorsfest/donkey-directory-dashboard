@@ -244,7 +244,19 @@ export function useFillFlow(onSessionExpired?: () => void) {
         }
         updateLastStep("Directory identity resolved", "done");
 
-        // Step 2: Scan form fields
+        // Step 2: Check credits before scanning
+        const wallet = await getCredits(onSessionExpired);
+        if (!wallet.lifetime_unlimited && wallet.credit_balance <= 0) {
+          setPaywall({
+            message: "You have no credits remaining. Top up to continue.",
+            creditBalance: wallet.credit_balance,
+            lifetimeUnlimited: wallet.lifetime_unlimited,
+            availablePacks: wallet.available_packs,
+          });
+          return;
+        }
+
+        // Step 3: Scan form fields
         addStep("Scanning form fields (including iframe fields)...");
         const scanResults = await chrome.scripting.executeScript({
           target: { tabId, allFrames: true },
@@ -264,7 +276,7 @@ export function useFillFlow(onSessionExpired?: () => void) {
           "done"
         );
 
-        // Step 3: Send to backend
+        // Step 4: Send to backend
         addStep("Generating fill values...");
         const data = await fillForm(
           {
@@ -286,7 +298,7 @@ export function useFillFlow(onSessionExpired?: () => void) {
         const mappedFields = mapReturnedFieldsToScannedFields(filledFields, fields);
         updateLastStep(`Generated ${mappedFields.length} values`, "done");
 
-        // Step 4: Fill the form
+        // Step 5: Fill the form
         addStep("Filling form fields across frames (waiting for delayed inputs)...");
         const fillResultsByFrame = await Promise.all(
           frameScanResults.map(async ({ frameId, fields: frameFields }) => {

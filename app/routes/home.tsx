@@ -70,7 +70,7 @@ export default function HomePage() {
       <HomeHero
         isAuthenticated={isAuthenticated}
         directoryCount={directoryCount}
-        localDirectoryCount={DIRECTORIES.length}
+        localDirectoryCount={250}
       />
       <MockDirectoriesTable
         isAuthenticated={isAuthenticated}

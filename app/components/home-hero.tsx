@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
@@ -167,10 +168,10 @@ function DotRippleCanvas() {
 }
 
 const HERO_PHRASES = [
-  { text: "everywhere it matters",     emoji: "🚀" },
-  { text: "across 250+ directories",    emoji: "📋" },
-  { text: "without the copy-paste",    emoji: "⚡" },
-  { text: "and get discovered",        emoji: "🌍" },
+  { text: "auto-filled for you",       emoji: "⚡" },
+  { text: "your progress, tracked",    emoji: "📊" },
+  { text: "always curated & fresh",    emoji: "✅" },
+  { text: "zero copy-paste",           emoji: "🎯" },
 ];
 
 type Props = {
@@ -197,7 +198,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
         <div className="px-10 py-12 max-[960px]:px-6 max-[960px]:py-8 max-[480px]:px-4 max-[480px]:py-5 flex flex-col justify-center gap-6">
           <div className="space-y-3">
             <h1 className="text-[3.2rem] font-bold leading-[1.1] max-[960px]:text-3xl max-[480px]:text-2xl">
-              <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill] max-[960px]:text-3xl max-[480px]:text-2xl">Submit Your Product</span>{" "}
+              <span className="text-[3.4rem] text-secondary [-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill] max-[960px]:text-3xl max-[480px]:text-2xl">{directoryCount ?? localDirectoryCount}+ launch directories,</span>{" "}
               <span className="relative inline-block">
                 <motion.span
                   key={activePhraseIndex}
@@ -230,8 +231,8 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
           {/* Feature bullets */}
           <ul className="flex flex-col gap-2.5">
             {([
-              { icon: Zap,        text: "Chrome extension autofills forms. Skip the copy-paste." },
               { icon: ListChecks, text: `${directoryCount ?? localDirectoryCount}+ curated directories, always up to date` },
+              { icon: Zap,        text: "Chrome extension autofills forms. Skip the copy-paste." },
               { icon: CheckCheck, text: "Track every submission: not started, in progress, or done" },
             ] as const).map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-2.5 text-sm font-medium">
@@ -275,6 +276,16 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
                   See all directories ↓
                 </Button>
               )}
+              <Button
+                asChild
+                size="default"
+                className="bg-primary text-secondary-foreground border-2 border-foreground shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all hover:bg-secondary/90"
+              >
+                <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <Icon icon="logos:chrome" className="size-5 shrink-0" />
+                  Autofill every directory form
+                </a>
+              </Button>
             </div>
             <button
               type="button"

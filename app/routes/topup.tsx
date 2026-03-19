@@ -12,7 +12,6 @@ import { getSession } from "~/lib/session.server";
 import { Button } from "@/shared/ui/button";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Check, Infinity, Zap } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -98,46 +97,57 @@ export default function TopupPage() {
   const isBusy = navigation.state !== "idle";
 
   return (
-    <main className="min-h-screen py-12 px-4">
-      <div className="mx-auto w-[min(900px,100%)]">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-heading text-3xl font-bold">Top up credits</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Credits are used when the Chrome extension auto-fills a directory submission.
-          </p>
-        </div>
+    <div className="mx-auto w-[min(1200px,calc(100vw-2rem))] max-[960px]:w-[min(1200px,calc(100vw-1rem))] py-8">
+      <div className="rounded-2xl border-2 border-foreground bg-white shadow-[var(--shadow-md)] overflow-hidden">
 
-        {/* Balance */}
-        <div className="mb-8 rounded-xl border-2 border-foreground bg-secondary px-6 py-4 shadow-[var(--shadow-sm)] inline-flex items-center gap-3">
-          {lifetimeUnlimited ? (
-            <>
-              <Infinity className="h-5 w-5" />
-              <span className="font-bold">Lifetime access — unlimited submissions</span>
-            </>
-          ) : (
-            <>
-              <Zap className="h-5 w-5" />
-              <span>
-                You have{" "}
-                <span className="font-bold">{creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>{" "}
-                remaining
-              </span>
-            </>
-          )}
+        {/* Header */}
+        <div className="px-8 py-7 border-b-2 border-foreground/10 flex items-start justify-between gap-6 flex-wrap max-[640px]:px-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
+              Billing
+            </p>
+            <h1 className="font-heading text-2xl font-bold leading-tight">
+              Top up credits
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              One credit = one auto-filled directory submission via the extension.
+            </p>
+          </div>
+
+          {/* Balance pill */}
+          <div className="shrink-0 self-center rounded-xl border-2 border-foreground bg-secondary px-5 py-3 shadow-[var(--shadow-sm)] flex items-center gap-2.5">
+            {lifetimeUnlimited ? (
+              <>
+                <Infinity className="h-4 w-4 shrink-0" />
+                <span className="text-sm font-bold">Lifetime — unlimited</span>
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 shrink-0" />
+                <span className="text-sm">
+                  <span className="font-bold">{creditBalance}</span>{" "}
+                  credit{creditBalance !== 1 ? "s" : ""} remaining
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
         {actionData?.error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{actionData.error}</AlertDescription>
-          </Alert>
+          <div className="px-8 pt-6 max-[640px]:px-5">
+            <Alert variant="destructive">
+              <AlertDescription>{actionData.error}</AlertDescription>
+            </Alert>
+          </div>
         )}
 
         {/* Packs */}
         {availablePacks.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No packs available at the moment.</p>
+          <div className="px-8 py-12 text-center max-[640px]:px-5">
+            <p className="text-muted-foreground text-sm">No packs available at the moment.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-3 gap-5 max-[640px]:grid-cols-1">
+          <div className="grid grid-cols-3 divide-x-2 divide-foreground/10 max-[768px]:grid-cols-1 max-[768px]:divide-x-0 max-[768px]:divide-y-2">
             {availablePacks.map((pack) => (
               <PackCard
                 key={pack.pack_code}
@@ -148,8 +158,16 @@ export default function TopupPage() {
             ))}
           </div>
         )}
+
+        {/* Footer note */}
+        <div className="px-8 py-4 border-t-2 border-foreground/10 bg-secondary/60 max-[640px]:px-5">
+          <p className="text-xs text-muted-foreground">
+            Secure payment via Stripe. All packs are one-time purchases — no subscription, no hidden fees.
+          </p>
+        </div>
+
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -165,40 +183,65 @@ function PackCard({
   const isPopular = pack.pack_code === "credits_100";
   const isLifetime = pack.lifetime_unlimited;
 
-  const features = isLifetime
-    ? ["Unlimited auto-fill submissions", "Never expires", "All future updates"]
-    : [`${pack.credits} submission credits`, "Credits never expire", "Use at your own pace"];
+  const features: string[] = isLifetime
+    ? [
+        "Unlimited one-click submissions",
+        "Every new directory, automatically",
+        "All future product launches included",
+      ]
+    : pack.pack_code === "credits_30"
+    ? [
+        "30 one-click form fills",
+        "Just 17¢ per directory submission",
+        "Credits never expire",
+      ]
+    : [
+        "100 one-click form fills",
+        "Just 10¢ per directory submission",
+        "Credits never expire",
+      ];
+
+  const label = isLifetime ? "Lifetime" : `${pack.credits} credits`;
+  const ctaLabel = isSubmitting
+    ? "Redirecting..."
+    : isLifetime
+    ? "Get lifetime access"
+    : `Buy ${pack.credits} credits`;
 
   return (
-    <div
-      className={cn(
-        "relative flex flex-col gap-5 rounded-xl border-2 border-foreground p-6 shadow-[var(--shadow-md)]",
-        isPopular ? "bg-secondary" : "bg-background"
-      )}
-    >
+    <div className="px-7 py-7 flex flex-col gap-5 relative max-[640px]:px-5">
+      {/* Lime top accent on popular */}
       {isPopular && (
-        <div className="absolute top-4 right-4">
-          <span className="inline-flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-widest bg-primary text-foreground border-2 border-foreground px-2 py-0.5 shadow-[2px_2px_0_#1A1A1A]">
-            <Zap className="h-3 w-3" />
-            Popular
-          </span>
-        </div>
+        <div className="absolute top-0 inset-x-0 h-[3px] bg-primary" />
       )}
 
       <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-          {isLifetime ? "Lifetime" : `${pack.credits} credits`}
-        </p>
+        <div className="flex items-center gap-2 mb-3">
+          <p className="text-[0.68rem] font-bold uppercase tracking-widest text-muted-foreground">
+            {label}
+          </p>
+          {isPopular && (
+            <span className="inline-flex items-center gap-1 bg-primary text-foreground text-[0.58rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+              <Zap className="h-2.5 w-2.5" fill="currentColor" />
+              Popular
+            </span>
+          )}
+        </div>
         <div className="flex items-baseline gap-1">
-          <span className="font-heading text-3xl font-bold">€{pack.amount_eur.toFixed(0)}</span>
-          <span className="text-sm text-muted-foreground">one-time</span>
+          <span className="font-heading text-4xl font-bold tracking-tight">
+            €{pack.amount_eur.toFixed(0)}
+          </span>
+          <span className="text-sm text-muted-foreground ml-1">one-time</span>
         </div>
       </div>
 
-      <ul className="flex flex-col gap-2 flex-1">
+      <ul className="flex flex-col gap-2.5 flex-1 text-sm">
         {features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-sm">
-            <Check className="h-4 w-4 mt-0.5 shrink-0 text-foreground/60" />
+          <li
+            key={f}
+            className={`flex items-start gap-2 ${isPopular ? "font-medium text-foreground" : "text-foreground/70"}`}
+          >
+            <Check className="h-3.5 w-3.5 mt-[3px] shrink-0" strokeWidth={2.5} />
             {f}
           </li>
         ))}
@@ -211,9 +254,9 @@ function PackCard({
           variant={isPopular ? "default" : "outline"}
           size="default"
           disabled={disabled}
-          className="w-full shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all"
+          className="w-full shadow-[var(--shadow-btn)] active:shadow-[var(--shadow-pressed)] active:translate-x-[3px] active:translate-y-[3px] transition-all font-semibold"
         >
-          {isSubmitting ? "Redirecting to checkout..." : isLifetime ? "Get lifetime access" : `Buy ${pack.credits} credits`}
+          {ctaLabel}
         </Button>
       </Form>
     </div>
