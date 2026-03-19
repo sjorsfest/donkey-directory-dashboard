@@ -7,12 +7,14 @@ import {
   redirect,
   useFetcher,
   useLoaderData,
+  useLocation,
   useMatch,
   useNavigate,
   useNavigation,
 } from "react-router";
 
 import type { Route } from "./+types/_nav";
+import type { ApiUserResponse } from "~/lib/api-contract";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
@@ -23,6 +25,7 @@ import { normalizeDomainInput } from "~/lib/domain-input";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { destroySession, getSession } from "~/lib/session.server";
 import { DashboardFooter } from "~/components/dashboard-footer";
+import { SupportWidget } from "~/components/SupportWidget";
 
 type LaunchProjectExtractActionData = {
   intent: "project_extract";
@@ -44,7 +47,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     Boolean(toOptionalString(session.get("refreshToken")));
 
   if (!hasSessionTokens) {
-    return data({ isAuthenticated: false });
+    return data({ isAuthenticated: false, userEmail: null });
   }
 
   const authResult = await sendAuthenticatedRequest({
@@ -54,8 +57,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     method: "GET",
   });
 
+  const isAuthenticated = authResult.response.status === 200;
+  const userEmail = isAuthenticated
+    ? (authResult.responseData as ApiUserResponse).email
+    : null;
+
   return data(
-    { isAuthenticated: authResult.response.status === 200 },
+    { isAuthenticated, userEmail },
     authResult.setCookie ? { headers: { "Set-Cookie": authResult.setCookie } } : undefined,
   );
 }
@@ -74,8 +82,17 @@ export async function action({ request }: Route.ActionArgs) {
   return data({ error: "Unsupported intent" }, { status: 400 });
 }
 
+function deriveNameFromEmail(email: string): string {
+  const local = email.split("@")[0];
+  return local
+    .split(/[._\-+]/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export default function NavLayout() {
-  const { isAuthenticated } = useLoaderData<typeof loader>();
+  const { isAuthenticated, userEmail } = useLoaderData<typeof loader>();
+  const location = useLocation();
   const navigation = useNavigation();
   const navigate = useNavigate();
   const launchNewFetcher = useFetcher<LaunchProjectExtractActionData>();
@@ -265,6 +282,15 @@ export default function NavLayout() {
           </launchNewFetcher.Form>
         </DialogContent>
       </Dialog>
+
+      {isAuthenticated && userEmail ? (
+        <SupportWidget
+          accountId="cmko8jp0i0000lo09ghgzcul5"
+          email={userEmail}
+          name={deriveNameFromEmail(userEmail)}
+          metadata={{ page: location.pathname + location.search }}
+        />
+      ) : null}
 
       <div className="flex-1 pb-10">
         <Outlet />
