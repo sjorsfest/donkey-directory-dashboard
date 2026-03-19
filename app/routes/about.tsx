@@ -359,6 +359,14 @@ export default function AboutPage() {
               <p className="m-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Indie maker · Amsterdam
               </p>
+              <a
+                href="https://x.com/sjorsfestt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="m-0 text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                @sjorsfestt
+              </a>
             </div>
           </div>
 
