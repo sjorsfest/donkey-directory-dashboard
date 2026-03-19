@@ -474,17 +474,12 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
               </div>
 
               {/* CTA */}
-              <a
-                href="https://chromewebstore.google.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between px-2.5 py-2 bg-accent-100 border-t border-foreground/15 hover:bg-secondary/40 transition-colors group"
-              >
+              <ChromeExtensionLink className="flex items-center justify-between px-2.5 py-2 bg-accent-100 border-t border-foreground/15 hover:bg-secondary/40 transition-colors group">
                 <span className="text-[0.55rem] font-bold" style={{ color: "hsl(var(--accent))" }}>
                   Add to Chrome, it's free!
                 </span>
                 <span className="text-[0.6rem] font-bold text-muted-foreground group-hover:translate-x-0.5 transition-transform">→</span>
-              </a>
+              </ChromeExtensionLink>
             </motion.div>
 
           </div>
