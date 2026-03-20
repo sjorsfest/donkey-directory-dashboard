@@ -4,6 +4,7 @@ import {
   Link,
   Outlet,
   data,
+  isRouteErrorResponse,
   redirect,
   useFetcher,
   useLoaderData,
@@ -457,6 +458,38 @@ function NavDialogSocialLinksInput(props: {
       </div>
       <input type="hidden" name="social_links_json" value={serialized} />
     </div>
+  );
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const status = isRouteErrorResponse(error) ? error.status : null;
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center px-4 py-16">
+      <div className="rounded-2xl border-2 border-foreground bg-card p-8 shadow-[var(--shadow-md)] max-w-md w-full text-center">
+        <Link className="inline-flex items-center gap-2 no-underline mb-6 justify-center" to="/">
+          <img src="/static/donkey.png" alt="Donkey Directories" className="h-8 w-8 object-contain" />
+          <strong className="font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill]">
+            Donkey Directories
+          </strong>
+        </Link>
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
+          {status ?? "Error"}
+        </p>
+        <h1 className="font-heading text-2xl font-bold mb-2">Something went wrong</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          An unexpected error occurred. Please try refreshing the page.
+        </p>
+        <div className="flex justify-center gap-3">
+          <a
+            href="/"
+            className="inline-flex items-center justify-center rounded-lg border-2 border-foreground bg-primary px-4 py-2 text-sm font-bold shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)] no-underline"
+          >
+            Back to home
+          </a>
+        </div>
+      </div>
+    </main>
   );
 }
 

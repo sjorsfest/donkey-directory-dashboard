@@ -21,6 +21,12 @@ body {
   color: hsl(var(--foreground));
 }
 
+@media (min-width: 1024px) {
+  body {
+    zoom: 0.9;
+  }
+}
+
 a {
   color: inherit;
 }

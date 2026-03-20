@@ -1,4 +1,4 @@
-import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { Form, Link, data, isRouteErrorResponse, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/topup";
 import {
   API_ROUTES,
@@ -166,6 +166,50 @@ export default function TopupPage() {
           </p>
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const status = isRouteErrorResponse(error) ? error.status : null;
+  const is401 = status === 401;
+
+  return (
+    <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center text-center gap-6">
+      <div className="rounded-2xl border-2 border-foreground bg-card p-8 shadow-[var(--shadow-md)] max-w-md w-full">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Billing</p>
+        <h1 className="font-heading text-2xl font-bold mb-2">
+          {is401 ? "Session expired" : "Something went wrong"}
+        </h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          {is401
+            ? "Your session has expired. Please log in again."
+            : "An unexpected error occurred loading this page. Please try again."}
+        </p>
+        <div className="flex justify-center gap-3">
+          {is401 ? (
+            <Link
+              to="/login?next=/topup"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-foreground bg-primary px-4 py-2 text-sm font-bold shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)] no-underline"
+            >
+              Log in
+            </Link>
+          ) : (
+            <Link
+              to="/topup"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-foreground bg-primary px-4 py-2 text-sm font-bold shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)] no-underline"
+            >
+              Retry
+            </Link>
+          )}
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center justify-center rounded-lg border-2 border-foreground bg-card px-4 py-2 text-sm font-bold shadow-[var(--shadow-btn)] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[var(--shadow-md)] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)] no-underline"
+          >
+            Dashboard
+          </Link>
+        </div>
       </div>
     </div>
   );
