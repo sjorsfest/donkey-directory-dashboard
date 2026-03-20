@@ -5,6 +5,7 @@ import { API_ROUTES, isApiDirectoryCountResponse } from "~/lib/api-contract";
 import { sendAuthenticatedRequest } from "~/lib/authenticated-api.server";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { getSession } from "~/lib/session.server";
+import { getCached, setCached } from "~/lib/redis.server";
 import { HomeHero } from "~/components/home-hero";
 import { MockDirectoriesTable, DIRECTORIES } from "~/components/mock-table";
 import { HowItWorks } from "~/components/how-it-works";
@@ -191,7 +192,12 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   );
 }
 
+const DIRECTORY_COUNT_CACHE_KEY = "directory_count";
+
 async function fetchDirectoryCount(apiBaseUrl: string): Promise<number | null> {
+  const cached = await getCached<number>(DIRECTORY_COUNT_CACHE_KEY);
+  if (cached !== null) return cached;
+
   try {
     const response = await fetch(`${apiBaseUrl}${API_ROUTES.directories.count}`);
 
@@ -205,6 +211,7 @@ async function fetchDirectoryCount(apiBaseUrl: string): Promise<number | null> {
       return null;
     }
 
+    await setCached(DIRECTORY_COUNT_CACHE_KEY, payload.total);
     return payload.total;
   } catch {
     return null;

@@ -12,3 +12,5 @@
 
 /chrome-extension/donkey-extension-prod.zip
 /.env.production
+.vercel
+.env*.local
