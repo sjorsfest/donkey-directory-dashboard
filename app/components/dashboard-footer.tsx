@@ -86,10 +86,15 @@ export function DashboardFooter() {
           </div>
         </div>
 
-        <div className="mt-7 border-t border-foreground/20 pt-4">
+        <div className="mt-7 flex items-center justify-between border-t border-foreground/20 pt-4">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Donkey Directories. All rights reserved.
           </p>
+          {isAuthenticated && (
+            <Link className={FOOTER_LINK_CLASS} to={submitDirectoryHref}>
+              Need help?
+            </Link>
+          )}
         </div>
       </div>
     </footer>
