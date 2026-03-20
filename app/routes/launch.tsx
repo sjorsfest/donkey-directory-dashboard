@@ -112,7 +112,10 @@ type StapleSocialConfig = {
   key: StapleSocialKey;
   label: string;
   placeholder: string;
+  prefix?: string;
   Icon: ComponentType<{ className?: string }>;
+  buildUrl: (handle: string) => string;
+  extractHandle: (url: string) => string;
 };
 
 type CreatorDraft = {
@@ -140,36 +143,49 @@ type LaunchActionData = {
 };
 
 const STAPLE_SOCIAL_CONFIGS: StapleSocialConfig[] = [
-
   {
     key: "instagram",
     label: "Instagram",
-    placeholder: "https://instagram.com/yourhandle",
+    placeholder: "yourhandle",
+    prefix: "@",
     Icon: Instagram,
+    buildUrl: (handle) => `https://instagram.com/${handle.replace(/^@/, "")}`,
+    extractHandle: (url) => url.replace(/^https?:\/\/(www\.)?instagram\.com\/?/, "").replace(/\/$/, ""),
   },
   {
     key: "linkedin",
     label: "LinkedIn",
-    placeholder: "https://linkedin.com/in/yourprofile",
+    placeholder: "yourprofile",
     Icon: Linkedin,
+    buildUrl: (handle) => `https://linkedin.com/in/${handle.replace(/^@/, "")}`,
+    extractHandle: (url) => url.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\/?/, "").replace(/\/$/, ""),
   },
   {
     key: "x",
     label: "X (Twitter)",
-    placeholder: "https://x.com/yourhandle",
+    placeholder: "yourhandle",
+    prefix: "@",
     Icon: Twitter,
+    buildUrl: (handle) => `https://x.com/${handle.replace(/^@/, "")}`,
+    extractHandle: (url) => url.replace(/^https?:\/\/(www\.)?(x|twitter)\.com\/?/, "").replace(/\/$/, ""),
   },
   {
     key: "youtube",
     label: "YouTube",
-    placeholder: "https://youtube.com/@yourchannel",
+    placeholder: "yourchannel",
+    prefix: "@",
     Icon: Youtube,
+    buildUrl: (handle) => `https://youtube.com/@${handle.replace(/^@/, "")}`,
+    extractHandle: (url) => url.replace(/^https?:\/\/(www\.)?youtube\.com\/@?/, "").replace(/\/$/, ""),
   },
   {
     key: "tiktok",
     label: "TikTok",
-    placeholder: "https://tiktok.com/@yourhandle",
+    placeholder: "yourhandle",
+    prefix: "@",
     Icon: Music2,
+    buildUrl: (handle) => `https://tiktok.com/@${handle.replace(/^@/, "")}`,
+    extractHandle: (url) => url.replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/, "").replace(/\/$/, ""),
   },
 ];
 
@@ -815,7 +831,7 @@ function QuickSocialLinksInput(props: {
       </small>
 
       <div className="grid gap-1.5 rounded-lg border-2 border-foreground bg-card p-3">
-        {STAPLE_SOCIAL_CONFIGS.map(({ key, label, placeholder, Icon }) => (
+        {STAPLE_SOCIAL_CONFIGS.map(({ key, label, placeholder, prefix, Icon }) => (
           <label
             key={key}
             className="grid grid-cols-1 items-center gap-2 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
@@ -824,12 +840,16 @@ function QuickSocialLinksInput(props: {
               <Icon className="h-4 w-4 text-muted-foreground" />
               {label}
             </span>
-            <Input
-              type="url"
-              value={props.values[key]}
-              placeholder={placeholder}
-              onChange={(event) => props.onValueChange(key, event.target.value)}
-            />
+            <div className="flex items-center rounded-md border-2 border-foreground bg-background focus-within:ring-2 focus-within:ring-primary">
+              {prefix && <span className="select-none pl-2.5 text-sm text-muted-foreground">{prefix}</span>}
+              <input
+                type="text"
+                value={props.values[key]}
+                placeholder={placeholder}
+                onChange={(event) => props.onValueChange(key, event.target.value)}
+                className={cn("w-full bg-transparent py-1.5 pr-2.5 text-sm outline-none placeholder:text-muted-foreground", prefix ? "pl-0.5" : "pl-2.5")}
+              />
+            </div>
           </label>
         ))}
       </div>
@@ -890,15 +910,15 @@ function createEmptyStapleSocialValues(): StapleSocialValues {
 
 function stapleSocialValuesToEntries(values: StapleSocialValues): SocialLinkInput[] {
   return STAPLE_SOCIAL_CONFIGS.reduce<SocialLinkInput[]>((acc, config) => {
-    const url = values[config.key].trim();
+    const handle = values[config.key].trim().replace(/^@/, "");
 
-    if (!url) {
+    if (!handle) {
       return acc;
     }
 
     acc.push({
       label: config.label,
-      url,
+      url: config.buildUrl(handle),
     });
 
     return acc;
@@ -914,7 +934,8 @@ function socialEntriesToStapleValues(entries: SocialLinkInput[]): StapleSocialVa
       continue;
     }
 
-    values[key] = entry.url;
+    const config = STAPLE_SOCIAL_CONFIGS.find((c) => c.key === key);
+    values[key] = config ? config.extractHandle(entry.url) : entry.url;
   }
 
   return values;
