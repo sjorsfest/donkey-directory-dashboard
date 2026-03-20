@@ -417,7 +417,6 @@ export default function NavLayout() {
           email={userEmail ?? undefined}
           name={userEmail ? deriveNameFromEmail(userEmail) : undefined}
           metadata={{ page: location.pathname + location.search }}
-          controlledByHost={searchParams.get("supportWidgetOpen") === "true" || undefined}
           widgetIsOpen={searchParams.get("supportWidgetOpen") === "true" ? true : undefined}
         />
       ) : null}

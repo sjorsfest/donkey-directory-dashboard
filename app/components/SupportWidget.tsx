@@ -6,7 +6,6 @@ interface SupportWidgetProps {
   name?: string;
   metadata?: Record<string, any>;
   metadataToken?: string;
-  controlledByHost?: boolean;
   widgetIsOpen?: boolean;
 }
 
@@ -16,15 +15,9 @@ export function SupportWidget({
   name,
   metadata,
   metadataToken,
-  controlledByHost,
   widgetIsOpen,
 }: SupportWidgetProps) {
-  useEffect(() => {
-    if (controlledByHost && (window as any).SupportWidget) {
-      (window as any).SupportWidget.widgetIsOpen = widgetIsOpen;
-    }
-  }, [controlledByHost, widgetIsOpen]);
-
+  // Load the widget script once on mount
   useEffect(() => {
     (window as any).SupportWidget = {
       accountId,
@@ -32,8 +25,6 @@ export function SupportWidget({
       name,
       metadata,
       metadataToken,
-      controlledByHost,
-      widgetIsOpen,
     };
 
     const scriptId = "support-widget-loader";
@@ -44,7 +35,34 @@ export function SupportWidget({
     script.src = "https://app.donkey.support/widget/loader.js";
     script.async = true;
     document.body.appendChild(script);
-  }, [accountId, email, name, metadata, metadataToken, controlledByHost, widgetIsOpen]);
+  }, []);
+
+  // Imperatively open/close the widget when widgetIsOpen changes,
+  // retrying until the widget script has loaded and exposed its API.
+  useEffect(() => {
+    if (widgetIsOpen === undefined) return;
+
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const tryAction = () => {
+      const sw = (window as any).SupportWidget;
+      if (widgetIsOpen && typeof sw?.open === "function") {
+        sw.open();
+        return;
+      }
+      if (!widgetIsOpen && typeof sw?.close === "function") {
+        sw.close();
+        return;
+      }
+      if (attempts < maxAttempts) {
+        attempts++;
+        setTimeout(tryAction, 250);
+      }
+    };
+
+    tryAction();
+  }, [widgetIsOpen]);
 
   return null;
 }

@@ -7,6 +7,9 @@ export default [
   layout("routes/_nav.tsx", [
     index("routes/home.tsx"),
     route("about", "routes/about.tsx"),
+    route("indie-hackers", "routes/indie-hackers.tsx"),
+    route("ai-builders", "routes/ai-builders.tsx"),
+    route("saas-founders", "routes/saas-founders.tsx"),
     route("dashboard", "routes/launch.tsx"),
     route("extensions", "routes/extensions.tsx"),
     route("topup", "routes/topup.tsx"),

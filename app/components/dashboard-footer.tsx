@@ -17,7 +17,7 @@ export function DashboardFooter() {
   return (
     <footer className="mt-10 border-t-2 border-foreground/25 bg-secondary-100">
       <div className={`${FOOTER_CONTAINER_CLASS} py-8`}>
-        <div className="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_repeat(2,minmax(0,0.8fr))]">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.8fr))]">
           <div className="space-y-2">
             <Link className="group inline-flex items-center gap-2 no-underline" to="/">
               <img
@@ -50,6 +50,23 @@ export function DashboardFooter() {
               </Link>
               <Link className={FOOTER_LINK_CLASS} to={submitDirectoryHref}>
                 Submit your directory
+              </Link>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground">
+              Built for
+            </p>
+            <div className="grid gap-2">
+              <Link className={FOOTER_LINK_CLASS} to="/indie-hackers">
+                Indie Hackers
+              </Link>
+              <Link className={FOOTER_LINK_CLASS} to="/ai-builders">
+                AI Builders
+              </Link>
+              <Link className={FOOTER_LINK_CLASS} to="/saas-founders">
+                SaaS Founders
               </Link>
             </div>
           </div>
