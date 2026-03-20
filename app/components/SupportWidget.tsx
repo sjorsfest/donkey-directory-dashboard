@@ -25,8 +25,6 @@ export function SupportWidget({
       name,
       metadata,
       metadataToken,
-      controlledByHost: true,
-      widgetIsOpen: false,
     };
 
     const scriptId = "support-widget-loader";

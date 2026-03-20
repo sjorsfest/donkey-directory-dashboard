@@ -1,5 +1,7 @@
-import { Link, useLocation, useRouteLoaderData } from "react-router";
+import { useState } from "react";
+import { Link, useRouteLoaderData } from "react-router";
 import type { loader as navLoader } from "~/routes/_nav";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 
 const FOOTER_CONTAINER_CLASS =
   "mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8";
@@ -9,10 +11,7 @@ const FOOTER_LINK_CLASS =
 export function DashboardFooter() {
   const navData = useRouteLoaderData<typeof navLoader>("routes/_nav");
   const isAuthenticated = navData?.isAuthenticated ?? false;
-  const location = useLocation();
-  const submitDirectoryHref = isAuthenticated
-    ? `${location.pathname}${location.search ? location.search + "&" : "?"}supportWidgetOpen=true`
-    : "/login";
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
   return (
     <footer className="mt-10 border-t-2 border-foreground/25 bg-secondary-100">
@@ -48,9 +47,18 @@ export function DashboardFooter() {
               <Link className={FOOTER_LINK_CLASS} to="/dashboard">
                 Submission Tracker
               </Link>
-              <Link className={FOOTER_LINK_CLASS} to={submitDirectoryHref}>
-                Submit your directory
-              </Link>
+              {isAuthenticated ? (
+                <button
+                  className={`${FOOTER_LINK_CLASS} cursor-pointer text-left`}
+                  onClick={() => setSubmitDialogOpen(true)}
+                >
+                  Submit your directory
+                </button>
+              ) : (
+                <Link className={FOOTER_LINK_CLASS} to="/login">
+                  Submit your directory
+                </Link>
+              )}
             </div>
           </div>
 
@@ -86,17 +94,28 @@ export function DashboardFooter() {
           </div>
         </div>
 
-        <div className="mt-7 flex items-center justify-between border-t border-foreground/20 pt-4">
+        <div className="mt-7 border-t border-foreground/20 pt-4">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Donkey Directories. All rights reserved.
           </p>
-          {isAuthenticated && (
-            <Link className={FOOTER_LINK_CLASS} to={submitDirectoryHref}>
-              Need help?
-            </Link>
-          )}
         </div>
       </div>
+
+      <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-xl">Got a directory to add? 🐴</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              We're cooking up a proper self-serve flow, but it's not quite ready yet.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              In the meantime, just tap the chat bubble in the bottom right corner and we'll get you sorted. Fast.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </footer>
   );
 }
