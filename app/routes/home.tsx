@@ -19,14 +19,14 @@ type LoaderData = {
   directoryCount: number | null;
 };
 
-const SEO_TITLE = "Donkey Directories Dashboard";
+const SEO_TITLE = "Donkey Directories";
 const SEO_DESCRIPTION =
   "Discover 250+ launch directories, autofill submissions in one click, and track every listing from one dashboard.";
 const OG_IMAGE_URL = "https://www.donkey.directory/og/og-image.png?v=6";
 const OG_IMAGE_ALT = "Donkey Directories — discover 250+ launch directories and track every listing in one place!";
 
-export function meta({}: Route.MetaArgs) {
-  const canonicalUrl = `${MAIN_ORIGIN}/`;
+export function meta({ location }: Route.MetaArgs) {
+  const canonicalUrl = `${MAIN_ORIGIN}${location.pathname}`;
 
   return [
     { title: SEO_TITLE },
@@ -57,7 +57,6 @@ export function meta({}: Route.MetaArgs) {
     { name: "twitter:title", content: SEO_TITLE },
     { name: "twitter:description", content: SEO_DESCRIPTION },
     { name: "twitter:image", content: OG_IMAGE_URL },
-    { name: "twitter:image:src", content: OG_IMAGE_URL },
     { name: "twitter:image:alt", content: OG_IMAGE_ALT },
     {
       "script:ld+json": {
