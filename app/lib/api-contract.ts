@@ -191,6 +191,37 @@ export function directorySubmissionCountsPath(projectId: string): string {
   return `/api/v1/directories/projects/${encodeURIComponent(projectId)}/submission-counts`;
 }
 
+export function directoryVotesPath(): string {
+  return "/api/v1/directories/votes";
+}
+
+export function directorySubmissionStagesPath(projectId: string): string {
+  return `/api/v1/directories/projects/${encodeURIComponent(projectId)}/submission-stages`;
+}
+
+export type ApiStaticDirectory = {
+  id: string;
+  name: string;
+  domain: string;
+  logo_url: string | null;
+  domain_authority: number | null;
+  category: string | null;
+  is_free: boolean;
+  is_dofollow: boolean;
+};
+
+export type ApiVoteEntry = {
+  thumbs_up_count: number;
+  thumbs_down_count: number;
+  total_votes: number;
+  thumbs_up_percentage: number;
+  my_vote: ApiDirectoryVoteChoice | null;
+};
+
+export type ApiVotesMap = Record<string, ApiVoteEntry>;
+export type ApiSubmissionStage = "not_submitted" | "in_progress" | "skipped" | "submitted";
+export type ApiSubmissionStagesMap = Record<string, ApiSubmissionStage>;
+
 export type ApiProjectSubmissionCountsResponse =
   components["schemas"]["ProjectDirectorySubmissionCountsResponse"];
 

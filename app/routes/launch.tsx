@@ -41,15 +41,24 @@ import {
   API_ROUTES,
   type ApiBrandExtractRequest,
   type ApiProjectSubmissionCountsResponse,
+  type ApiStaticDirectory,
+  type ApiVotesMap,
+  type ApiSubmissionStagesMap,
   directorySubmissionCountsPath,
+  directoryVotesPath,
+  directorySubmissionStagesPath,
   isApiDirectoryVoteChoice,
 } from "~/lib/api-contract";
 import {
-  listDirectoriesRequest,
   putDirectoryVoteRequest,
   deleteDirectoryVoteRequest,
 } from "~/lib/directories-api.server";
-import { ProjectSubmissionsTable } from "~/components/directories-table";
+import {
+  ProjectSubmissionsTable,
+  type DirectoryWithStage,
+  type DirectorySubmissionStage,
+} from "~/components/directories-table";
+import { getCached, setCached } from "~/lib/redis.server";
 import { normalizeDomainInput } from "~/lib/domain-input";
 import {
   parseApiErrorMessage,
@@ -65,17 +74,6 @@ type CreatorCreateRequest = components["schemas"]["CreatorCreateRequest"];
 type BrandProfile = components["schemas"]["BrandProfileResponse"];
 type Creator = components["schemas"]["CreatorResponse"];
 
-type DirectorySubmissionStage = "not_submitted" | "in_progress" | "submitted";
-
-type DirectoryWithStage = {
-  id: string;
-  name: string;
-  domain: string;
-  category?: string | null;
-  is_free: boolean;
-  is_dofollow: boolean;
-  submission_stage: DirectorySubmissionStage;
-};
 
 type LoaderData = {
   isAuthenticated: true;
@@ -289,7 +287,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   let submissionCounts: ApiProjectSubmissionCountsResponse | null = null;
 
   if (selectedProjectId) {
-    const [brandProfileResult, creatorsResult, directoriesResult, submissionCountsResult] = await Promise.all([
+    const [staticDirs, brandProfileResult, creatorsResult, votesResult, stagesResult, submissionCountsResult] = await Promise.all([
+      fetchStaticDirectoriesWithCache(session, apiBaseUrl),
       sendAuthenticatedRequest({
         session,
         apiBaseUrl,
@@ -302,10 +301,17 @@ export async function loader({ request }: Route.LoaderArgs) {
         path: projectCreatorsPath(selectedProjectId),
         method: "GET",
       }),
-      listDirectoriesRequest({
+      sendAuthenticatedRequest({
         session,
         apiBaseUrl,
-        query: { project_id: selectedProjectId, page_size: 100 },
+        path: directoryVotesPath(),
+        method: "GET",
+      }),
+      sendAuthenticatedRequest({
+        session,
+        apiBaseUrl,
+        path: directorySubmissionStagesPath(selectedProjectId),
+        method: "GET",
       }),
       sendAuthenticatedRequest({
         session,
@@ -317,7 +323,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
     latestSetCookie = pickSetCookie(latestSetCookie, brandProfileResult.setCookie);
     latestSetCookie = pickSetCookie(latestSetCookie, creatorsResult.setCookie);
-    latestSetCookie = pickSetCookie(latestSetCookie, directoriesResult.setCookie);
+    latestSetCookie = pickSetCookie(latestSetCookie, votesResult.setCookie);
+    latestSetCookie = pickSetCookie(latestSetCookie, stagesResult.setCookie);
 
     brandProfile = brandProfileResult.response.ok
       ? asBrandProfile(brandProfileResult.responseData)
@@ -327,15 +334,27 @@ export async function loader({ request }: Route.LoaderArgs) {
       ? asCreatorArray(creatorsResult.responseData)
       : [];
 
-    if (directoriesResult.response.ok && isRecord(directoriesResult.responseData)) {
-      const payload = directoriesResult.responseData as Record<string, unknown>;
-      if (Array.isArray(payload.directories)) {
-        directories = payload.directories as DirectoryWithStage[];
-      }
-      if (typeof payload.total === "number") {
-        directoriesTotal = payload.total;
-      }
-    }
+    const votesMap: ApiVotesMap = (votesResult.response.ok && isRecord(votesResult.responseData) && isRecord((votesResult.responseData as Record<string, unknown>).votes))
+      ? (votesResult.responseData as { votes: ApiVotesMap }).votes
+      : {};
+
+    const stagesMap: ApiSubmissionStagesMap = (stagesResult.response.ok && isRecord(stagesResult.responseData) && isRecord((stagesResult.responseData as Record<string, unknown>).stages))
+      ? (stagesResult.responseData as { stages: ApiSubmissionStagesMap }).stages
+      : {};
+
+    directoriesTotal = staticDirs.total;
+    directories = staticDirs.directories.map((dir) => {
+      const voteEntry = votesMap[dir.id];
+      return {
+        ...dir,
+        submission_stage: stagesMap[dir.id] ?? "not_submitted",
+        my_vote: voteEntry?.my_vote ?? null,
+        thumbs_up_count: voteEntry?.thumbs_up_count ?? 0,
+        thumbs_down_count: voteEntry?.thumbs_down_count ?? 0,
+        total_votes: voteEntry?.total_votes ?? 0,
+        thumbs_up_percentage: voteEntry?.thumbs_up_percentage ?? null,
+      };
+    });
 
     if (submissionCountsResult.response.ok && isRecord(submissionCountsResult.responseData)) {
       const payload = submissionCountsResult.responseData as Record<string, unknown>;
@@ -856,15 +875,6 @@ function SkeletonSubmissionsTable() {
   );
 }
 
-// ─── Directory Submissions Section ───────────────────────────────────────────
-
-const STAGE_LABELS: Record<DirectorySubmissionStage, string> = {
-  not_submitted: "Not submitted",
-  in_progress: "In progress",
-  submitted: "Submitted",
-};
-
-
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 function createEmptyStapleSocialValues(): StapleSocialValues {
@@ -1138,7 +1148,7 @@ async function runSubmissionStageUpdateAction(options: {
   directoryId: string;
   submissionStage: string;
 }) {
-  const validStages: DirectorySubmissionStage[] = ["not_submitted", "in_progress", "submitted"];
+  const validStages: DirectorySubmissionStage[] = ["not_submitted", "in_progress", "skipped", "submitted"];
 
   if (!validStages.includes(options.submissionStage as DirectorySubmissionStage)) {
     return data<LaunchActionData>(
@@ -1290,6 +1300,37 @@ function parseSocialLinksFromFormData(value: FormDataEntryValue | null): {
   }
 }
 
+const STATIC_DIRS_CACHE_KEY = "directories_v1";
+const SIX_HOURS_SECONDS = 6 * 60 * 60;
+
+async function fetchStaticDirectoriesWithCache(
+  session: SessionType,
+  apiBaseUrl: string
+): Promise<{ directories: ApiStaticDirectory[]; total: number }> {
+  const cached = await getCached<{ directories: ApiStaticDirectory[]; total: number }>(
+    STATIC_DIRS_CACHE_KEY
+  );
+  if (cached) return cached;
+
+  const result = await sendAuthenticatedRequest({
+    session,
+    apiBaseUrl,
+    path: `${API_ROUTES.directories.list}?page_size=500`,
+    method: "GET",
+  });
+
+  if (!result.response.ok || !isRecord(result.responseData) || !Array.isArray(result.responseData.directories)) {
+    return { directories: [], total: 0 };
+  }
+
+  const payload = {
+    directories: result.responseData.directories as ApiStaticDirectory[],
+    total: typeof result.responseData.total === "number" ? result.responseData.total : 0,
+  };
+  await setCached(STATIC_DIRS_CACHE_KEY, payload, SIX_HOURS_SECONDS);
+  return payload;
+}
+
 function brandProfilePath(projectId: string): string {
   return `/api/v1/brand/projects/${encodeURIComponent(projectId)}/brand-profile`;
 }
@@ -1377,7 +1418,7 @@ function formatDate(value: string): string {
     return "recently";
   }
 
-  return parsed.toLocaleDateString(undefined, {
+  return parsed.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",

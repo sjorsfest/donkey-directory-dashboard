@@ -552,6 +552,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/directories/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get directory vote stats
+         * @description Get vote stats for all directories. Includes the current user's vote when authenticated.
+         */
+        get: operations["get_directory_votes_api_v1_directories_votes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/directories/by-domain": {
         parameters: {
             query?: never;
@@ -604,6 +624,26 @@ export interface paths {
          * @description Get total directories plus submitted/skipped submission counts for a project. Useful for frontend progress bars.
          */
         get: operations["get_project_directory_submission_counts_api_v1_directories_projects__project_id__submission_counts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/directories/projects/{project_id}/submission-stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get project submission stages
+         * @description Get submission stages for all directories in a project, keyed by directory ID.
+         */
+        get: operations["get_project_submission_stages_api_v1_directories_projects__project_id__submission_stages_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1719,26 +1759,6 @@ export interface components {
             /** Is Dofollow */
             is_dofollow: boolean;
             status: components["schemas"]["DirectoryStatus"];
-            /** @default not_submitted */
-            submission_stage: components["schemas"]["DirectorySubmissionStage"];
-            /**
-             * Thumbs Up Count
-             * @default 0
-             */
-            thumbs_up_count: number;
-            /**
-             * Thumbs Down Count
-             * @default 0
-             */
-            thumbs_down_count: number;
-            /**
-             * Total Votes
-             * @default 0
-             */
-            total_votes: number;
-            /** Thumbs Up Percentage */
-            thumbs_up_percentage?: number | null;
-            my_vote?: components["schemas"]["DirectoryVoteChoice"] | null;
         };
         /**
          * DirectoryListResponse
@@ -2019,6 +2039,16 @@ export interface components {
             submission_stage: components["schemas"]["DirectorySubmissionStage"];
         };
         /**
+         * DirectorySubmissionStagesResponse
+         * @description Submission stages for all directories in a project, keyed by directory ID.
+         */
+        DirectorySubmissionStagesResponse: {
+            /** Stages */
+            stages: {
+                [key: string]: components["schemas"]["DirectorySubmissionStage"];
+            };
+        };
+        /**
          * DirectoryTag
          * @enum {string}
          */
@@ -2152,6 +2182,40 @@ export interface components {
          */
         DirectoryVoteRequest: {
             vote: components["schemas"]["DirectoryVoteChoice"];
+        };
+        /**
+         * DirectoryVoteStatsItem
+         * @description Vote stats for one directory, including the current user's vote.
+         */
+        DirectoryVoteStatsItem: {
+            /**
+             * Thumbs Up Count
+             * @default 0
+             */
+            thumbs_up_count: number;
+            /**
+             * Thumbs Down Count
+             * @default 0
+             */
+            thumbs_down_count: number;
+            /**
+             * Total Votes
+             * @default 0
+             */
+            total_votes: number;
+            /** Thumbs Up Percentage */
+            thumbs_up_percentage?: number | null;
+            my_vote?: components["schemas"]["DirectoryVoteChoice"] | null;
+        };
+        /**
+         * DirectoryVoteStatsResponse
+         * @description Vote stats for all directories, keyed by directory ID.
+         */
+        DirectoryVoteStatsResponse: {
+            /** Votes */
+            votes: {
+                [key: string]: components["schemas"]["DirectoryVoteStatsItem"];
+            };
         };
         /**
          * DirectoryVoteSummaryResponse
@@ -3613,8 +3677,6 @@ export interface operations {
     list_directories_api_v1_directories__get: {
         parameters: {
             query?: {
-                /** @description Project ID used to include per-directory submission stage */
-                project_id?: string | null;
                 /** @description Page number */
                 page?: number;
                 /** @description Items per page */
@@ -3722,6 +3784,26 @@ export interface operations {
             };
         };
     };
+    get_directory_votes_api_v1_directories_votes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryVoteStatsResponse"];
+                };
+            };
+        };
+    };
     get_directory_by_domain_api_v1_directories_by_domain_get: {
         parameters: {
             query: {
@@ -3794,6 +3876,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectDirectorySubmissionCountsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_project_submission_stages_api_v1_directories_projects__project_id__submission_stages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectorySubmissionStagesResponse"];
                 };
             };
             /** @description Validation Error */

@@ -175,6 +175,8 @@ export type DirectoryWithStage = {
   my_vote?: "up" | "down" | null;
   thumbs_up_count?: number;
   thumbs_down_count?: number;
+  total_votes?: number;
+  thumbs_up_percentage?: number | null;
 };
 
 const SUBMISSION_STAGE_LABELS: Record<DirectorySubmissionStage, string> = {
@@ -653,24 +655,6 @@ export function ProjectSubmissionsTable(props: {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function SubmissionStatCard(props: {
-  label: string;
-  count: number;
-  color: keyof typeof STAT_CARD_COLORS;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg border-2 border-foreground border-l-4 p-4 shadow-[var(--shadow-sm)]",
-        STAT_CARD_COLORS[props.color],
-      )}
-    >
-      <p className="m-0 text-2xl font-extrabold">{props.count}</p>
-      <p className="m-0 text-xs font-semibold mt-0.5">{props.label}</p>
     </div>
   );
 }
