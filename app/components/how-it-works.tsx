@@ -184,24 +184,27 @@ export function HowItWorks() {
         </div>
 
         {/* ── Step 02 — hero card ── */}
-        <div className="flex-1 rounded-xl border-2 border-foreground bg-foreground shadow-[6px_6px_0_hsl(var(--primary))] p-5 sm:p-7 flex flex-col">
+        <div className="flex-1 rounded-xl border-2 border-foreground bg-card shadow-[6px_6px_0_hsl(var(--primary))] p-5 sm:p-7 flex flex-col">
 
           {/* Top row: chip + badge */}
           <div className="flex items-center gap-2.5 mb-4">
-            <StepChip number="02" inverted />
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/15 px-2.5 py-1 text-[0.65rem] font-bold text-primary">
+            <StepChip number="02" />
+            <ChromeExtensionLink>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/15 px-2.5 py-1 text-[0.65rem] font-bold text-accent">
               <Chrome className="h-2.5 w-2.5" />
               Chrome Extension
             </span>
+            </ChromeExtensionLink>
           </div>
 
           {/* Copy — above the mockup so it aligns with cards 1 & 3 */}
-          <h3 className="font-[Fredoka] text-[1.3rem] font-bold text-background leading-tight mb-2">
-            Click. Auto-filled. Submit.
+          <h3 className="font-[Fredoka] text-[1.3rem] font-bold text-foreground leading-tight mb-2">
+            Submit. Track. Done.
           </h3>
-          <p className="text-sm font-medium text-background/55 leading-relaxed mb-5">
-            Open the extension on any directory site and every field fills itself in
-            under a second. Hit submit and move on to the next one.
+          <p className="text-sm font-medium text-foreground/55 leading-relaxed mb-5">
+            Your dashboard keeps a live record of every directory: what's submitted,
+            what's in progress, what's next. Add the Chrome extension and every form
+            fills itself in under a second, so you can move twice as fast.
           </p>
 
           {/* Extension mockup — pushed to the bottom */}

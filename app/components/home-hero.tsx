@@ -196,17 +196,17 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px]">
 
         {/* Left — copy */}
-        <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-12 flex flex-col justify-center gap-5 sm:gap-6">
+        <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-12 flex flex-col justify-center items-center text-center sm:items-start sm:text-left gap-5 sm:gap-6">
           <div className="space-y-3">
-            <h1 className="text-xl font-bold leading-[1.15] sm:text-3xl lg:text-[3.2rem]">
-              <span className="text-2xl sm:text-3xl lg:text-[3.4rem] text-secondary [-webkit-text-stroke:2px_hsl(var(--foreground))] sm:[-webkit-text-stroke:4px_hsl(var(--foreground))] lg:[-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]">{directoryCount ?? localDirectoryCount}+ launch directories,</span>{" "}
+            <h1 className="text-xl font-bold leading-[1.15] sm:text-3xl lg:text-[3.2rem] mb-4">
+              <span className="text-[1.6rem] sm:text-3xl lg:text-[3.4rem] text-secondary [-webkit-text-stroke:2px_hsl(var(--foreground))] sm:[-webkit-text-stroke:4px_hsl(var(--foreground))] lg:[-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]">{directoryCount ?? localDirectoryCount}+ Launch Directories</span>{" "}
               <span className="relative inline-block">
                 <motion.span
                   key={activePhraseIndex}
                   initial={{ opacity: 0, y: 12, rotate: -2 }}
                   animate={{ opacity: 1, y: 0, rotate: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="inline-block text-[1.4rem] leading-[1.15] sm:text-[2.2rem] lg:text-[3.6rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:2px_hsl(var(--foreground))] sm:[-webkit-text-stroke:4px_hsl(var(--foreground))] lg:[-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]"
+                  className="inline-block text-[1.6rem] leading-[1.15] sm:text-[2.2rem] lg:text-[3.6rem] text-primary decoration-4 decoration-current [-webkit-text-stroke:2px_hsl(var(--foreground))] sm:[-webkit-text-stroke:4px_hsl(var(--foreground))] lg:[-webkit-text-stroke:6px_hsl(var(--foreground))] [paint-order:stroke_fill]"
                 >
                   {HERO_PHRASES[activePhraseIndex].text}
                 </motion.span>
@@ -230,7 +230,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
           </div>
 
           {/* Feature bullets */}
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2.5 text-left">
             {([
               { icon: ListChecks, text: `${directoryCount ?? localDirectoryCount}+ curated directories, always up to date` },
               { icon: Zap,        text: "Chrome extension autofills forms. Skip the copy-paste." },
@@ -293,7 +293,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
             <button
               type="button"
               onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
-              className="w-fit ml-2 text-sm font-medium text-foreground/45 hover:text-foreground/70 transition-colors flex items-center gap-1"
+              className="w-fit mx-auto sm:mx-0 sm:ml-2 text-sm font-medium text-foreground/45 hover:text-foreground/70 transition-colors flex items-center gap-1"
             >
               How does it work?
             </button>

@@ -146,7 +146,7 @@ export default function HomePage() {
         directoryCount={directoryCount}
       />
       <HowItWorks />
-      <PricingSection isAuthenticated={isAuthenticated} />
+      <div className="hidden sm:block"><PricingSection isAuthenticated={isAuthenticated} /></div>
       <FAQSection />
       <FinalCtaSection isAuthenticated={isAuthenticated} />
     </div>
