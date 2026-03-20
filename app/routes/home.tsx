@@ -22,7 +22,7 @@ type LoaderData = {
 const SEO_TITLE = "Donkey Directories";
 const SEO_DESCRIPTION =
   "Discover 250+ launch directories, autofill submissions in one click, and track every listing from one dashboard.";
-const OG_IMAGE_URL = "https://www.donkey.directory/og/og-image.png?v=7";
+const OG_IMAGE_URL = "https://www.donkey.directory/og/og-image.png?v=8";
 const OG_IMAGE_ALT = "Donkey Directories — discover 250+ launch directories and track every listing in one place!";
 const BRAND_LOGO_URL = `${MAIN_ORIGIN}/donkey.png`;
 

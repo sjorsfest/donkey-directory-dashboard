@@ -411,14 +411,14 @@ export default function NavLayout() {
         </DialogContent>
       </Dialog>
 
-      {isAuthenticated && userEmail ? (
+      {isAuthenticated ? (
         <SupportWidget
           accountId="cmko8jp0i0000lo09ghgzcul5"
-          email={userEmail}
-          name={deriveNameFromEmail(userEmail)}
+          email={userEmail ?? undefined}
+          name={userEmail ? deriveNameFromEmail(userEmail) : undefined}
           metadata={{ page: location.pathname + location.search }}
           controlledByHost
-          widgetIsOpen={searchParams.get("supportWidgetOpen") === "true"}
+          widgetIsOpen={searchParams.get("supportWidgetOpen") === "true" ? true : undefined}
         />
       ) : null}
 
