@@ -1,9 +1,28 @@
 import { Link } from "react-router";
 import { Check, Zap, Infinity } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { Button } from "@/shared/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
 
 interface Props {
   isAuthenticated: boolean;
+}
+
+function ChromeBadge() {
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="cursor-default">
+            <Icon icon="logos:chrome" className="h-3.5 w-3.5 shrink-0" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          These credits power the extension. The rest of the app? Free, forever.
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 export function PricingSection({ isAuthenticated }: Props) {
@@ -21,7 +40,7 @@ export function PricingSection({ isAuthenticated }: Props) {
           Stop filling the same form 250+ times.
         </h2>
         <p className="mt-1.5 text-sm text-muted-foreground max-w-lg">
-          Tracking is always free. Credits let the extension submit your product in one click, with no copy-paste and no tab-switching.
+          Tracking is always free. Credits unlock the Chrome extension so it can submit your product in one click, with no copy-paste and no tab-switching.
         </p>
       </div>
 
@@ -78,6 +97,7 @@ export function PricingSection({ isAuthenticated }: Props) {
 
           <div>
             <div className="flex items-center gap-2 mb-3">
+              <ChromeBadge />
               <p className="text-[0.68rem] font-bold uppercase tracking-widest text-muted-foreground">
                 Starter pack
               </p>
@@ -120,9 +140,12 @@ export function PricingSection({ isAuthenticated }: Props) {
         {/* Lifetime */}
         <div className="px-5 py-6 flex flex-col gap-5 sm:px-7 sm:py-7">
           <div>
-            <p className="text-[0.68rem] font-bold uppercase tracking-widest text-muted-foreground mb-3">
-              Lifetime
-            </p>
+            <div className="flex items-center gap-2 mb-3">
+              <ChromeBadge />
+              <p className="text-[0.68rem] font-bold uppercase tracking-widest text-muted-foreground">
+                Lifetime
+              </p>
+            </div>
             <div className="flex items-baseline gap-1">
               <span className="font-heading text-4xl font-bold tracking-tight">€69</span>
               <span className="text-sm text-muted-foreground ml-1">once</span>

@@ -271,9 +271,9 @@ export function HowItWorks() {
 
       {/* ── CTA bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t-2 border-foreground/10 bg-secondary/30 px-5 py-4 sm:px-8 sm:py-5">
-        <p className="text-sm font-medium text-muted-foreground">
-          First{" "}
-          <span className="font-bold text-foreground">5 submissions are free</span>, no credit card needed.
+        <p className="hidden sm:block text-sm font-medium text-muted-foreground">
+          Your first{" "}
+          <span className="font-bold text-foreground">5 Chrome extension submissions are free</span>. No credit card, no commitment.
         </p>
         <div className="flex items-center gap-3 flex-wrap">
           <Button
