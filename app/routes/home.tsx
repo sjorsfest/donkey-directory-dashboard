@@ -24,16 +24,29 @@ const SEO_DESCRIPTION =
   "Discover 250+ launch directories, autofill submissions in one click, and track every listing from one dashboard.";
 const OG_IMAGE_URL = "https://www.donkey.directory/og/og-image.png?v=7";
 const OG_IMAGE_ALT = "Donkey Directories — discover 250+ launch directories and track every listing in one place!";
+const BRAND_LOGO_URL = `${MAIN_ORIGIN}/donkey.png`;
+
+function withLengthGuardrail(label: string, value: string, maxLength: number): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) return normalized;
+  const trimmed = `${normalized.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
+  if (import.meta.env.DEV) {
+    console.warn(`[seo] ${label} exceeded ${maxLength} chars and was trimmed.`, {
+      originalLength: normalized.length,
+      trimmedLength: trimmed.length,
+    });
+  }
+  return trimmed;
+}
 
 export function meta({ location }: Route.MetaArgs) {
   const canonicalUrl = `${MAIN_ORIGIN}${location.pathname}`;
+  const title = withLengthGuardrail("title", SEO_TITLE, 60);
+  const description = withLengthGuardrail("description", SEO_DESCRIPTION, 160);
 
   return [
-    { title: SEO_TITLE },
-    {
-      name: "description",
-      content: SEO_DESCRIPTION,
-    },
+    { title },
+    { name: "description", content: description },
     { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
     { name: "googlebot", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
     {
@@ -44,8 +57,8 @@ export function meta({ location }: Route.MetaArgs) {
     { tagName: "link", rel: "canonical", href: canonicalUrl },
     { property: "og:type", content: "website" },
     { property: "og:site_name", content: "Donkey Directories" },
-    { property: "og:title", content: SEO_TITLE },
-    { property: "og:description", content: SEO_DESCRIPTION },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
     { property: "og:url", content: canonicalUrl },
     { property: "og:locale", content: "en_US" },
     { property: "og:image", content: OG_IMAGE_URL },
@@ -53,10 +66,14 @@ export function meta({ location }: Route.MetaArgs) {
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
     { property: "og:image:alt", content: OG_IMAGE_ALT },
+    { property: "og:logo", content: BRAND_LOGO_URL },
+    { name: "logo", content: BRAND_LOGO_URL },
     { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:title", content: SEO_TITLE },
-    { name: "twitter:description", content: SEO_DESCRIPTION },
+    { name: "twitter:url", content: canonicalUrl },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
     { name: "twitter:image", content: OG_IMAGE_URL },
+    { name: "twitter:image:src", content: OG_IMAGE_URL },
     { name: "twitter:image:alt", content: OG_IMAGE_ALT },
     {
       "script:ld+json": {
