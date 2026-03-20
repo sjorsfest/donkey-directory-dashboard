@@ -591,31 +591,43 @@ export default function LaunchPage() {
                   key={project.id}
                   to={buildLaunchProjectHref(project.id)}
                   className={cn(
-                    "flex flex-col gap-3 rounded-lg border-2 border-foreground p-5 text-inherit no-underline shadow-[var(--shadow-md)] transition-[transform,box-shadow,background] duration-100 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_hsl(var(--foreground))] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)]",
+                    "flex items-center gap-3 rounded-lg border-2 border-foreground p-3 text-inherit no-underline shadow-[var(--shadow-md)] transition-[transform,box-shadow,background] duration-100 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_hsl(var(--foreground))] active:translate-x-px active:translate-y-px active:shadow-[var(--shadow-pressed)] lg:flex-col lg:items-start lg:gap-3 lg:p-5",
                     isActive ? "bg-primary text-primary-foreground" : "bg-card",
                   )}
                 >
-                  <strong className="m-0 text-base leading-[1.2] font-extrabold">{project.name}</strong>
-                  <p className={cn("m-0 font-['IBM_Plex_Mono',monospace] text-[0.8rem]", isActive ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                    {project.domain}
-                  </p>
+                  {/* Mobile: left column with name + domain */}
+                  <div className="min-w-0 flex-1 lg:contents">
+                    <strong className="m-0 block truncate text-sm font-extrabold leading-[1.2] lg:text-base">{project.name}</strong>
+                    <p className={cn("m-0 truncate font-['IBM_Plex_Mono',monospace] text-[0.7rem] lg:text-[0.8rem]", isActive ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                      {project.domain}
+                    </p>
+                  </div>
+
+                  {/* Mobile: right side — stats pills or chevron */}
                   {isActive && submittedCount !== null ? (
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem]">
-                      <span className="flex items-center gap-1 whitespace-nowrap text-primary-foreground/80">
+                    <div className="flex shrink-0 flex-col items-end gap-1 lg:mt-1 lg:w-full lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-3 lg:gap-y-1 lg:text-[0.7rem]">
+                      <span className="flex items-center gap-1 whitespace-nowrap text-[0.65rem] text-primary-foreground/80">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        {submittedCount} submitted
+                        {submittedCount}
+                        <span className="hidden lg:inline">submitted</span>
                       </span>
-                      <span className="flex items-center gap-1 whitespace-nowrap text-primary-foreground/80">
+                      <span className="flex items-center gap-1 whitespace-nowrap text-[0.65rem] text-primary-foreground/80">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                        {skippedCount} skipped
+                        {skippedCount}
+                        <span className="hidden lg:inline">skipped</span>
                       </span>
-                      <span className="flex items-center gap-1 whitespace-nowrap text-primary-foreground/60">
+                      <span className="flex items-center gap-1 whitespace-nowrap text-[0.65rem] text-primary-foreground/60">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/30" />
-                        {notSubmittedCount} pending
+                        {notSubmittedCount}
+                        <span className="hidden lg:inline">pending</span>
                       </span>
                     </div>
-                  ) : null}
-                  <div className="mt-auto flex items-center justify-end text-xs">
+                  ) : (
+                    <span className={cn("shrink-0 text-base lg:hidden", isActive ? "text-primary-foreground/50" : "text-muted-foreground/40")}>›</span>
+                  )}
+
+                  {/* Date — desktop only */}
+                  <div className="hidden lg:mt-auto lg:flex lg:w-full lg:items-center lg:justify-end lg:text-xs">
                     <small className={isActive ? "text-primary-foreground/70" : "text-muted-foreground"}>Updated {formatDate(project.updated_at)}</small>
                   </div>
                 </Link>
@@ -624,12 +636,12 @@ export default function LaunchPage() {
 
             <button
               type="button"
-              className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-foreground bg-transparent p-5 text-center text-muted-foreground transition-[background,color,transform] duration-100 hover:-translate-x-px hover:-translate-y-px hover:bg-secondary hover:text-foreground"
+              className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-foreground bg-transparent p-3 text-muted-foreground transition-[background,color,transform] duration-100 hover:-translate-x-px hover:-translate-y-px hover:bg-secondary hover:text-foreground lg:min-h-[120px] lg:flex-col lg:items-center lg:justify-center lg:gap-3 lg:p-5 lg:text-center"
               onClick={openNewProjectDialog}
             >
-              <Plus className="mb-1.5 h-8 w-8" />
-              <strong>New project</strong>
-              <small>Start from a domain URL</small>
+              <Plus className="h-5 w-5 shrink-0 lg:mb-1.5 lg:h-8 lg:w-8" />
+              <strong className="text-sm lg:text-base">New project</strong>
+              <small className="hidden lg:block">Start from a domain URL</small>
             </button>
           </div>
           </div>
@@ -834,7 +846,7 @@ function QuickSocialLinksInput(props: {
         {STAPLE_SOCIAL_CONFIGS.map(({ key, label, placeholder, prefix, Icon }) => (
           <label
             key={key}
-            className="grid grid-cols-1 items-center gap-2 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
+            className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-center gap-2"
           >
             <span className="inline-flex items-center gap-2 text-[0.85rem] font-bold">
               <Icon className="h-4 w-4 text-muted-foreground" />

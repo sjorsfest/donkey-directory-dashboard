@@ -255,7 +255,7 @@ export default function NavLayout() {
                 alt="Donkey Directories"
                 className="sm:block h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10"
               />
-              <span className="inline sm:inline">
+              <span className={isAuthenticated ? "hidden sm:inline" : "inline"}>
                 <strong className="select-none font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill] lg:text-2xl">
                   Donkey Directories
                 </strong>
