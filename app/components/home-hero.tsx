@@ -247,7 +247,7 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
 
           {/* CTAs */}
           <div className="flex flex-col gap-3 pt-1">
-            <div className="flex items-center gap-3 flex-wrap sm:gap-4">
+            <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-start sm:gap-4">
               {!isAuthenticated && (
                 <Button
                   asChild

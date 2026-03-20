@@ -460,7 +460,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
   return (
     <div id="directories-table" className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
       {/* Table header bar */}
-      <div className="flex items-center justify-between gap-4 border-b-2 border-foreground px-5 py-4">
+      <div className="flex items-center justify-between gap-4 border-b-2 border-foreground px-5 py-2.5 sm:py-4">
         <div className="flex items-center gap-3">
           <LayoutList size={18} />
           <h2 className="text-base font-bold whitespace-nowrap">All directories</h2>
@@ -699,9 +699,9 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
         <Table>
           <TableHeader>
             <TableRow className="border-b-2 border-foreground">
-              <TableHead className="hidden sm:table-cell w-14">DR</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead className="sm:hidden w-14">DR</TableHead>
+              <TableHead className="hidden sm:table-cell w-14 h-8 sm:h-12">DR</TableHead>
+              <TableHead className="h-8 sm:h-12">Name</TableHead>
+              <TableHead className="sm:hidden w-14 h-8">DR</TableHead>
               <TableHead className="hidden sm:table-cell">Category</TableHead>
               <TableHead className="hidden sm:table-cell">Pricing</TableHead>
               <TableHead className="hidden sm:table-cell">Dofollow</TableHead>
