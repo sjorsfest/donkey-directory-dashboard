@@ -752,7 +752,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
                       className="flex items-center gap-2 hover:underline underline-offset-2"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <DirectoryLogo name={dir.name} logoUrl={dir.logoUrl} />
+                      <DirectoryLogo name={dir.name} logoUrl={isAuthenticated ? dir.logoUrl : null} />
                       {dir.name}
                     </a>
                   </TableCell>
@@ -802,7 +802,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
             })}
             {isAuthenticated && (
               <TableRow className="cursor-pointer hover:bg-primary/10 transition-colors border-t-2 border-foreground">
-                <TableCell colSpan={6} className="py-4 text-center text-sm font-semibold text-accent hover:bg-accent-100">
+                <TableCell colSpan={6} className="py-4 text-center text-sm font-semibold text-accent-700 hover:bg-accent-100">
                   <Link to="/dashboard" className="block w-full group">
                     View all directories and track where you&apos;ve launched{" "}
                     <span className="inline-block animate-[nudge_2s_ease-in-out_infinite] group-hover:animate-none">→</span>

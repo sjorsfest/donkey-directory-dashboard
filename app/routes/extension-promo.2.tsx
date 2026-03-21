@@ -104,9 +104,9 @@ function ExtensionMockupCompact() {
 const ROWS = [
   { name: "Product Hunt", dot: "bg-emerald-400", label: "Submitted", cls: "text-emerald-600 font-bold", icon: true },
   { name: "BetaList", dot: "bg-amber-400", label: "In progress", cls: "text-amber-600 font-bold", icon: false },
-  { name: "Indie Hackers", dot: "bg-foreground/20", label: "Not started", cls: "text-foreground/35", muted: true },
-  { name: "G2", dot: "bg-foreground/20", label: "Not started", cls: "text-foreground/35", muted: true },
-  { name: "Futurepedia", dot: "bg-foreground/20", label: "Not started", cls: "text-foreground/35", muted: true },
+  { name: "Indie Hackers", dot: "bg-foreground/20", label: "Not started", cls: "text-foreground/35", icon: false, muted: true },
+  { name: "G2", dot: "bg-foreground/20", label: "Not started", cls: "text-foreground/35", icon: false, muted: true },
+  { name: "Futurepedia", dot: "bg-foreground/20", label: "Not started", cls: "text-foreground/35", icon: false, muted: true },
 ] as const;
 
 function ProgressMockup() {

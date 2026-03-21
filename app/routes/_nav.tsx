@@ -49,6 +49,10 @@ const STAPLE_SOCIAL_CONFIGS: StapleSocialConfig[] = [
   { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@yourhandle", Icon: Music2 },
 ];
 
+const DONKEY_LOGO_SRC = "/static/donkey-128.webp";
+const DONKEY_LOGO_SRC_SET =
+  "/static/donkey-64.webp 64w, /static/donkey-128.webp 128w, /static/donkey-192.webp 192w";
+
 function createEmptyStapleSocialValues(): StapleSocialValues {
   return { website: "", instagram: "", linkedin: "", x: "", youtube: "", tiktok: "" };
 }
@@ -251,8 +255,13 @@ export default function NavLayout() {
           <nav className="flex flex-wrap items-center justify-between gap-3 rounded-[1.25rem] border-2 border-foreground bg-card px-3 py-2.5 shadow-[var(--shadow-md)] sm:gap-4 sm:px-4 sm:py-3">
             <Link className="group inline-flex items-center gap-2 no-underline" to="/">
               <img
-                src="/static/donkey.png"
-                alt="Donkey Directories"
+                src={DONKEY_LOGO_SRC}
+                srcSet={DONKEY_LOGO_SRC_SET}
+                sizes="(min-width: 640px) 40px, 32px"
+                alt=""
+                aria-hidden="true"
+                width={40}
+                height={40}
                 className="sm:block h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10"
               />
               <span className={isAuthenticated ? "hidden sm:inline" : "inline"}>
@@ -467,7 +476,16 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <main className="flex min-h-screen flex-col items-center justify-center px-4 py-16">
       <div className="rounded-2xl border-2 border-foreground bg-card p-8 shadow-[var(--shadow-md)] max-w-md w-full text-center">
         <Link className="inline-flex items-center gap-2 no-underline mb-6 justify-center" to="/">
-          <img src="/static/donkey.png" alt="Donkey Directories" className="h-8 w-8 object-contain" />
+          <img
+            src={DONKEY_LOGO_SRC}
+            srcSet={DONKEY_LOGO_SRC_SET}
+            sizes="32px"
+            alt=""
+            aria-hidden="true"
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain"
+          />
           <strong className="font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl font-bold tracking-[-0.02em] text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill]">
             Donkey Directories
           </strong>

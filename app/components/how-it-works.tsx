@@ -28,7 +28,7 @@ function ExtensionMockup() {
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[0.52rem] font-medium text-white/35 uppercase tracking-wider">
+          <span className="text-[0.52rem] font-medium text-white/70 uppercase tracking-wider">
             Product Hunt
           </span>
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -38,7 +38,7 @@ function ExtensionMockup() {
       {/* Progress */}
       <div className="px-3.5 pt-3 pb-2">
         <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-[0.58rem] font-semibold text-foreground/55">
+          <span className="text-[0.58rem] font-semibold text-foreground/70">
             Auto-filling form…
           </span>
           <span className="text-[0.6rem] font-bold text-foreground">3 / 4</span>
@@ -57,7 +57,7 @@ function ExtensionMockup() {
       <div className="space-y-2 px-3.5 pb-3">
         {EXTENSION_FIELDS.map((field) => (
           <div key={field.label}>
-            <span className="mb-0.5 block text-[0.5rem] font-bold uppercase tracking-widest text-foreground/35">
+            <span className="mb-0.5 block text-[0.5rem] font-bold uppercase tracking-widest text-foreground/70">
               {field.label}
             </span>
             <div
@@ -85,7 +85,7 @@ function ExtensionMockup() {
 
       {/* Submit footer */}
       <div className="flex items-center justify-between border-t border-foreground/10 bg-secondary/30 px-3.5 py-2.5">
-        <span className="text-[0.58rem] font-medium text-foreground/45">Filling last field…</span>
+        <span className="text-[0.58rem] font-medium text-foreground/70">Filling last field…</span>
         <button className="rounded-lg border-2 border-foreground bg-primary px-3 py-1 text-[0.62rem] font-bold text-foreground shadow-[2px_2px_0_#1A1A1A] transition-all hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#1A1A1A]">
           Submit →
         </button>
@@ -152,7 +152,7 @@ export function HowItWorks() {
 
           {/* Proof: URL in → everything out */}
           <div className="hidden sm:block mt-6 pt-5 border-t border-foreground/10">
-            <p className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/30 mb-2.5">
+            <p className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/70 mb-2.5">
               You type
             </p>
             <div className="flex items-center gap-2 rounded-lg border border-foreground/20 bg-card px-3 py-2 mb-4">
@@ -161,14 +161,14 @@ export function HowItWorks() {
               </span>
               <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
             </div>
-            <p className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/30 mb-2.5">
+            <p className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/70 mb-2.5">
               We auto-scrape
             </p>
             <div className="flex flex-wrap gap-1.5">
               {["App name", "Tagline", "Description", "Screenshots", "Socials", "Tags"].map((f) => (
                 <span
                   key={f}
-                  className="inline-flex items-center gap-1 rounded-md border border-foreground/15 bg-card px-2 py-1 text-[0.62rem] font-semibold text-foreground/55"
+                  className="inline-flex items-center gap-1 rounded-md border border-foreground/15 bg-card px-2 py-1 text-[0.62rem] font-semibold text-foreground/75"
                 >
                   <Check className="h-2.5 w-2.5 text-emerald-500" />
                   {f}
@@ -190,7 +190,7 @@ export function HowItWorks() {
           <div className="flex items-center gap-2.5 mb-4">
             <StepChip number="02" />
             <ChromeExtensionLink>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/15 px-2.5 py-1 text-[0.65rem] font-bold text-accent">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/55 bg-accent/20 px-2.5 py-1 text-[0.65rem] font-bold text-accent-800">
               <Chrome className="h-2.5 w-2.5" />
               Chrome Extension
             </span>
@@ -201,7 +201,7 @@ export function HowItWorks() {
           <h3 className="font-[Fredoka] text-[1.3rem] font-bold text-foreground leading-tight mb-2">
             Submit. Track. Done.
           </h3>
-          <p className="text-sm font-medium text-foreground/55 leading-relaxed mb-5">
+          <p className="text-sm font-medium text-foreground/70 leading-relaxed mb-5">
             Your dashboard keeps a live record of every directory: what's submitted,
             what's in progress, what's next. Add the Chrome extension and every form
             fills itself in under a second, so you can move twice as fast.
@@ -232,21 +232,21 @@ export function HowItWorks() {
           {/* Proof: tracking rows + progress */}
           <div className="hidden sm:block mt-6 pt-5 border-t border-foreground/10 space-y-2">
             {([
-              { name: "Product Hunt",  dot: "bg-emerald-400", label: "Submitted",   labelCls: "text-emerald-600 font-bold", icon: true  },
-              { name: "BetaList",      dot: "bg-amber-400",   label: "In progress", labelCls: "text-amber-600 font-bold",   icon: false },
-              { name: "Indie Hackers", dot: "bg-foreground/20", label: "Not started", labelCls: "text-foreground/35",       icon: false, muted: true },
-              { name: "G2",            dot: "bg-foreground/20", label: "Not started", labelCls: "text-foreground/35",       icon: false, muted: true },
-              { name: "Futurepedia",   dot: "bg-foreground/20", label: "Not started", labelCls: "text-foreground/35",       icon: false, muted: true },
+              { name: "Product Hunt",  dot: "bg-emerald-400", label: "Submitted",   labelCls: "text-emerald-700 font-bold", icon: true  },
+              { name: "BetaList",      dot: "bg-amber-400",   label: "In progress", labelCls: "text-amber-800 font-bold",   icon: false },
+              { name: "Indie Hackers", dot: "bg-foreground/20", label: "Not started", labelCls: "text-foreground/70",       icon: false, muted: true },
+              { name: "G2",            dot: "bg-foreground/20", label: "Not started", labelCls: "text-foreground/70",       icon: false, muted: true },
+              { name: "Futurepedia",   dot: "bg-foreground/20", label: "Not started", labelCls: "text-foreground/70",       icon: false, muted: true },
             ] as const).map((row) => (
               <div
                 key={row.name}
                 className={[
                   "flex items-center gap-2.5 rounded-lg border border-foreground/12 bg-card px-3 py-2",
-                  "muted" in row && row.muted ? "opacity-50" : "",
+                  "muted" in row && row.muted ? "bg-secondary/25" : "",
                 ].join(" ")}
               >
                 <span className={`h-2 w-2 shrink-0 rounded-full ${row.dot}`} />
-                <span className="flex-1 text-xs font-medium text-foreground/60">{row.name}</span>
+                <span className="flex-1 text-xs font-medium text-foreground/75">{row.name}</span>
                 <span className={`inline-flex items-center gap-1 text-[0.6rem] ${row.labelCls}`}>
                   {row.icon && <CheckCheck className="h-3 w-3" />}
                   {row.label}
@@ -257,8 +257,8 @@ export function HowItWorks() {
             {/* Progress bar */}
             <div className="pt-1">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/30">Progress</span>
-                <span className="text-[0.65rem] font-bold text-foreground/50">12 / 250</span>
+                <span className="text-[0.58rem] font-bold uppercase tracking-widest text-foreground/70">Progress</span>
+                <span className="text-[0.65rem] font-bold text-foreground/70">12 / 250</span>
               </div>
               <div className="h-2 rounded-full bg-foreground/10 overflow-hidden">
                 <div className="h-full w-[14%] rounded-full bg-primary" />

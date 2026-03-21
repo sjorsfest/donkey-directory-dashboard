@@ -11,6 +11,9 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { NavigationProgress } from "./components/NavigationProgress";
 
+const GOOGLE_FONTS_STYLESHEET =
+  "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap";
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -18,10 +21,7 @@ export const links: Route.LinksFunction = () => [
     href: "https://fonts.gstatic.com",
     crossOrigin: "anonymous",
   },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap",
-  },
+  { rel: "preload", as: "style", href: GOOGLE_FONTS_STYLESHEET },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -32,6 +32,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <link
+          id="google-fonts-stylesheet"
+          rel="stylesheet"
+          href={GOOGLE_FONTS_STYLESHEET}
+          media="print"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                var link = document.getElementById("google-fonts-stylesheet");
+                if (!link) return;
+                function enableFonts() {
+                  link.media = "all";
+                }
+                if (link.sheet) {
+                  enableFonts();
+                } else {
+                  link.addEventListener("load", enableFonts, { once: true });
+                }
+              })();
+            `,
+          }}
+        />
+        <noscript>
+          <link rel="stylesheet" href={GOOGLE_FONTS_STYLESHEET} />
+        </noscript>
       </head>
       <body className="bg-accent-100">
         <div

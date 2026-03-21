@@ -7,6 +7,9 @@ const FOOTER_CONTAINER_CLASS =
   "mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8";
 const FOOTER_LINK_CLASS =
   "text-sm font-semibold text-muted-foreground no-underline transition-colors hover:text-foreground";
+const DONKEY_LOGO_SRC = "/static/donkey-128.webp";
+const DONKEY_LOGO_SRC_SET =
+  "/static/donkey-64.webp 64w, /static/donkey-128.webp 128w, /static/donkey-192.webp 192w";
 
 export function DashboardFooter() {
   const navData = useRouteLoaderData<typeof navLoader>("routes/_nav");
@@ -20,8 +23,13 @@ export function DashboardFooter() {
           <div className="space-y-2">
             <Link className="group inline-flex items-center gap-2 no-underline" to="/">
               <img
-                src="/static/donkey.png"
-                alt="Donkey Directories"
+                src={DONKEY_LOGO_SRC}
+                srcSet={DONKEY_LOGO_SRC_SET}
+                sizes="36px"
+                alt=""
+                aria-hidden="true"
+                width={36}
+                height={36}
                 className="block h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110"
               />
               <strong className="font-[Fredoka,_Nunito,_ui-sans-serif,_system-ui,_sans-serif] text-xl tracking-[-0.02em] text-primary [-webkit-text-stroke:2px_hsl(var(--foreground))] [paint-order:stroke_fill]">

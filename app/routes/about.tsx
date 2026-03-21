@@ -64,7 +64,16 @@ export default function AboutPage() {
 
         {/* Header strip */}
         <div className="flex items-center gap-3 border-b-2 border-foreground px-6 py-4 sm:px-8">
-          <img src="/static/donkey.png" alt="" className="h-7 w-7 object-contain" />
+          <img
+            src="/static/donkey-64.webp"
+            srcSet="/static/donkey-64.webp 64w, /static/donkey-128.webp 128w"
+            sizes="28px"
+            width={28}
+            height={28}
+            alt=""
+            aria-hidden="true"
+            className="h-7 w-7 object-contain"
+          />
           <h1 className="m-0 font-heading text-xl font-bold">Yes, I got frustrated by the app submission process</h1>
         </div>
 

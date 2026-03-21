@@ -280,7 +280,8 @@ export function DirectoryLogo({ name, logoUrl }: { name: string; logoUrl?: strin
     return (
       <img
         src={src}
-        alt={name}
+        alt=""
+        aria-hidden="true"
         onError={() => setImgFailed(true)}
         className="h-6 w-6 rounded-full border border-foreground/10 object-contain bg-card flex-shrink-0"
       />
@@ -288,7 +289,10 @@ export function DirectoryLogo({ name, logoUrl }: { name: string; logoUrl?: strin
   }
 
   return (
-    <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-foreground/10 bg-secondary text-[10px] font-bold text-foreground">
+    <span
+      aria-hidden="true"
+      className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-foreground/10 bg-secondary text-[10px] font-bold text-foreground"
+    >
       {letter}
     </span>
   );

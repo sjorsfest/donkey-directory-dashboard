@@ -35,8 +35,11 @@ export default function ExtensionPromo4() {
           {/* Logo */}
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-foreground bg-background shadow-[4px_4px_0_#1A1A1A]">
             <img
-              src="/static/donkey.png"
-              alt="Donkey logo"
+              src="/static/donkey-128.webp"
+              srcSet="/static/donkey-64.webp 64w, /static/donkey-128.webp 128w, /static/donkey-192.webp 192w"
+              sizes="40px"
+              alt=""
+              aria-hidden="true"
               width={40}
               height={40}
               className="h-10 w-10 object-contain"

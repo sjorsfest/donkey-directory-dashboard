@@ -116,8 +116,11 @@ export default function ExtensionPromo3() {
           {/* Logo + name */}
           <div className="flex items-center gap-3">
             <img
-              src="/static/donkey.png"
-              alt="Donkey logo"
+              src="/static/donkey-128.webp"
+              srcSet="/static/donkey-64.webp 64w, /static/donkey-128.webp 128w, /static/donkey-192.webp 192w"
+              sizes="48px"
+              alt=""
+              aria-hidden="true"
               width={48}
               height={48}
               className="h-12 w-12 object-contain rounded-xl border-2 border-foreground/20 bg-background/10 p-1"

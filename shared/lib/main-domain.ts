@@ -25,4 +25,4 @@ function normalizeDomain(value: unknown): string | null {
 const configuredMainDomain = normalizeDomain(import.meta.env.VITE_MAIN_DOMAIN);
 
 export const MAIN_DOMAIN = configuredMainDomain ?? DEFAULT_MAIN_DOMAIN;
-export const MAIN_ORIGIN = `https://${MAIN_DOMAIN}`;
+export const MAIN_ORIGIN = `https://www.${MAIN_DOMAIN}`;

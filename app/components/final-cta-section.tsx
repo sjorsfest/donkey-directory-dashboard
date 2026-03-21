@@ -6,13 +6,20 @@ interface Props {
   isAuthenticated: boolean;
 }
 
+const DONKEY_LOGO_SRC = "/static/donkey-128.webp";
+const DONKEY_LOGO_SRC_SET =
+  "/static/donkey-64.webp 64w, /static/donkey-128.webp 128w, /static/donkey-192.webp 192w";
+
 export function FinalCtaSection({ isAuthenticated }: Props) {
   return (
     <section className="relative overflow-hidden rounded-2xl border-2 border-foreground bg-card shadow-[var(--shadow-md)]">
       <div className="px-5 py-8 sm:px-8 sm:py-12 text-center relative z-10">
         <img
-          src="/static/donkey.png"
-          alt="Donkey logo"
+          src={DONKEY_LOGO_SRC}
+          srcSet={DONKEY_LOGO_SRC_SET}
+          sizes="(min-width: 640px) 80px, 64px"
+          alt=""
+          aria-hidden="true"
           width={80}
           height={80}
           className="mx-auto mb-4 h-16 w-16 sm:h-20 sm:w-20 object-contain"
