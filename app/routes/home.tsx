@@ -24,7 +24,6 @@ const SEO_DESCRIPTION =
   "Discover 250+ launch directories, autofill submissions in one click, and track every listing from one dashboard.";
 const OG_IMAGE_URL = "https://www.donkey.directory/og/og-image.png?v=9";
 const OG_IMAGE_ALT = "Donkey Directories — discover 250+ launch directories and track every listing in one place!";
-const BRAND_LOGO_URL = `${MAIN_ORIGIN}/donkey.png`;
 
 function withLengthGuardrail(label: string, value: string, maxLength: number): string {
   const normalized = value.replace(/\s+/g, " ").trim();
@@ -62,18 +61,13 @@ export function meta({ location }: Route.MetaArgs) {
     { property: "og:url", content: canonicalUrl },
     { property: "og:locale", content: "en_US" },
     { property: "og:image", content: OG_IMAGE_URL },
-    { property: "og:image:secure_url", content: OG_IMAGE_URL },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
     { property: "og:image:alt", content: OG_IMAGE_ALT },
-    { property: "og:logo", content: BRAND_LOGO_URL },
-    { name: "logo", content: BRAND_LOGO_URL },
     { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:url", content: canonicalUrl },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: OG_IMAGE_URL },
-    { name: "twitter:image:src", content: OG_IMAGE_URL },
     { name: "twitter:image:alt", content: OG_IMAGE_ALT },
     {
       "script:ld+json": {
