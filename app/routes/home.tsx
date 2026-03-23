@@ -7,7 +7,7 @@ import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { getSession } from "~/lib/session.server";
 import { getCached, setCached } from "~/lib/redis.server";
 import { HomeHero } from "~/components/home-hero";
-import { MockDirectoriesTable, DIRECTORIES } from "~/components/mock-table";
+import { MockDirectoriesTable } from "~/components/mock-table";
 import { HowItWorks } from "~/components/how-it-works";
 import { PricingSection } from "~/components/pricing-section";
 import { FAQSection } from "~/components/faq-section";

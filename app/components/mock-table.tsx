@@ -752,7 +752,7 @@ export function MockDirectoriesTable({ isAuthenticated, directoryCount }: Props)
                       className="flex items-center gap-2 hover:underline underline-offset-2"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <DirectoryLogo name={dir.name} logoUrl={isAuthenticated ? dir.logoUrl : null} />
+                      <DirectoryLogo name={dir.name} logoUrl={dir.logoUrl} />
                       {dir.name}
                     </a>
                   </TableCell>
