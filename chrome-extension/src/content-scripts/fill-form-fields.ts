@@ -250,7 +250,8 @@ export async function fillFormFields(
       const check = (): HTMLElement | null => {
         if (controlsId) {
           const el = document.getElementById(controlsId);
-          if (el) return el as HTMLElement;
+          // Only return the element if it's actually visible (not toggled via hidden class)
+          if (el && !el.classList.contains("hidden") && el.style.display !== "none") return el as HTMLElement;
         }
         return document.querySelector<HTMLElement>(
           '[role="dialog"][data-state="open"], [role="listbox"][data-state="open"]'
@@ -482,7 +483,7 @@ export async function fillFormFields(
           skipped++;
         }
         continue;
-      } else if (el.tagName === "BUTTON" && el.getAttribute("role") === "combobox") {
+      } else if (el.getAttribute("role") === "combobox") {
         const ok = await fillCombobox(el, value as string | string[]);
         if (ok) { outcomes[field_id] = "filled"; filled++; }
         else { outcomes[field_id] = "not_filled"; skipped++; }

@@ -301,10 +301,36 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           }
           if (!label) label = button.getAttribute("aria-label") || "";
 
+          // Walk up ancestors to find a sibling label-like element. Covers:
+          // - label[for] pointing to a different id than the button's
+          // - div/span used as a visual label (no <label> tag at all)
+          if (!label) {
+            let ancestor = button.parentElement;
+            for (let depth = 0; depth < 5 && ancestor; depth++, ancestor = ancestor.parentElement) {
+              for (const sibling of Array.from(ancestor.children)) {
+                if (sibling === button || sibling.contains(button)) continue;
+                const tag = sibling.tagName.toLowerCase();
+                const isLabelLike =
+                  tag === "label" ||
+                  tag.match(/^h[1-6]$/) ||
+                  sibling.getAttribute("role") === "heading";
+                // Also accept plain div/span that look like short label text
+                const isDivSpanLabel =
+                  (tag === "div" || tag === "span") &&
+                  !sibling.querySelector("input, textarea, select, button");
+                if (!isLabelLike && !isDivSpanLabel) continue;
+                const text = sibling.textContent?.trim().replace(/[\s*]+$/, "").trim() || "";
+                if (text && text.length < 100) { label = text; break; }
+              }
+              if (label) break;
+            }
+          }
+
           // Derive a fieldId from the label text if no name attribute
           if (!fieldId && label) {
             fieldId = label
               .replace(/\(.*?\)/g, "")
+              .replace(/[\s*]+$/, "")
               .trim()
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, "_")
