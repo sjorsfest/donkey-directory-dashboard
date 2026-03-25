@@ -236,16 +236,20 @@ export function useFillFlow(onSessionExpired?: () => void) {
           throw new Error("Could not determine the active tab domain.");
         }
 
+        // Steps 1+2: Resolve directory identity and check credits in parallel —
+        // both are independent network calls with no ordering requirement.
         addStep("Resolving directory identity...");
-        const directoryId = await resolveDirectoryIdForHostname(hostname, onSessionExpired);
+        const [directoryId, wallet] = await Promise.all([
+          resolveDirectoryIdForHostname(hostname, onSessionExpired),
+          getCredits(onSessionExpired),
+        ]);
+
         if (!directoryId) {
           updateLastStep(`No directory found for ${hostname}.`, "error");
           return;
         }
         updateLastStep("Directory identity resolved", "done");
 
-        // Step 2: Check credits before scanning
-        const wallet = await getCredits(onSessionExpired);
         if (!wallet.lifetime_unlimited && wallet.credit_balance <= 0) {
           setPaywall({
             message: "You have no credits remaining. Top up to continue.",

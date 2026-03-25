@@ -19,6 +19,8 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
     return [document];
   };
 
+  // Use TreeWalker instead of querySelectorAll("*") — avoids allocating a large NodeList
+  // and lets the browser iterate lazily.
   const getSearchRoots = (doc: Document): Array<Document | ShadowRoot> => {
     const roots: Array<Document | ShadowRoot> = [doc];
     const queue: Array<Document | ShadowRoot> = [doc];
@@ -26,19 +28,24 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
 
     while (queue.length > 0) {
       const root = queue.shift()!;
-      const elements = root.querySelectorAll("*");
-
-      elements.forEach((node) => {
+      const walker = doc.createTreeWalker(root as unknown as Node, NodeFilter.SHOW_ELEMENT);
+      let node: Node | null = walker.nextNode();
+      while (node !== null) {
         const el = node as HTMLElement;
         if (el.shadowRoot && !seen.has(el.shadowRoot)) {
           seen.add(el.shadowRoot);
           roots.push(el.shadowRoot);
           queue.push(el.shadowRoot);
         }
-      });
+        node = walker.nextNode();
+      }
     }
 
     return roots;
+  };
+
+  type WithCheckVisibility = Element & {
+    checkVisibility?: (opts?: { checkOpacity?: boolean; checkVisibilityCSS?: boolean }) => boolean;
   };
 
   const isVisible = (
@@ -47,16 +54,30 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
     if (input instanceof HTMLInputElement && SKIP_TYPES.has(input.type)) return false;
     if (input.hidden || input.getAttribute("aria-hidden") === "true") return false;
 
+    // checkVisibility() checks the full ancestor chain in one browser-optimized call —
+    // much faster than walking getComputedStyle on every ancestor.
+    // Available in Chrome 105+ (all current extension targets).
+    if (typeof (input as WithCheckVisibility).checkVisibility === "function") {
+      if (
+        !(input as WithCheckVisibility).checkVisibility!({
+          checkOpacity: true,
+          checkVisibilityCSS: true,
+        })
+      ) {
+        return false;
+      }
+      const rect = input.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    }
+
+    // Fallback for older environments: walk ancestor chain with getComputedStyle.
     const ownerWindow = input.ownerDocument.defaultView;
     if (!ownerWindow) return true;
 
-    // Walk up the ancestor chain — popups/modals often hide via display:none,
-    // visibility:hidden, or opacity:0 on a parent, not on the input itself.
     let el: Element | null = input;
     while (el && el !== input.ownerDocument.documentElement) {
       const style = ownerWindow.getComputedStyle(el);
       if (style.display === "none" || style.visibility === "hidden") return false;
-      // Treat opacity:0 as hidden (covers slide-out/fade-out popups)
       if (parseFloat(style.opacity) === 0) return false;
       el = el.parentElement;
     }
@@ -68,10 +89,18 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
   const collectFields = (): ScannedField[] => {
     const fields: ScannedField[] = [];
     const seenElements = new Set<Element>();
+    const scannedFieldIds = new Set<string>();
     let generatedIndex = 0;
 
+    const GENERIC_LABELS = new Set(["your answer", "jouw antwoord", "enter your answer"]);
+
     for (const doc of getAccessibleDocuments()) {
-      for (const root of getSearchRoots(doc)) {
+      // Build roots once per document — shared across all three passes.
+      // Previously each pass called getSearchRoots() independently (3× traversal).
+      const roots = getSearchRoots(doc);
+
+      // Pass 1: standard form fields (input, textarea, select)
+      for (const root of roots) {
         const elements = root.querySelectorAll("input, textarea, select");
         elements.forEach((el) => {
           if (seenElements.has(el)) return;
@@ -103,7 +132,6 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           // Handles form builders (Google Forms, Typeform, etc.) where the question
           // title is a nearby div/span, not a <label> or aria-label.
           // Also fires when aria-label is a generic placeholder like "Your answer".
-          const GENERIC_LABELS = new Set(["your answer", "jouw antwoord", "enter your answer"]);
           if (!label || GENERIC_LABELS.has(label.toLowerCase())) {
             let ancestor = input.parentElement;
             for (let depth = 0; depth < 8 && ancestor; depth++, ancestor = ancestor.parentElement) {
@@ -165,17 +193,14 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             options,
             pattern: "pattern" in input ? input.pattern || null : null,
           });
+          scannedFieldIds.add(fieldId);
         });
       }
-    }
 
-    // Second pass: scan [data-field] containers for special fields
-    // (contenteditable rich text editors and clickable chip groups)
-    const scannedFieldIds = new Set(fields.map((f) => f.field_id));
-
-    for (const doc2 of getAccessibleDocuments()) {
-      for (const root2 of getSearchRoots(doc2)) {
-        const containers = root2.querySelectorAll<HTMLElement>("[data-field]");
+      // Pass 2: scan [data-field] containers for special fields
+      // (contenteditable rich text editors and clickable chip groups)
+      for (const root of roots) {
+        const containers = root.querySelectorAll<HTMLElement>("[data-field]");
         containers.forEach((container) => {
           const fieldName = container.getAttribute("data-field");
           if (!fieldName || scannedFieldIds.has(fieldName)) return;
@@ -284,12 +309,10 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           scannedFieldIds.add(fieldName);
         });
       }
-    }
 
-    // Third pass: scan [role="combobox"] buttons (Radix UI and similar custom selects)
-    for (const doc3 of getAccessibleDocuments()) {
-      for (const root3 of getSearchRoots(doc3)) {
-        root3.querySelectorAll<HTMLElement>('[role="combobox"]').forEach((button) => {
+      // Pass 3: scan [role="combobox"] buttons (Radix UI and similar custom selects)
+      for (const root of roots) {
+        root.querySelectorAll<HTMLElement>('[role="combobox"]').forEach((button) => {
           let fieldId = button.getAttribute("name")?.trim() || "";
           let label = "";
 
@@ -372,11 +395,13 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
   return new Promise((resolve) => {
     let observer: MutationObserver | null = null;
     let intervalId: number | null = null;
+    let debounceTimer: number | null = null;
     const startedAt = Date.now();
 
     const finish = (result: ScannedField[]) => {
       if (observer) observer.disconnect();
       if (intervalId !== null) window.clearInterval(intervalId);
+      if (debounceTimer !== null) window.clearTimeout(debounceTimer);
       resolve(result);
     };
 
@@ -391,14 +416,27 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
       }
     };
 
-    observer = new MutationObserver(() => attempt());
+    // Debounce observer callbacks — page load can fire hundreds of mutations per second.
+    // The 50ms debounce collapses bursts into a single re-scan.
+    const debouncedAttempt = () => {
+      if (debounceTimer !== null) window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => {
+        debounceTimer = null;
+        attempt();
+      }, 50);
+    };
+
+    observer = new MutationObserver(debouncedAttempt);
     observer.observe(root, {
       childList: true,
       subtree: true,
       attributes: true,
       attributeFilter: ["class", "style", "hidden", "aria-hidden"],
     });
-    intervalId = window.setInterval(() => attempt(), 250);
+    // Fallback polling for visibility changes not triggered by DOM mutations
+    // (e.g. CSS-only transitions). Reduced from 250ms to 500ms since the
+    // MutationObserver handles the common case immediately via debounced callback.
+    intervalId = window.setInterval(() => attempt(), 500);
 
     // Nudge common lazy-loaders that react to viewport/resize events.
     window.dispatchEvent(new Event("scroll"));

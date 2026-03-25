@@ -50,24 +50,34 @@ export async function fillFormFields(
     return [document];
   };
 
+  // Cache shadow root discovery — roots don't change during fill, so we compute once.
+  const rootsCache = new Map<Document, Array<Document | ShadowRoot>>();
+
+  // Use TreeWalker instead of querySelectorAll("*") — avoids allocating a large NodeList.
   const getSearchRoots = (doc: Document): Array<Document | ShadowRoot> => {
+    const cached = rootsCache.get(doc);
+    if (cached) return cached;
+
     const roots: Array<Document | ShadowRoot> = [doc];
     const queue: Array<Document | ShadowRoot> = [doc];
     const seen = new Set<Document | ShadowRoot>([doc]);
 
     while (queue.length > 0) {
       const root = queue.shift()!;
-      const elements = root.querySelectorAll("*");
-      elements.forEach((node) => {
+      const walker = doc.createTreeWalker(root as unknown as Node, NodeFilter.SHOW_ELEMENT);
+      let node: Node | null = walker.nextNode();
+      while (node !== null) {
         const el = node as HTMLElement;
         if (el.shadowRoot && !seen.has(el.shadowRoot)) {
           seen.add(el.shadowRoot);
           roots.push(el.shadowRoot);
           queue.push(el.shadowRoot);
         }
-      });
+        node = walker.nextNode();
+      }
     }
 
+    rootsCache.set(doc, roots);
     return roots;
   };
 
@@ -100,19 +110,47 @@ export async function fillFormFields(
     return all;
   };
 
-  const findElementForField = (fieldId: string): HTMLElement | null => {
-    const byDataId = queryFirst(
-      `[data-dd-field-id="${CSS.escape(fieldId)}"]`
-    );
-    if (byDataId) return byDataId;
+  // Pre-build O(1) lookup maps from attributes set during scanning.
+  // Replaces repeated queryFirst()/querySelectorAll() calls in the hot path —
+  // findElementForField was previously called once per field and triggered
+  // a full DOM scan each time via queryFirst and queryAllFields.
+  const byDataId = new Map<string, HTMLElement>();
+  const byDataField = new Map<string, HTMLElement>();
+  const byId = new Map<string, HTMLElement>();
+  const byName = new Map<string, HTMLElement>();
 
+  for (const doc of getAccessibleDocuments()) {
+    for (const root of getSearchRoots(doc)) {
+      root.querySelectorAll("input, textarea, select, [role='combobox']").forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        const dataId = htmlEl.getAttribute("data-dd-field-id");
+        if (dataId) byDataId.set(dataId, htmlEl);
+        if (htmlEl.id) byId.set(htmlEl.id, htmlEl);
+        const name = htmlEl.getAttribute("name");
+        if (name) byName.set(name, htmlEl);
+      });
+      root.querySelectorAll<HTMLElement>("[data-field]").forEach((el) => {
+        const name = el.getAttribute("data-field");
+        if (name) byDataField.set(name, el);
+      });
+    }
+  }
+
+  const findElementForField = (fieldId: string): HTMLElement | null => {
+    // Fast path: O(1) map lookup by data-dd-field-id (stamped during scanning)
+    const fromDataId = byDataId.get(fieldId);
+    if (fromDataId) return fromDataId;
+
+    // Fast path: O(1) lookup by id or name variants
     const variants = buildFieldVariants(fieldId);
     for (const variant of variants) {
-      const escaped = CSS.escape(variant);
-      const direct = queryFirst(`#${escaped}`) || queryFirst(`[name="${escaped}"]`);
-      if (direct) return direct;
+      const fromId = byId.get(variant) || byName.get(variant);
+      if (fromId) return fromId;
     }
 
+    // Slow path: full DOM scan with fuzzy matching.
+    // Only reached when the backend returned a field_id that doesn't exactly match
+    // any scanned attribute — relatively rare.
     const normalizedVariants = new Set(variants.map(normalize));
     const candidates = queryAllFields();
     let bestEl: HTMLElement | null = null;
@@ -174,6 +212,21 @@ export async function fillFormFields(
       };
 
       const attempt = () => {
+        // Invalidate root cache so newly added shadow roots are discovered
+        rootsCache.clear();
+        // Extend lookup maps with any elements that appeared after initial build
+        for (const doc of getAccessibleDocuments()) {
+          for (const r of getSearchRoots(doc)) {
+            r.querySelectorAll("input, textarea, select, [role='combobox']").forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              const dataId = htmlEl.getAttribute("data-dd-field-id");
+              if (dataId && !byDataId.has(dataId)) byDataId.set(dataId, htmlEl);
+              if (htmlEl.id && !byId.has(htmlEl.id)) byId.set(htmlEl.id, htmlEl);
+              const name = htmlEl.getAttribute("name");
+              if (name && !byName.has(name)) byName.set(name, htmlEl);
+            });
+          }
+        }
         const found = findElementForField(fieldId);
         if (found) {
           finish(found);
@@ -311,8 +364,9 @@ export async function fillFormFields(
 
   for (const { field_id, value } of filledFields) {
     try {
-      // Handle special [data-field] containers before standard input lookup
-      const dataContainer = queryFirst(`[data-field="${CSS.escape(field_id)}"]`);
+      // Handle special [data-field] containers before standard input lookup.
+      // Use pre-built map (O(1)) instead of queryFirst (full DOM scan).
+      const dataContainer = byDataField.get(field_id) ?? queryFirst(`[data-field="${CSS.escape(field_id)}"]`);
       if (dataContainer) {
         const editor = dataContainer.querySelector('[contenteditable="true"]');
         if (editor) {
