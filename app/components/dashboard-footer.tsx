@@ -11,6 +11,11 @@ const DONKEY_LOGO_SRC = "/static/donkey-128.webp";
 const DONKEY_LOGO_SRC_SET =
   "/static/donkey-64.webp 64w, /static/donkey-128.webp 128w, /static/donkey-192.webp 192w";
 
+const DONKEY_SUPPORT_URL =
+  "https://donkey.support/?utm_source=donkey_directories&utm_medium=footer&utm_campaign=partner_referral&utm_content=donkey_support";
+const DONKEY_SEO_URL =
+  "https://donkeyseo.io/?utm_source=donkey_directories&utm_medium=footer&utm_campaign=partner_referral&utm_content=donkey_seo";
+
 export function DashboardFooter() {
   const navData = useRouteLoaderData<typeof navLoader>("routes/_nav");
   const isAuthenticated = navData?.isAuthenticated ?? false;
@@ -19,7 +24,7 @@ export function DashboardFooter() {
   return (
     <footer className="mt-10 border-t-2 border-foreground/25 bg-secondary-100">
       <div className={`${FOOTER_CONTAINER_CLASS} py-8`}>
-        <div className="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.8fr))]">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_repeat(4,minmax(0,0.8fr))]">
           <div className="space-y-2">
             <Link className="group inline-flex items-center gap-2 no-underline" to="/">
               <img
@@ -98,6 +103,38 @@ export function DashboardFooter() {
               <Link className={FOOTER_LINK_CLASS} to="/privacy-policy">
                 Privacy Policy
               </Link>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground">
+              Partners
+            </p>
+            <div className="grid gap-2">
+              <a
+                href={DONKEY_SUPPORT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-lg border-2 border-foreground bg-[#C3F73A] px-3 py-2 text-sm font-bold text-foreground no-underline shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:bg-[#b8ec2e]"
+              >
+                <span className="block text-xs uppercase tracking-[0.04em]">Add a support widget</span>
+                <span className="inline-flex items-center gap-1">
+                  Donkey Support
+                  <span className="transition-transform group-hover:translate-x-0.5">↗</span>
+                </span>
+              </a>
+              <a
+                href={DONKEY_SEO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-lg border-2 border-foreground bg-[#FFCD38] px-3 py-2 text-sm font-bold text-foreground no-underline shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:bg-[#f8c000]"
+              >
+                <span className="block text-xs uppercase tracking-[0.04em]">Want more traffic?</span>
+                <span className="inline-flex items-center gap-1">
+                  Donkey Seo
+                  <span className="transition-transform group-hover:translate-x-0.5">↗</span>
+                </span>
+              </a>
             </div>
           </div>
         </div>
