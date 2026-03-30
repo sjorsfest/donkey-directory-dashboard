@@ -115,25 +115,19 @@ export function DashboardFooter() {
                 href={DONKEY_SUPPORT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group rounded-lg border-2 border-foreground bg-[#C3F73A] px-3 py-2 text-sm font-bold text-foreground no-underline shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:bg-[#b8ec2e]"
+                className="group inline-flex items-center gap-1.5 rounded-md border-l-2 border-[#C3F73A] py-0.5 pl-2.5 text-sm font-semibold text-foreground no-underline transition-all duration-200 hover:scale-[1.03] hover:border-l-[3px] hover:bg-[#C3F73A]/15 hover:text-foreground"
               >
-                <span className="block text-xs uppercase tracking-[0.04em]">Add a support widget</span>
-                <span className="inline-flex items-center gap-1">
-                  Donkey Support
-                  <span className="transition-transform group-hover:translate-x-0.5">↗</span>
-                </span>
+                Donkey Support
+                <span className="inline-block transition-transform duration-200 group-hover:translate-x-1 group-hover:scale-110">↗</span>
               </a>
               <a
                 href={DONKEY_SEO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group rounded-lg border-2 border-foreground bg-[#FFCD38] px-3 py-2 text-sm font-bold text-foreground no-underline shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:bg-[#f8c000]"
+                className="group inline-flex items-center gap-1.5 rounded-md border-l-2 border-[#FFCD38] py-0.5 pl-2.5 text-sm font-semibold text-foreground no-underline transition-all duration-200 hover:scale-[1.03] hover:border-l-[3px] hover:bg-[#FFCD38]/15 hover:text-foreground"
               >
-                <span className="block text-xs uppercase tracking-[0.04em]">Want more traffic?</span>
-                <span className="inline-flex items-center gap-1">
-                  Donkey Seo
-                  <span className="transition-transform group-hover:translate-x-0.5">↗</span>
-                </span>
+                Donkey Seo
+                <span className="inline-block transition-transform duration-200 group-hover:translate-x-1 group-hover:scale-110">↗</span>
               </a>
             </div>
           </div>
