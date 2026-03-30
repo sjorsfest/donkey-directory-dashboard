@@ -92,7 +92,51 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
     const scannedFieldIds = new Set<string>();
     let generatedIndex = 0;
 
-    const GENERIC_LABELS = new Set(["your answer", "jouw antwoord", "enter your answer"]);
+    const GENERIC_LABELS = new Set([
+      "your answer",
+      "jouw antwoord",
+      "enter your answer",
+      "your informative answer",
+    ]);
+
+    const normalizeText = (value: string): string => value.trim().replace(/\s+/g, " ");
+
+    const isGenericLabel = (value: string): boolean => {
+      const normalized = normalizeText(value).toLowerCase();
+      if (!normalized) return false;
+      if (GENERIC_LABELS.has(normalized)) return true;
+      return /^(your|enter|type|add)\b.*\banswer\b/.test(normalized);
+    };
+
+    const nextGeneratedFieldId = (): string => `dd-field-${generatedIndex++}`;
+
+    const makeUniqueFieldId = (
+      preferredIds: Array<string | null | undefined>
+    ): string => {
+      const cleaned = preferredIds
+        .map((id) => id?.trim())
+        .filter((id): id is string => Boolean(id));
+
+      for (const candidate of cleaned) {
+        if (!scannedFieldIds.has(candidate)) {
+          return candidate;
+        }
+      }
+
+      const base = cleaned[0] || nextGeneratedFieldId();
+      if (!scannedFieldIds.has(base)) {
+        return base;
+      }
+
+      let suffix = 2;
+      let candidate = `${base}__${suffix}`;
+      while (scannedFieldIds.has(candidate)) {
+        suffix += 1;
+        candidate = `${base}__${suffix}`;
+      }
+
+      return candidate;
+    };
 
     for (const doc of getAccessibleDocuments()) {
       // Build roots once per document — shared across all three passes.
@@ -109,8 +153,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           const input = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
           if (!isVisible(input)) return;
 
-          const fieldId =
-            input.getAttribute("name")?.trim() || input.id || `dd-field-${generatedIndex++}`;
+          const fieldId = makeUniqueFieldId([input.getAttribute("name"), input.id]);
           input.setAttribute("data-dd-field-id", fieldId);
 
           let label = "";
@@ -132,7 +175,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           // Handles form builders (Google Forms, Typeform, etc.) where the question
           // title is a nearby div/span, not a <label> or aria-label.
           // Also fires when aria-label is a generic placeholder like "Your answer".
-          if (!label || GENERIC_LABELS.has(label.toLowerCase())) {
+          if (!label || isGenericLabel(label)) {
             let ancestor = input.parentElement;
             for (let depth = 0; depth < 8 && ancestor; depth++, ancestor = ancestor.parentElement) {
               for (const sibling of Array.from(ancestor.children)) {
@@ -164,7 +207,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
                   break;
                 }
               }
-              if (label && !GENERIC_LABELS.has(label.toLowerCase())) break;
+              if (label && !isGenericLabel(label)) break;
             }
           }
 

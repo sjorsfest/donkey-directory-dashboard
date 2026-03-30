@@ -80,6 +80,7 @@ type LoaderData = {
   projects: Project[];
   selectedProjectId: string | null;
   projectsError: string | null;
+  hasConnectedExtension: boolean;
   brandProfile: BrandProfile | null;
   creators: Creator[];
   projectDetailError: string | null;
@@ -271,14 +272,23 @@ export async function loader({ request }: Route.LoaderArgs) {
     });
   }
 
-  const projectsResult = await sendAuthenticatedRequest({
-    session,
-    apiBaseUrl,
-    path: API_ROUTES.brand.projects,
-    method: "GET",
-  });
+  const [projectsResult, extensionConnectCodesResult] = await Promise.all([
+    sendAuthenticatedRequest({
+      session,
+      apiBaseUrl,
+      path: API_ROUTES.brand.projects,
+      method: "GET",
+    }),
+    sendAuthenticatedRequest({
+      session,
+      apiBaseUrl,
+      path: API_ROUTES.auth.extensionConnectCodes,
+      method: "GET",
+    }),
+  ]);
 
   latestSetCookie = pickSetCookie(latestSetCookie, projectsResult.setCookie);
+  latestSetCookie = pickSetCookie(latestSetCookie, extensionConnectCodesResult.setCookie);
 
   const projects = projectsResult.response.ok
     ? asProjectArray(projectsResult.responseData)
@@ -290,6 +300,10 @@ export async function loader({ request }: Route.LoaderArgs) {
         projectsResult.responseData,
         `Failed to load projects (HTTP ${projectsResult.response.status}).`,
       );
+
+  const hasConnectedExtension =
+    extensionConnectCodesResult.response.ok &&
+    hasConsumedExtensionConnectCodeWithUserAgent(extensionConnectCodesResult.responseData);
 
   const requestUrl = new URL(request.url);
   const requestedProjectId = toOptionalString(requestUrl.searchParams.get("project"));
@@ -403,6 +417,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       projects,
       selectedProjectId,
       projectsError,
+      hasConnectedExtension,
       brandProfile,
       creators,
       projectDetailError,
@@ -475,7 +490,15 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function LaunchPage() {
-  const { projects, selectedProjectId, projectsError, directories, directoriesTotal, submissionCounts } =
+  const {
+    projects,
+    selectedProjectId,
+    projectsError,
+    directories,
+    directoriesTotal,
+    submissionCounts,
+    hasConnectedExtension,
+  } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -653,6 +676,8 @@ export default function LaunchPage() {
               directories={directories}
               directoriesTotal={directoriesTotal}
               submissionCounts={submissionCounts}
+              showExtensionInstallPrompt={!hasConnectedExtension}
+              showConnectedExtensionReminderPrompt={hasConnectedExtension}
             />
           ) : (
             <SkeletonSubmissionsTable />
@@ -1420,6 +1445,20 @@ function asBrandProfile(value: unknown): BrandProfile | null {
   }
 
   return value as BrandProfile;
+}
+
+function hasConsumedExtensionConnectCodeWithUserAgent(value: unknown): boolean {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  return value.some((item) => {
+    if (!isRecord(item)) {
+      return false;
+    }
+
+    return toOptionalString(item.consumed_user_agent) !== undefined;
+  });
 }
 
 function isValidHttpUrl(value: string): boolean {
