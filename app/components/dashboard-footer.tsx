@@ -80,26 +80,6 @@ export function DashboardFooter() {
             <p className="max-w-[36ch] text-sm text-muted-foreground">
               Directory launch tracking and fast submission workflows, all in one dashboard.
             </p>
-            {isHomePage && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {EXTERNAL_BADGES.map((badge) => (
-                  <a
-                    key={badge.href}
-                    href={badge.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="opacity-70 transition-opacity hover:opacity-100"
-                  >
-                    <img
-                      src={badge.src}
-                      alt={badge.alt}
-                      height={28}
-                      className="h-[28px] w-auto object-contain"
-                    />
-                  </a>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="space-y-3">
@@ -195,6 +175,31 @@ export function DashboardFooter() {
           </p>
         </div>
       </div>
+
+      {isHomePage && (
+        <div className="overflow-hidden border-t border-foreground/10 py-3" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
+          <div className="group relative">
+            <div className="flex w-max animate-[marquee_60s_linear_infinite] items-center gap-5 group-hover:[animation-play-state:paused]">
+              {[...EXTERNAL_BADGES, ...EXTERNAL_BADGES, ...EXTERNAL_BADGES].map((badge, i) => (
+                <a
+                  key={`${badge.href}-${i}`}
+                  href={badge.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 opacity-50 transition-opacity hover:opacity-90"
+                >
+                  <img
+                    src={badge.src}
+                    alt={badge.alt}
+                    height={20}
+                    className="h-[20px] w-auto object-contain"
+                  />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import {
   fillForm,
   getCredits,
@@ -173,96 +173,12 @@ function uniqueFieldsById(fields: FilledField[]): FilledField[] {
   return Array.from(unique.values());
 }
 
-interface PreScanCache {
-  tabId: number;
-  pageUrl: string;
-  pageTitle: string;
-  hostname: string;
-  directoryId: string | null;
-  frameScanResults: FrameScanResult[];
-  fields: ScannedField[];
-}
-
-async function getTabMetadata(tab: chrome.tabs.Tab): Promise<{
-  tabId: number;
-  pageUrl: string;
-  pageTitle: string;
-  hostname: string;
-} | null> {
-  if (tab.id === undefined) return null;
-  const tabId = tab.id;
-
-  let pageUrl = tab.url || "";
-  let pageTitle = tab.title || "";
-  if (!pageUrl || !pageTitle) {
-    const metadata = await chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => ({
-        url: window.location.href,
-        title: document.title,
-      }),
-    });
-    pageUrl = metadata?.[0]?.result?.url || pageUrl;
-    pageTitle = metadata?.[0]?.result?.title || pageTitle;
-  }
-
-  const hostname = toHostname(pageUrl);
-  if (!hostname) return null;
-
-  return { tabId, pageUrl, pageTitle, hostname };
-}
-
 export function useFillFlow(onSessionExpired?: () => void) {
   const [steps, setSteps] = useState<StepInfo[]>([]);
   const [results, setResults] = useState<FillResults | null>(null);
   const [paywall, setPaywall] = useState<FillPaywallState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-
-  const preScanRef = useRef<Promise<PreScanCache | null> | null>(null);
-
-  // Eagerly pre-scan form fields and resolve directory ID on mount.
-  // This runs the two slowest steps (field scanning + directory resolution)
-  // before the user clicks "Autofill", so the click path is much faster.
-  useEffect(() => {
-    const doPreScan = async (): Promise<PreScanCache | null> => {
-      try {
-        const tab = await getTargetTab();
-        if (!tab) return null;
-
-        const meta = await getTabMetadata(tab);
-        if (!meta) return null;
-
-        // Run field scanning and directory resolution in parallel
-        const [scanResults, directoryId] = await Promise.all([
-          chrome.scripting.executeScript({
-            target: { tabId: meta.tabId, allFrames: true },
-            func: scanFormFields,
-            args: [12000],
-          }),
-          resolveDirectoryIdForHostname(meta.hostname, onSessionExpired),
-        ]);
-
-        const frameScanResults = asFrameScanResults(scanResults);
-        const fields = frameScanResults.flatMap((entry) => entry.fields);
-
-        return {
-          tabId: meta.tabId,
-          pageUrl: meta.pageUrl,
-          pageTitle: meta.pageTitle,
-          hostname: meta.hostname,
-          directoryId,
-          frameScanResults,
-          fields,
-        };
-      } catch {
-        // Pre-scan is best-effort; failures are handled in run()
-        return null;
-      }
-    };
-
-    preScanRef.current = doPreScan();
-  }, [onSessionExpired]);
 
   const addStep = (text: string, state: StepInfo["state"] = "active") => {
     setSteps((prev) => [...prev, { text, state }]);
@@ -289,9 +205,6 @@ export function useFillFlow(onSessionExpired?: () => void) {
       setIsRunning(true);
 
       try {
-        // Try to use pre-scanned data; fall back to scanning fresh if unavailable.
-        const cached = preScanRef.current ? await preScanRef.current : null;
-
         // Step 1: Get active tab
         const tab = await getTargetTab();
         if (tab?.id === undefined) {
@@ -301,29 +214,38 @@ export function useFillFlow(onSessionExpired?: () => void) {
         }
         const tabId = tab.id;
 
-        const meta = await getTabMetadata(tab);
-        if (!meta) {
+        // In side panel context, tab.url may be unavailable without extra permissions.
+        // Read page metadata directly from the tab so the backend still receives URL/title.
+        let pageUrl = tab.url || "";
+        let pageTitle = tab.title || "";
+        if (!pageUrl || !pageTitle) {
+          const metadata = await chrome.scripting.executeScript({
+            target: { tabId },
+            func: () => ({
+              url: window.location.href,
+              title: document.title,
+            }),
+          });
+
+          pageUrl = metadata?.[0]?.result?.url || pageUrl;
+          pageTitle = metadata?.[0]?.result?.title || pageTitle;
+        }
+
+        const hostname = toHostname(pageUrl);
+        if (!hostname) {
           throw new Error("Could not determine the active tab domain.");
         }
 
-        // Check if pre-scan is still valid (same tab, same page)
-        const cacheValid = cached !== null && cached.tabId === tabId && cached.hostname === meta.hostname;
-
-        // Step 2: Resolve directory identity and check credits
+        // Steps 1+2: Resolve directory identity and check credits in parallel —
+        // both are independent network calls with no ordering requirement.
         addStep("Resolving directory identity...");
-
-        let directoryId: string | null;
-        if (cacheValid && cached.directoryId !== null) {
-          directoryId = cached.directoryId;
-        } else {
-          directoryId = await resolveDirectoryIdForHostname(meta.hostname, onSessionExpired);
-        }
-
-        // Always check credits fresh (balance may have changed)
-        const wallet = await getCredits(onSessionExpired);
+        const [directoryId, wallet] = await Promise.all([
+          resolveDirectoryIdForHostname(hostname, onSessionExpired),
+          getCredits(onSessionExpired),
+        ]);
 
         if (!directoryId) {
-          updateLastStep(`No directory found for ${meta.hostname}.`, "error");
+          updateLastStep(`No directory found for ${hostname}.`, "error");
           return;
         }
         updateLastStep("Directory identity resolved", "done");
@@ -338,37 +260,25 @@ export function useFillFlow(onSessionExpired?: () => void) {
           return;
         }
 
-        // Step 3: Scan form fields (use pre-scan cache if valid)
-        let frameScanResults: FrameScanResult[];
-        let fields: ScannedField[];
+        // Step 3: Scan form fields
+        addStep("Scanning form fields (including iframe fields)...");
+        const scanResults = await chrome.scripting.executeScript({
+          target: { tabId, allFrames: true },
+          func: scanFormFields,
+          args: [12000],
+        });
 
-        if (cacheValid && cached.fields.length > 0) {
-          frameScanResults = cached.frameScanResults;
-          fields = cached.fields;
-          addStep(
-            `Found ${fields.length} form fields across ${frameScanResults.length} frame${frameScanResults.length === 1 ? "" : "s"}`,
-            "done"
-          );
-        } else {
-          addStep("Scanning form fields (including iframe fields)...");
-          const scanResults = await chrome.scripting.executeScript({
-            target: { tabId, allFrames: true },
-            func: scanFormFields,
-            args: [12000],
-          });
+        const frameScanResults = asFrameScanResults(scanResults);
+        const fields = frameScanResults.flatMap((entry) => entry.fields);
 
-          frameScanResults = asFrameScanResults(scanResults);
-          fields = frameScanResults.flatMap((entry) => entry.fields);
-
-          if (fields.length === 0) {
-            updateLastStep("No form fields found on this page.", "error");
-            return;
-          }
-          updateLastStep(
-            `Found ${fields.length} form fields across ${frameScanResults.length} frame${frameScanResults.length === 1 ? "" : "s"}`,
-            "done"
-          );
+        if (fields.length === 0) {
+          updateLastStep("No form fields found on this page.", "error");
+          return;
         }
+        updateLastStep(
+          `Found ${fields.length} form fields across ${frameScanResults.length} frame${frameScanResults.length === 1 ? "" : "s"}`,
+          "done"
+        );
 
         // Step 4: Send to backend
         addStep("Generating fill values...");
@@ -376,8 +286,8 @@ export function useFillFlow(onSessionExpired?: () => void) {
           {
             project_id: projectId,
             directory_id: directoryId,
-            page_url: meta.pageUrl,
-            page_title: meta.pageTitle,
+            page_url: pageUrl,
+            page_title: pageTitle,
             fields,
           },
           onSessionExpired
