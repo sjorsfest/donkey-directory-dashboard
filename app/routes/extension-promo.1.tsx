@@ -94,18 +94,18 @@ export function meta() {
 
 export default function ExtensionPromo1() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-8">
+    <div style={{ width: 1280, height: 800, overflow: "hidden" }}>
       <div
-        className="relative w-[1280px] h-[800px] overflow-hidden rounded-2xl border-2 border-foreground bg-background shadow-[var(--shadow-md)] flex items-center"
-        style={{ flexShrink: 0 }}
+        className="relative overflow-hidden bg-background flex items-center"
+        style={{ width: 1280, height: 800 }}
       >
         {/* ── Decorative blobs ── */}
-        <div className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-primary/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+        <div className="pointer-events-none absolute -top-28 -right-28 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-32 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
 
         {/* ── Dot grid ── */}
         <svg
-          className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.04]"
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.045]"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
@@ -126,12 +126,34 @@ export default function ExtensionPromo1() {
 
           {/* Headline */}
           <div>
-            <h1 className="font-[Fredoka] text-[3.6rem] font-bold leading-[1.05] text-foreground">
-              Your brand,{" "}
-              <span className="text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill]">
+            <h1 className="font-[Fredoka] text-[3.6rem] font-bold leading-[1.05]">
+              <span
+                className="text-white"
+                style={{
+                  WebkitTextStroke: "5px hsl(var(--foreground))",
+                  paintOrder: "stroke fill",
+                }}
+              >
+                Your brand,
+              </span>{" "}
+              <span
+                className="text-primary"
+                style={{
+                  WebkitTextStroke: "5px hsl(var(--foreground))",
+                  paintOrder: "stroke fill",
+                }}
+              >
                 auto-filled
               </span>{" "}
-              everywhere.
+              <span
+                className="text-white"
+                style={{
+                  WebkitTextStroke: "5px hsl(var(--foreground))",
+                  paintOrder: "stroke fill",
+                }}
+              >
+                everywhere.
+              </span>
             </h1>
             <p className="mt-4 text-lg font-medium text-foreground/60 leading-relaxed">
               Open the extension on any directory site.
@@ -165,11 +187,7 @@ export default function ExtensionPromo1() {
         {/* ── Right column ── */}
         <div className="relative z-10 flex flex-1 items-center justify-center pr-16">
           <div className="relative">
-            {/* Subtle bg card behind mockup */}
-            <div className="absolute -inset-8 rounded-2xl border-2 border-foreground/8 bg-secondary/40" />
-            <div className="relative">
-              <ExtensionMockup />
-            </div>
+            <ExtensionMockup />
           </div>
         </div>
       </div>

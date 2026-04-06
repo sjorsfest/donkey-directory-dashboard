@@ -164,28 +164,55 @@ export function meta() {
 
 export default function ExtensionPromo2() {
   return (
-    <div className="min-h-screen bg-secondary flex items-center justify-center p-8">
+    <div style={{ width: 1280, height: 800, overflow: "hidden" }}>
       <div
-        className="relative w-[1280px] h-[800px] overflow-hidden rounded-2xl border-2 border-foreground bg-secondary shadow-[var(--shadow-md)] flex flex-col"
-        style={{ flexShrink: 0 }}
+        className="relative overflow-hidden bg-background flex flex-col"
+        style={{ width: 1280, height: 800 }}
       >
         {/* ── Decorative blobs ── */}
-        <div className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full bg-primary/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-28 -right-28 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-32 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
+
+        {/* ── Dot grid ── */}
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.045]"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <pattern id="dots2" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1.5" fill="hsl(var(--foreground))" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots2)" />
+        </svg>
 
         {/* ── Header ── */}
         <div className="relative z-10 flex flex-col items-center text-center pt-12 pb-8 px-16">
           <span className="mb-4 inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-foreground px-4 py-1.5 text-sm font-bold text-background">
             250+ directories
           </span>
-          <h1 className="font-[Fredoka] text-[2.8rem] font-bold leading-[1.05] text-foreground">
-            Track every submission,{" "}
-            <span className="text-primary [-webkit-text-stroke:3px_hsl(var(--foreground))] [paint-order:stroke_fill]">
+          <h1 className="font-[Fredoka] text-[2.8rem] font-bold leading-[1.05]">
+            <span
+              className="text-white"
+              style={{
+                WebkitTextStroke: "5px hsl(var(--foreground))",
+                paintOrder: "stroke fill",
+              }}
+            >
+              Track every submission,
+            </span>{" "}
+            <span
+              className="text-primary"
+              style={{
+                WebkitTextStroke: "5px hsl(var(--foreground))",
+                paintOrder: "stroke fill",
+              }}
+            >
               effortlessly.
             </span>
           </h1>
           <p className="mt-3 max-w-xl text-base font-medium text-foreground/55">
-            See what's done, what's pending, and where to go next — all in one place.
+            See what's done, what's pending, and where to go next. All in one place.
           </p>
         </div>
 
@@ -241,12 +268,6 @@ export default function ExtensionPromo2() {
           </div>
         </div>
 
-        {/* ── Footer bar ── */}
-        <div className="relative z-10 border-t-2 border-foreground/10 bg-card/50 px-10 py-4 text-center">
-          <p className="text-sm font-medium text-foreground/45">
-            No copy-paste. No tab-switching. Just submissions.
-          </p>
-        </div>
       </div>
     </div>
   );

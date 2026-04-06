@@ -10,10 +10,10 @@ export default function OgImage() {
   const directoryCount = 250;
 
   return (
-    <div style={{ width: 1200, height: 630, overflow: "hidden" }}>
+    <div style={{ width: 1280, height: 800, overflow: "hidden" }}>
       <div
         className="relative overflow-hidden bg-background"
-        style={{ width: 1200, height: 630 }}
+        style={{ width: 1280, height: 800 }}
       >
         {/* ── Dot grid ── */}
         <svg

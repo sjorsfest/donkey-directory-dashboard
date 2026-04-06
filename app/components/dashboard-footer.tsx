@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useRouteLoaderData } from "react-router";
+import { Link, useLocation, useRouteLoaderData } from "react-router";
 import type { loader as navLoader } from "~/routes/_nav";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 
@@ -16,10 +16,20 @@ const DONKEY_SUPPORT_URL =
 const DONKEY_SEO_URL =
   "https://donkeyseo.io/?utm_source=donkey_directories&utm_medium=footer&utm_campaign=partner_referral&utm_content=donkey_seo";
 
+const EXTERNAL_BADGES = [
+  {
+    href: "https://toolprism.com",
+    src: "https://toolprism.com/assets/images/badge.png",
+    alt: "Tool Prism",
+  },
+];
+
 export function DashboardFooter() {
   const navData = useRouteLoaderData<typeof navLoader>("routes/_nav");
   const isAuthenticated = navData?.isAuthenticated ?? false;
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
 
   return (
     <footer className="mt-10 border-t-2 border-foreground/25 bg-secondary-100">
@@ -44,6 +54,26 @@ export function DashboardFooter() {
             <p className="max-w-[36ch] text-sm text-muted-foreground">
               Directory launch tracking and fast submission workflows, all in one dashboard.
             </p>
+            {isHomePage && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {EXTERNAL_BADGES.map((badge) => (
+                  <a
+                    key={badge.href}
+                    href={badge.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="opacity-70 transition-opacity hover:opacity-100"
+                  >
+                    <img
+                      src={badge.src}
+                      alt={badge.alt}
+                      height={28}
+                      className="h-[28px] w-auto object-contain"
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
