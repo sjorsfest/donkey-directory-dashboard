@@ -66,7 +66,7 @@ export function PricingSection({ isAuthenticated }: Props) {
             {[
               "Browse & filter 250+ directories",
               "Full submission progress tracker",
-              "5 free one-click form fills",
+              "3 free one-click form fills",
               "Vote to surface the best ones",
             ].map((f) => (
               <li key={f} className="flex items-start gap-2">
