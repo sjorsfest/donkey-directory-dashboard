@@ -32,6 +32,11 @@ const EXTERNAL_BADGES = [
     href: "https://toptrendtools.com",
     src: "https://toptrendtools.com/assets/images/badge.png",
     alt: "Top Trend Tools",
+  },
+  {
+    href: "https://trustiner.com",
+    src: "https://trustiner.com/assets/images/badge.png",
+    alt: "Trustiner",
   }
 ];
 
