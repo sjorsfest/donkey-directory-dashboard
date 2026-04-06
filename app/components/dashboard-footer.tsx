@@ -37,6 +37,11 @@ const EXTERNAL_BADGES = [
     href: "https://trustiner.com",
     src: "https://trustiner.com/assets/images/badge.png",
     alt: "Trustiner",
+  },
+  {
+    href: "https://turbo0.com/item/donkey-directories",
+    src: "https://img.turbo0.com/badge-listed-light.svg",
+    alt: "Listed on Turbo0",
   }
 ];
 
