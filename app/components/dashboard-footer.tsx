@@ -22,6 +22,11 @@ const EXTERNAL_BADGES = [
     src: "https://toolprism.com/assets/images/badge.png",
     alt: "Tool Prism",
   },
+  {
+    href: "https://milliondothomepage.com/product/donkey-directories",
+    src: "https://milliondothomepage.com/assets/images/badge.png",
+    alt: "Badge",
+  },
 ];
 
 export function DashboardFooter() {
