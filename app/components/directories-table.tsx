@@ -2,21 +2,20 @@ import { type MouseEvent, useMemo, useState } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
 import type { ApiProjectSubmissionCountsResponse } from "~/lib/api-contract";
 import {
-  ArrowRight,
-  CheckCheck,
   ChevronDown,
   ChevronUp,
   LayoutList,
-  ListChecks,
   LockKeyhole,
   SlidersHorizontal,
   ThumbsDown,
   ThumbsUp,
-  Zap,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
-import { motion } from "framer-motion";
 import { ChromeExtensionLink } from "~/components/chrome-extension-link";
+import {
+  ExtensionPromptDialog,
+  type ExtensionPromptVariant,
+} from "~/components/extension-prompt-dialog";
 
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
@@ -71,7 +70,7 @@ const INSTALL_PROMPT_CLICK_COUNT_STORAGE_KEY = "donkey_directory_install_prompt_
 const CONNECTED_REMINDER_CLICK_COUNT_STORAGE_KEY =
   "donkey_directory_connected_reminder_link_click_count";
 
-type ExtensionPromptVariant = "install" | "connected_reminder";
+
 
 function readDirectoryLinkClickCount(storageKey: string): number {
   if (typeof window === "undefined") return 0;
@@ -481,32 +480,6 @@ export function ProjectSubmissionsTable(props: {
     registerDirectoryLinkInteraction();
   }
 
-  const extensionPromptBenefits =
-    activeExtensionPrompt === "connected_reminder"
-      ? [
-          "Open the Chrome extension on each directory page",
-          "Autofill your details without manual copy-paste",
-          "Keep submissions moving faster from tab to tab",
-        ]
-      : [
-          "Autofill your profile fields instantly",
-          "Submit more directories in less time",
-          "Keep momentum with fewer manual steps",
-        ];
-
-  const extensionPromptTitle =
-    activeExtensionPrompt === "connected_reminder"
-      ? "Your Chrome extension is connected"
-      : "Cut directory submission time with one click";
-
-  const extensionPromptDescription =
-    activeExtensionPrompt === "connected_reminder"
-      ? "Quick reminder: use the Chrome extension in each directory tab to speed through submissions."
-      : "Stop wasting hours on manual data entry. Let the extension handle the heavy lifting for you.";
-
-  const dismissLabel =
-    activeExtensionPrompt === "connected_reminder" ? "Continue manually" : "Not now";
-
   return (
     <div className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
       {/* Table header bar */}
@@ -777,94 +750,10 @@ export function ProjectSubmissionsTable(props: {
         </div>
       )}
 
-      <Dialog
-        open={activeExtensionPrompt !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setActiveExtensionPrompt(null);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-md overflow-hidden p-0 gap-0 border-2 border-foreground">
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col"
-          >
-            <div className="h-1.5 bg-accent w-full" />
-            <div className="p-6 flex flex-col gap-4">
-              <DialogHeader className="text-left gap-3">
-                <div className="flex items-start gap-3">
-                  <Icon icon="logos:chrome" className="h-7 w-7 shrink-0" />
-                  <div className="space-y-1">
-                    <DialogTitle>{extensionPromptTitle}</DialogTitle>
-                    <DialogDescription>{extensionPromptDescription}</DialogDescription>
-                  </div>
-                </div>
-              </DialogHeader>
-
-              <motion.ul
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  hidden: {},
-                  visible: {
-                    transition: { staggerChildren: 0.06, delayChildren: 0.08 },
-                  },
-                }}
-                className="m-0 grid gap-2 p-0"
-              >
-                {extensionPromptBenefits.map((text, index) => {
-                  const icons = [ListChecks, Zap, CheckCheck] as const;
-                  const BenefitIcon = icons[index] ?? ListChecks;
-
-                  return (
-                    <motion.li
-                      key={text}
-                      variants={{
-                        hidden: { opacity: 0, y: 6 },
-                        visible: { opacity: 1, y: 0 },
-                      }}
-                      className="flex items-center gap-2.5 text-sm font-medium"
-                    >
-                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 border-foreground bg-secondary">
-                        <BenefitIcon className="h-3.5 w-3.5" />
-                      </span>
-                      <span>{text}</span>
-                    </motion.li>
-                  );
-                })}
-              </motion.ul>
-
-              <DialogFooter className="gap-2">
-                <Button
-                  variant="ghost"
-                  className="h-9 px-2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setActiveExtensionPrompt(null)}
-                >
-                  {dismissLabel}
-                </Button>
-                {activeExtensionPrompt === "connected_reminder" ? (
-                  <Button onClick={() => setActiveExtensionPrompt(null)}>
-                    <Icon icon="logos:chrome" className="h-4 w-4" />
-                    Got it, I'll use the extension
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button asChild>
-                    <ChromeExtensionLink onClick={() => setActiveExtensionPrompt(null)}>
-                      <Icon icon="logos:chrome" className="h-4 w-4" />
-                      Automate My Submissions
-                      <ArrowRight className="h-4 w-4" />
-                    </ChromeExtensionLink>
-                  </Button>
-                )}
-              </DialogFooter>
-            </div>
-          </motion.div>
-        </DialogContent>
-      </Dialog>
+      <ExtensionPromptDialog
+        variant={activeExtensionPrompt}
+        onClose={() => setActiveExtensionPrompt(null)}
+      />
     </div>
   );
 }
