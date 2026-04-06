@@ -42,6 +42,11 @@ const EXTERNAL_BADGES = [
     href: "https://turbo0.com/item/donkey-directories",
     src: "https://img.turbo0.com/badge-listed-light.svg",
     alt: "Listed on Turbo0",
+  },
+  {
+    href: "https://dododirectory.com",
+    src: "https://dododirectory.com/badge-light.png",
+    alt: "Featured on DodoDirectory",
   }
 ];
 
