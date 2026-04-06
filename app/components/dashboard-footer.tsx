@@ -27,6 +27,12 @@ const EXTERNAL_BADGES = [
     src: "https://milliondothomepage.com/assets/images/badge.png",
     alt: "Badge",
   },
+
+  {
+    href: "https://toptrendtools.com",
+    src: "https://toptrendtools.com/assets/images/badge.png",
+    alt: "Top Trend Tools",
+  }
 ];
 
 export function DashboardFooter() {
