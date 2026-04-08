@@ -82,6 +82,11 @@ const EXTERNAL_BADGES = [
     href: "https://launchscroll.com",
     src: "https://launchscroll.com/assets/images/badge.png",
     alt: "Launch Scroll",
+  },
+  {
+    href: "https://startupaideas.com",
+    src: "https://startupaideas.com/assets/images/badge.png",
+    alt: "Startup AIdeas",
   }
 ];
 
