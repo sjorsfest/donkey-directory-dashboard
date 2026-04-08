@@ -62,6 +62,11 @@ const EXTERNAL_BADGES = [
     href: "https://latestaiupdates.com",
     src: "https://latestaiupdates.com/assets/images/badge.png",
     alt: "Latest AI Updates",
+  },
+  {
+    href: "https://toolcosmos.com",
+    src: "https://toolcosmos.com/assets/images/badge.png",
+    alt: "Tool Cosmos",
   }
 ];
 
