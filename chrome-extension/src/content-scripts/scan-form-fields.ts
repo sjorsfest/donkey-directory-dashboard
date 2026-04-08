@@ -110,6 +110,41 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
 
     const nextGeneratedFieldId = (): string => `dd-field-${generatedIndex++}`;
 
+    // Shared helper: derive a label from an element by walking ancestors
+    // looking for sibling label-like elements. Used by passes 3–5.
+    const findNearbyLabel = (el: Element, maxDepth = 5): string => {
+      let label = "";
+      let ancestor = el.parentElement;
+      for (let depth = 0; depth < maxDepth && ancestor; depth++, ancestor = ancestor.parentElement) {
+        for (const sibling of Array.from(ancestor.children)) {
+          if (sibling === el || sibling.contains(el)) continue;
+          const tag = sibling.tagName.toLowerCase();
+          const isLabelLike =
+            tag === "label" ||
+            tag.match(/^h[1-6]$/) ||
+            sibling.getAttribute("role") === "heading";
+          const isDivSpanLabel =
+            (tag === "div" || tag === "span") &&
+            !sibling.querySelector("input, textarea, select, button, [contenteditable]");
+          if (!isLabelLike && !isDivSpanLabel) continue;
+          const text = sibling.textContent?.trim().replace(/[\s*]+$/, "").trim() || "";
+          if (text && text.length < 100) { label = text; break; }
+        }
+        if (label) break;
+      }
+      return label;
+    };
+
+    // Shared helper: derive a field_id from label text
+    const labelToFieldId = (label: string): string =>
+      label
+        .replace(/\(.*?\)/g, "")
+        .replace(/[\s*]+$/, "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+
     const makeUniqueFieldId = (
       preferredIds: Array<string | null | undefined>
     ): string => {
@@ -366,42 +401,8 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             if (labelEl?.textContent) label = labelEl.textContent.trim();
           }
           if (!label) label = button.getAttribute("aria-label") || "";
-
-          // Walk up ancestors to find a sibling label-like element. Covers:
-          // - label[for] pointing to a different id than the button's
-          // - div/span used as a visual label (no <label> tag at all)
-          if (!label) {
-            let ancestor = button.parentElement;
-            for (let depth = 0; depth < 5 && ancestor; depth++, ancestor = ancestor.parentElement) {
-              for (const sibling of Array.from(ancestor.children)) {
-                if (sibling === button || sibling.contains(button)) continue;
-                const tag = sibling.tagName.toLowerCase();
-                const isLabelLike =
-                  tag === "label" ||
-                  tag.match(/^h[1-6]$/) ||
-                  sibling.getAttribute("role") === "heading";
-                // Also accept plain div/span that look like short label text
-                const isDivSpanLabel =
-                  (tag === "div" || tag === "span") &&
-                  !sibling.querySelector("input, textarea, select, button");
-                if (!isLabelLike && !isDivSpanLabel) continue;
-                const text = sibling.textContent?.trim().replace(/[\s*]+$/, "").trim() || "";
-                if (text && text.length < 100) { label = text; break; }
-              }
-              if (label) break;
-            }
-          }
-
-          // Derive a fieldId from the label text if no name attribute
-          if (!fieldId && label) {
-            fieldId = label
-              .replace(/\(.*?\)/g, "")
-              .replace(/[\s*]+$/, "")
-              .trim()
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "_")
-              .replace(/^_+|_+$/g, "");
-          }
+          if (!label) label = findNearbyLabel(button);
+          if (!fieldId && label) fieldId = labelToFieldId(label);
 
           if (!fieldId || scannedFieldIds.has(fieldId)) return;
 
@@ -419,6 +420,302 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           });
           scannedFieldIds.add(fieldId);
         });
+      }
+
+      // Pass 4: orphaned contenteditable editors (e.g. Tiptap/ProseMirror)
+      // not inside a [data-field] container — caught by label[for] or ancestor walk.
+      for (const root of roots) {
+        root.querySelectorAll<HTMLElement>('[contenteditable="true"]').forEach((editor) => {
+          // Skip if already captured by pass 2 (inside a [data-field] container)
+          if (editor.closest("[data-field]")) return;
+          // Skip tiny editors (likely inline formatting, not a form field)
+          const rect = editor.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) return;
+
+          let label = "";
+          let fieldId = "";
+          const ownerDoc = editor.ownerDocument || document;
+
+          // Check if any label[for] references a sibling/parent id that wraps this editor
+          let container = editor.parentElement;
+          for (let depth = 0; depth < 8 && container; depth++, container = container.parentElement) {
+            if (container.id) {
+              const labelEl = ownerDoc.querySelector(
+                `label[for="${CSS.escape(container.id)}"]`
+              );
+              if (labelEl?.textContent) {
+                label = labelEl.textContent.trim().replace(/[\s*]+$/, "").trim();
+                fieldId = container.id;
+                break;
+              }
+            }
+          }
+
+          // Also try labels whose `for` doesn't match any real input (orphaned labels)
+          if (!label) {
+            const allLabels = ownerDoc.querySelectorAll<HTMLLabelElement>("label[for]");
+            allLabels.forEach((lbl) => {
+              if (label) return;
+              const forId = lbl.getAttribute("for") || "";
+              // If there's no actual input with this id, the label might point to the editor
+              if (forId && !ownerDoc.getElementById(forId)) {
+                // Check if this label is near the editor (within the same parent container)
+                let editorAncestor = editor.parentElement;
+                for (let d = 0; d < 8 && editorAncestor; d++, editorAncestor = editorAncestor.parentElement) {
+                  if (editorAncestor.contains(lbl)) {
+                    label = lbl.textContent?.trim().replace(/[\s*]+$/, "").trim() || "";
+                    fieldId = forId;
+                    break;
+                  }
+                }
+              }
+            });
+          }
+
+          if (!label) label = findNearbyLabel(editor, 8);
+          if (!fieldId && label) fieldId = labelToFieldId(label);
+          if (!fieldId) fieldId = nextGeneratedFieldId();
+          fieldId = makeUniqueFieldId([fieldId]);
+          if (scannedFieldIds.has(fieldId)) return;
+
+          // Stamp data-field on the nearest wrapper so fillFormFields can locate it
+          const wrapper = editor.closest("div:has(> [contenteditable])") || editor.parentElement;
+          if (wrapper) wrapper.setAttribute("data-field", fieldId);
+
+          const placeholderEl = editor.querySelector("[data-placeholder]");
+          const placeholder = placeholderEl?.getAttribute("data-placeholder") || null;
+
+          fields.push({
+            field_id: fieldId,
+            type: "contenteditable",
+            tag: "div",
+            label: label || fieldId,
+            placeholder,
+            required: false,
+            max_length: null,
+            options: null,
+            pattern: null,
+          });
+          scannedFieldIds.add(fieldId);
+        });
+      }
+
+      // Pass 5: orphaned file inputs (hidden inputs not captured by pass 1 or 2)
+      for (const root of roots) {
+        root.querySelectorAll<HTMLInputElement>('input[type="file"]').forEach((fileInput) => {
+          if (seenElements.has(fileInput)) return;
+          // Skip if already inside a [data-field] container (handled by pass 2)
+          if (fileInput.closest("[data-field]")) return;
+
+          let label = "";
+          let fieldId = fileInput.getAttribute("name")?.trim() || fileInput.id || "";
+          const ownerDoc = fileInput.ownerDocument || document;
+
+          if (fileInput.id) {
+            const labelEl = ownerDoc.querySelector(
+              `label[for="${CSS.escape(fileInput.id)}"]`
+            );
+            if (labelEl?.textContent) label = labelEl.textContent.trim();
+          }
+
+          // Walk ancestors to find nearby label or button text ("Upload Logo", etc.)
+          if (!label) {
+            let ancestor = fileInput.parentElement;
+            for (let depth = 0; depth < 6 && ancestor; depth++, ancestor = ancestor.parentElement) {
+              // Check for a label element
+              const labelEl = ancestor.querySelector("label");
+              if (labelEl?.textContent) {
+                label = labelEl.textContent.trim().replace(/[\s*]+$/, "").trim();
+                break;
+              }
+              // Check for a nearby button with descriptive text (e.g. "Upload Logo")
+              const btnEl = ancestor.querySelector("button");
+              if (btnEl?.textContent) {
+                const btnText = btnEl.textContent.trim();
+                if (btnText.length < 80) { label = btnText; break; }
+              }
+            }
+          }
+
+          if (!label) label = findNearbyLabel(fileInput, 6);
+          if (!fieldId && label) fieldId = labelToFieldId(label);
+          if (!fieldId) fieldId = nextGeneratedFieldId();
+          fieldId = makeUniqueFieldId([fieldId]);
+          if (scannedFieldIds.has(fieldId)) return;
+
+          // Stamp data-field on the wrapping container that holds both the label and the file input,
+          // so fillFormFields can find it via [data-field].
+          let wrapper: Element | null = null;
+          let anc = fileInput.parentElement;
+          for (let d = 0; d < 6 && anc; d++, anc = anc.parentElement) {
+            if (anc.querySelector("label") && anc.contains(fileInput)) {
+              wrapper = anc;
+              break;
+            }
+          }
+          if (!wrapper) wrapper = fileInput.parentElement;
+          if (wrapper) wrapper.setAttribute("data-field", fieldId);
+          fileInput.setAttribute("data-dd-field-id", fieldId);
+
+          fields.push({
+            field_id: fieldId,
+            type: "file-upload",
+            tag: "input",
+            label: label || fieldId,
+            placeholder: fileInput.accept || null,
+            required: false,
+            max_length: null,
+            options: null,
+            pattern: fileInput.accept || null,
+          });
+          scannedFieldIds.add(fieldId);
+        });
+      }
+
+      // Pass 6: Radix UI checkbox groups (button[role="checkbox"])
+      // These use data-state="checked"/"unchecked" instead of native checked.
+      // The hidden <input type="checkbox"> siblings fail isVisible(), so pass 1 misses them.
+      {
+        const processed = new Set<Element>();
+        for (const root of roots) {
+          root.querySelectorAll<HTMLElement>('button[role="checkbox"]').forEach((btn) => {
+            if (processed.has(btn)) return;
+
+            // Walk up to find the container that holds the group label + all checkboxes
+            let groupContainer: Element | null = null;
+            let groupLabel = "";
+            let ancestor = btn.parentElement;
+            for (let depth = 0; depth < 8 && ancestor; depth++, ancestor = ancestor.parentElement) {
+              const lbl = ancestor.querySelector(":scope > label");
+              const checkboxes = ancestor.querySelectorAll('button[role="checkbox"]');
+              if (lbl && checkboxes.length >= 2) {
+                groupContainer = ancestor;
+                groupLabel = lbl.textContent?.trim().replace(/[\s*]+$/, "").trim() || "";
+                break;
+              }
+            }
+
+            if (!groupContainer || !groupLabel) return;
+
+            const allCheckboxes = groupContainer.querySelectorAll<HTMLElement>('button[role="checkbox"]');
+            allCheckboxes.forEach((cb) => processed.add(cb));
+
+            let fieldId = labelToFieldId(groupLabel);
+            if (!fieldId || scannedFieldIds.has(fieldId)) return;
+            fieldId = makeUniqueFieldId([fieldId]);
+
+            // Collect options from associated labels
+            const options: { value: string; text: string }[] = [];
+            allCheckboxes.forEach((cb) => {
+              let optLabel = "";
+              if (cb.id) {
+                const lblEl = (cb.ownerDocument || document).querySelector(
+                  `label[for="${CSS.escape(cb.id)}"]`
+                );
+                if (lblEl?.textContent) optLabel = lblEl.textContent.trim();
+              }
+              if (!optLabel) {
+                // Skip the hidden input sibling, look for the label after it
+                let sibling = cb.nextElementSibling;
+                if (sibling?.tagName === "INPUT") sibling = sibling.nextElementSibling;
+                if (sibling?.tagName === "LABEL") optLabel = sibling.textContent?.trim() || "";
+              }
+              if (optLabel) options.push({ value: optLabel, text: optLabel });
+            });
+
+            groupContainer.setAttribute("data-field", fieldId);
+            fields.push({
+              field_id: fieldId,
+              type: "checkbox-group",
+              tag: "div",
+              label: groupLabel,
+              placeholder: null,
+              required: false,
+              max_length: null,
+              options,
+              pattern: null,
+            });
+            scannedFieldIds.add(fieldId);
+          });
+        }
+      }
+
+      // Pass 7: Radix UI radio groups (button[role="radio"] inside [role="radiogroup"] or grouped)
+      {
+        const processed = new Set<Element>();
+        for (const root of roots) {
+          root.querySelectorAll<HTMLElement>('button[role="radio"]').forEach((btn) => {
+            if (processed.has(btn)) return;
+
+            // Prefer [role="radiogroup"] wrapper, otherwise walk up like checkbox groups
+            let groupContainer: Element | null = btn.closest('[role="radiogroup"]');
+            let groupLabel = "";
+
+            if (groupContainer) {
+              // Find label from a sibling or parent of the radiogroup
+              let anc = groupContainer.parentElement;
+              for (let d = 0; d < 4 && anc; d++, anc = anc.parentElement) {
+                const lbl = anc.querySelector(":scope > label");
+                if (lbl?.textContent) {
+                  groupLabel = lbl.textContent.trim().replace(/[\s*]+$/, "").trim();
+                  groupContainer = anc; // use the wider container that has the label
+                  break;
+                }
+              }
+            } else {
+              let ancestor = btn.parentElement;
+              for (let depth = 0; depth < 8 && ancestor; depth++, ancestor = ancestor.parentElement) {
+                const lbl = ancestor.querySelector(":scope > label");
+                const radios = ancestor.querySelectorAll('button[role="radio"]');
+                if (lbl && radios.length >= 2) {
+                  groupContainer = ancestor;
+                  groupLabel = lbl.textContent?.trim().replace(/[\s*]+$/, "").trim() || "";
+                  break;
+                }
+              }
+            }
+
+            if (!groupContainer || !groupLabel) return;
+
+            const allRadios = groupContainer.querySelectorAll<HTMLElement>('button[role="radio"]');
+            allRadios.forEach((rb) => processed.add(rb));
+
+            let fieldId = labelToFieldId(groupLabel);
+            if (!fieldId || scannedFieldIds.has(fieldId)) return;
+            fieldId = makeUniqueFieldId([fieldId]);
+
+            const options: { value: string; text: string }[] = [];
+            allRadios.forEach((rb) => {
+              let optLabel = "";
+              if (rb.id) {
+                const lblEl = (rb.ownerDocument || document).querySelector(
+                  `label[for="${CSS.escape(rb.id)}"]`
+                );
+                if (lblEl?.textContent) optLabel = lblEl.textContent.trim();
+              }
+              if (!optLabel) {
+                let sibling = rb.nextElementSibling;
+                if (sibling?.tagName === "INPUT") sibling = sibling.nextElementSibling;
+                if (sibling?.tagName === "LABEL") optLabel = sibling.textContent?.trim() || "";
+              }
+              if (optLabel) options.push({ value: optLabel, text: optLabel });
+            });
+
+            groupContainer.setAttribute("data-field", fieldId);
+            fields.push({
+              field_id: fieldId,
+              type: "radio-group",
+              tag: "div",
+              label: groupLabel,
+              placeholder: null,
+              required: false,
+              max_length: null,
+              options,
+              pattern: null,
+            });
+            scannedFieldIds.add(fieldId);
+          });
+        }
       }
     }
 

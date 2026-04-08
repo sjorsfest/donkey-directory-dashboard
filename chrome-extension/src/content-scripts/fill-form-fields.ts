@@ -447,6 +447,65 @@ export async function fillFormFields(
           continue;
         }
 
+        // Check for Radix UI checkbox group (button[role="checkbox"])
+        const checkboxBtns = dataContainer.querySelectorAll<HTMLElement>('button[role="checkbox"]');
+        if (checkboxBtns.length >= 2) {
+          if (value == null || value === "") { outcomes[field_id] = "not_filled"; skipped++; continue; }
+          const rawValues = Array.isArray(value) ? (value as string[]).map(String) : String(value).split(",");
+          const targets = rawValues.map((v) => normalize(String(v).trim())).filter(Boolean);
+          let clickedCount = 0;
+          checkboxBtns.forEach((btn) => {
+            let optLabel = "";
+            if (btn.id) {
+              const lblEl = document.querySelector(`label[for="${CSS.escape(btn.id)}"]`);
+              if (lblEl?.textContent) optLabel = lblEl.textContent.trim();
+            }
+            if (!optLabel) {
+              let sibling = btn.nextElementSibling;
+              if (sibling?.tagName === "INPUT") sibling = sibling.nextElementSibling;
+              if (sibling?.tagName === "LABEL") optLabel = sibling.textContent?.trim() || "";
+            }
+            const optNorm = normalize(optLabel);
+            if (targets.some((t) => optNorm === t || optNorm.includes(t) || t.includes(optNorm))) {
+              if (btn.getAttribute("data-state") !== "checked") {
+                btn.click();
+              }
+              clickedCount++;
+            }
+          });
+          if (clickedCount > 0) { outcomes[field_id] = "filled"; filled++; }
+          else { outcomes[field_id] = "not_filled"; skipped++; }
+          continue;
+        }
+
+        // Check for Radix UI radio group (button[role="radio"])
+        const radioBtns = dataContainer.querySelectorAll<HTMLElement>('button[role="radio"]');
+        if (radioBtns.length >= 2) {
+          if (value == null || value === "") { outcomes[field_id] = "not_filled"; skipped++; continue; }
+          const target = normalize(String(value).trim());
+          let clicked = false;
+          radioBtns.forEach((btn) => {
+            let optLabel = "";
+            if (btn.id) {
+              const lblEl = document.querySelector(`label[for="${CSS.escape(btn.id)}"]`);
+              if (lblEl?.textContent) optLabel = lblEl.textContent.trim();
+            }
+            if (!optLabel) {
+              let sibling = btn.nextElementSibling;
+              if (sibling?.tagName === "INPUT") sibling = sibling.nextElementSibling;
+              if (sibling?.tagName === "LABEL") optLabel = sibling.textContent?.trim() || "";
+            }
+            const optNorm = normalize(optLabel);
+            if (optNorm === target || optNorm.includes(target) || target.includes(optNorm)) {
+              btn.click();
+              clicked = true;
+            }
+          });
+          if (clicked) { outcomes[field_id] = "filled"; filled++; }
+          else { outcomes[field_id] = "not_filled"; skipped++; }
+          continue;
+        }
+
         const hasInput = dataContainer.querySelector(
           "input:not([type=hidden]):not([type=file]), textarea, select"
         );
