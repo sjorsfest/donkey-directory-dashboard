@@ -67,6 +67,11 @@ const EXTERNAL_BADGES = [
     href: "https://toolcosmos.com",
     src: "https://toolcosmos.com/assets/images/badge.png",
     alt: "Tool Cosmos",
+  },
+  {
+    href: "https://thekeytools.com",
+    src: "https://thekeytools.com/assets/images/badge.png",
+    alt: "The Key Tools",
   }
 ];
 
