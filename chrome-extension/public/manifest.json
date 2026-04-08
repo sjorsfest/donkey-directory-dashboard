@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Donkey Directories",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Auto-fill directory submission forms using your brand profile.",
   "permissions": ["storage", "activeTab", "scripting", "sidePanel"],
   "host_permissions": [

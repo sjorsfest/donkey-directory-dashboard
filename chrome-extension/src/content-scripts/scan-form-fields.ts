@@ -233,10 +233,11 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
       for (const buckets of allBuckets) {
         for (const el of buckets.formFields) {
           if (seenElements.has(el)) continue;
-          seenElements.add(el);
 
           const input = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
           if (!isVisible(input)) continue;
+
+          seenElements.add(el);
 
           const fieldId = makeUniqueFieldId([input.getAttribute("name"), input.id]);
           pendingWrites.push({ el: input, attr: "data-dd-field-id", value: fieldId });
