@@ -72,6 +72,11 @@ const EXTERNAL_BADGES = [
     href: "https://thekeytools.com",
     src: "https://thekeytools.com/assets/images/badge.png",
     alt: "The Key Tools",
+  },
+  {
+    href: "https://unitelist.com",
+    src: "https://unitelist.com/assets/images/badge.png",
+    alt: "Unite List",
   }
 ];
 
