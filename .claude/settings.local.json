@@ -6,7 +6,9 @@
       "Bash(npm run ext:build:*)",
       "WebFetch(domain:jobalert.world)",
       "Bash(npx tsc:*)",
-      "Bash(head -c 3000 \"/Users/jeroenmeij/Desktop/personal/donkey-directory-dashboard/public/directories \\(3\\).json\")"
+      "Bash(head -c 3000 \"/Users/jeroenmeij/Desktop/personal/donkey-directory-dashboard/public/directories \\(3\\).json\")",
+      "Bash(find /Users/jeroenmeij/Desktop/personal/donkey-directory-dashboard -type f \\\\\\(-name *webhook* -o -name *blog* -o -name *article* -o -name *content* \\\\\\))",
+      "Bash(find /Users/jeroenmeij/Desktop/personal/donkey-directory-dashboard -type f \\\\\\(-name *prisma* -o -name *drizzle* -o -name *orm* -o -name *db* -o -name *database* -o -name schema* \\\\\\))"
     ]
   }
 }

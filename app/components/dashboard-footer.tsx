@@ -53,6 +53,7 @@ const EXTERNAL_BADGES = [
 export function DashboardFooter() {
   const navData = useRouteLoaderData<typeof navLoader>("routes/_nav");
   const isAuthenticated = navData?.isAuthenticated ?? false;
+  const blogPillars = navData?.blogPillars ?? [];
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
@@ -60,7 +61,7 @@ export function DashboardFooter() {
   return (
     <footer className="mt-10 border-t-2 border-foreground/25 bg-secondary-100">
       <div className={`${FOOTER_CONTAINER_CLASS} py-8`}>
-        <div className="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_repeat(4,minmax(0,0.8fr))]">
+        <div className={`grid gap-8 ${blogPillars.length > 0 ? "md:grid-cols-[minmax(0,1.2fr)_repeat(5,minmax(0,0.8fr))]" : "md:grid-cols-[minmax(0,1.2fr)_repeat(4,minmax(0,0.8fr))]"}`}>
           <div className="space-y-2">
             <Link className="group inline-flex items-center gap-2 no-underline" to="/">
               <img
@@ -92,6 +93,9 @@ export function DashboardFooter() {
               </Link>
               <Link className={FOOTER_LINK_CLASS} to="/about">
                 About
+              </Link>
+              <Link className={FOOTER_LINK_CLASS} to="/blog">
+                Blog
               </Link>
               <Link className={FOOTER_LINK_CLASS} to="/dashboard">
                 Submission Tracker
@@ -127,6 +131,25 @@ export function DashboardFooter() {
               </Link>
             </div>
           </div>
+
+          {blogPillars.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground">
+                Topics
+              </p>
+              <div className="grid gap-2">
+                {blogPillars.slice(0, 6).map((pillar) => (
+                  <Link
+                    key={pillar.id}
+                    className={FOOTER_LINK_CLASS}
+                    to={`/pillars/${pillar.slug}`}
+                  >
+                    {pillar.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground">

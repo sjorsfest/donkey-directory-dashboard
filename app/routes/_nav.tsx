@@ -28,6 +28,7 @@ import { sendAuthenticatedRequest } from "~/lib/authenticated-api.server";
 import { normalizeDomainInput } from "~/lib/domain-input";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { destroySession, getSession } from "~/lib/session.server";
+import { getCachedPillars } from "~/lib/blog-data.server";
 import { DashboardFooter } from "~/components/dashboard-footer";
 import { SupportWidget } from "~/components/SupportWidget";
 
@@ -92,8 +93,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const chromeExtensionUrl = process.env.CHROME_EXTENSION_URL || null;
 
+  let blogPillars: Array<{ id: string; name: string; slug: string; description: string | null }> = [];
+  try {
+    blogPillars = await getCachedPillars();
+  } catch {
+    // Blog features should not break the main app
+  }
+
   if (!hasSessionTokens) {
-    return data({ isAuthenticated: false, userEmail: null, chromeExtensionUrl });
+    return data({ isAuthenticated: false, userEmail: null, chromeExtensionUrl, blogPillars });
   }
 
   const authResult = await sendAuthenticatedRequest({
@@ -109,7 +117,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     : null;
 
   return data(
-    { isAuthenticated, userEmail, chromeExtensionUrl },
+    { isAuthenticated, userEmail, chromeExtensionUrl, blogPillars },
     authResult.setCookie ? { headers: { "Set-Cookie": authResult.setCookie } } : undefined,
   );
 }
