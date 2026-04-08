@@ -57,6 +57,11 @@ const EXTERNAL_BADGES = [
     href: "https://open-launch.com/projects/donkey-directories",
     src: "https://open-launch.com/api/badge/9edd3717-4226-4055-aa56-f7dd36fc5b66/featured-light.svg",
     alt: "Featured on Open-Launch",
+  },
+  {
+    href: "https://latestaiupdates.com",
+    src: "https://latestaiupdates.com/assets/images/badge.png",
+    alt: "Latest AI Updates",
   }
 ];
 

@@ -23,11 +23,12 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
   // and lets the browser iterate lazily.
   const getSearchRoots = (doc: Document): Array<Document | ShadowRoot> => {
     const roots: Array<Document | ShadowRoot> = [doc];
-    const queue: Array<Document | ShadowRoot> = [doc];
     const seen = new Set<Document | ShadowRoot>([doc]);
 
-    while (queue.length > 0) {
-      const root = queue.shift()!;
+    // Use index pointer instead of queue.shift() — avoids O(n) array copy per iteration.
+    let qi = 0;
+    while (qi < roots.length) {
+      const root = roots[qi++];
       const walker = doc.createTreeWalker(root as unknown as Node, NodeFilter.SHOW_ELEMENT);
       let node: Node | null = walker.nextNode();
       while (node !== null) {
@@ -35,7 +36,6 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
         if (el.shadowRoot && !seen.has(el.shadowRoot)) {
           seen.add(el.shadowRoot);
           roots.push(el.shadowRoot);
-          queue.push(el.shadowRoot);
         }
         node = walker.nextNode();
       }
@@ -86,11 +86,30 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
     return rect.width > 0 && rect.height > 0;
   };
 
+  // Single combined selector — queried once per root instead of 7 separate passes.
+  const COMBINED_SELECTOR =
+    'input, textarea, select, [data-field], [role="combobox"], ' +
+    '[contenteditable="true"], button[role="checkbox"], button[role="radio"]';
+
+  // Element buckets collected per root, processed in pass order.
+  type RootBuckets = {
+    formFields: HTMLElement[];
+    dataFieldContainers: HTMLElement[];
+    comboboxes: HTMLElement[];
+    contenteditables: HTMLElement[];
+    fileInputs: HTMLInputElement[];
+    checkboxButtons: HTMLElement[];
+    radioButtons: HTMLElement[];
+  };
+
   const collectFields = (): ScannedField[] => {
     const fields: ScannedField[] = [];
     const seenElements = new Set<Element>();
     const scannedFieldIds = new Set<string>();
     let generatedIndex = 0;
+
+    // Deferred DOM writes — batched and flushed at the end to avoid layout thrashing.
+    const pendingWrites: Array<{ el: Element; attr: string; value: string }> = [];
 
     const GENERIC_LABELS = new Set([
       "your answer",
@@ -174,22 +193,53 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
     };
 
     for (const doc of getAccessibleDocuments()) {
-      // Build roots once per document — shared across all three passes.
-      // Previously each pass called getSearchRoots() independently (3× traversal).
       const roots = getSearchRoots(doc);
 
+      // Query combined selector once per root and categorize into buckets.
+      // This replaces 7 separate querySelectorAll calls per root.
+      const allBuckets: RootBuckets[] = roots.map((root) => {
+        const buckets: RootBuckets = {
+          formFields: [],
+          dataFieldContainers: [],
+          comboboxes: [],
+          contenteditables: [],
+          fileInputs: [],
+          checkboxButtons: [],
+          radioButtons: [],
+        };
+
+        root.querySelectorAll<HTMLElement>(COMBINED_SELECTOR).forEach((el) => {
+          const tag = el.tagName;
+          if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+            buckets.formFields.push(el);
+            if (tag === "INPUT" && (el as HTMLInputElement).type === "file") {
+              buckets.fileInputs.push(el as HTMLInputElement);
+            }
+          }
+          if (el.hasAttribute("data-field")) buckets.dataFieldContainers.push(el);
+          if (el.getAttribute("role") === "combobox") buckets.comboboxes.push(el);
+          if (el.getAttribute("contenteditable") === "true") buckets.contenteditables.push(el);
+          if (tag === "BUTTON") {
+            const role = el.getAttribute("role");
+            if (role === "checkbox") buckets.checkboxButtons.push(el);
+            if (role === "radio") buckets.radioButtons.push(el);
+          }
+        });
+
+        return buckets;
+      });
+
       // Pass 1: standard form fields (input, textarea, select)
-      for (const root of roots) {
-        const elements = root.querySelectorAll("input, textarea, select");
-        elements.forEach((el) => {
-          if (seenElements.has(el)) return;
+      for (const buckets of allBuckets) {
+        for (const el of buckets.formFields) {
+          if (seenElements.has(el)) continue;
           seenElements.add(el);
 
           const input = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-          if (!isVisible(input)) return;
+          if (!isVisible(input)) continue;
 
           const fieldId = makeUniqueFieldId([input.getAttribute("name"), input.id]);
-          input.setAttribute("data-dd-field-id", fieldId);
+          pendingWrites.push({ el: input, attr: "data-dd-field-id", value: fieldId });
 
           let label = "";
           if (input.id) {
@@ -272,16 +322,15 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             pattern: "pattern" in input ? input.pattern || null : null,
           });
           scannedFieldIds.add(fieldId);
-        });
+        }
       }
 
       // Pass 2: scan [data-field] containers for special fields
       // (contenteditable rich text editors and clickable chip groups)
-      for (const root of roots) {
-        const containers = root.querySelectorAll<HTMLElement>("[data-field]");
-        containers.forEach((container) => {
+      for (const buckets of allBuckets) {
+        for (const container of buckets.dataFieldContainers) {
           const fieldName = container.getAttribute("data-field");
-          if (!fieldName || scannedFieldIds.has(fieldName)) return;
+          if (!fieldName || scannedFieldIds.has(fieldName)) continue;
 
           // Contenteditable rich text editor (e.g. Tiptap/ProseMirror)
           const editor = container.querySelector('[contenteditable="true"]') as HTMLElement | null;
@@ -302,7 +351,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               pattern: null,
             });
             scannedFieldIds.add(fieldName);
-            return;
+            continue;
           }
 
           // Clickable chip groups (no standard input inside)
@@ -325,7 +374,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
                 pattern: fileInput.accept || null,
               });
               scannedFieldIds.add(fieldName);
-              return;
+              continue;
             }
 
             // Check for tag input: a text input where typing + Enter adds a tag
@@ -342,7 +391,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
                   if (existingIdx !== -1) fields.splice(existingIdx, 1);
                 }
                 // Point data-dd-field-id to the semantic [data-field] name
-                textInput.setAttribute("data-dd-field-id", fieldName);
+                pendingWrites.push({ el: textInput, attr: "data-dd-field-id", value: fieldName });
                 fields.push({
                   field_id: fieldName,
                   type: "tag-input",
@@ -357,11 +406,11 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
                 scannedFieldIds.add(fieldName);
               }
             }
-            return;
+            continue;
           }
 
           const chips = Array.from(container.querySelectorAll<HTMLElement>(".cursor-pointer"));
-          if (chips.length === 0) return;
+          if (chips.length === 0) continue;
 
           const options = chips
             .map((chip) => {
@@ -369,7 +418,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               return { value: text, text };
             })
             .filter((o) => o.text.length > 0);
-          if (options.length === 0) return;
+          if (options.length === 0) continue;
 
           const labelEl = container.querySelector("label");
           const label = labelEl?.textContent?.trim() || fieldName;
@@ -385,12 +434,12 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             pattern: null,
           });
           scannedFieldIds.add(fieldName);
-        });
+        }
       }
 
       // Pass 3: scan [role="combobox"] buttons (Radix UI and similar custom selects)
-      for (const root of roots) {
-        root.querySelectorAll<HTMLElement>('[role="combobox"]').forEach((button) => {
+      for (const buckets of allBuckets) {
+        for (const button of buckets.comboboxes) {
           let fieldId = button.getAttribute("name")?.trim() || "";
           let label = "";
 
@@ -404,9 +453,9 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           if (!label) label = findNearbyLabel(button);
           if (!fieldId && label) fieldId = labelToFieldId(label);
 
-          if (!fieldId || scannedFieldIds.has(fieldId)) return;
+          if (!fieldId || scannedFieldIds.has(fieldId)) continue;
 
-          button.setAttribute("data-dd-field-id", fieldId);
+          pendingWrites.push({ el: button, attr: "data-dd-field-id", value: fieldId });
           fields.push({
             field_id: fieldId,
             type: "combobox",
@@ -419,46 +468,57 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             pattern: null,
           });
           scannedFieldIds.add(fieldId);
-        });
+        }
       }
 
       // Pass 4: orphaned contenteditable editors (e.g. Tiptap/ProseMirror)
       // not inside a [data-field] container — caught by label[for] or ancestor walk.
-      for (const root of roots) {
-        root.querySelectorAll<HTMLElement>('[contenteditable="true"]').forEach((editor) => {
-          // Skip if already captured by pass 2 (inside a [data-field] container)
-          if (editor.closest("[data-field]")) return;
-          // Skip tiny editors (likely inline formatting, not a form field)
-          const rect = editor.getBoundingClientRect();
-          if (rect.width === 0 || rect.height === 0) return;
+      {
+        // Cache orphan labels once — labels whose `for` doesn't match any real input.
+        // Previously re-queried for every contenteditable editor.
+        let orphanLabelsCache: { lbl: HTMLLabelElement; forId: string }[] | null = null;
+        const getOrphanLabels = (ownerDoc: Document) => {
+          if (orphanLabelsCache) return orphanLabelsCache;
+          orphanLabelsCache = [];
+          ownerDoc.querySelectorAll<HTMLLabelElement>("label[for]").forEach((lbl) => {
+            const forId = lbl.getAttribute("for") || "";
+            if (forId && !ownerDoc.getElementById(forId)) {
+              orphanLabelsCache!.push({ lbl, forId });
+            }
+          });
+          return orphanLabelsCache;
+        };
 
-          let label = "";
-          let fieldId = "";
-          const ownerDoc = editor.ownerDocument || document;
+        for (const buckets of allBuckets) {
+          for (const editor of buckets.contenteditables) {
+            // Skip if already captured by pass 2 (inside a [data-field] container)
+            if (editor.closest("[data-field]")) continue;
+            // Skip tiny editors (likely inline formatting, not a form field)
+            const rect = editor.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) continue;
 
-          // Check if any label[for] references a sibling/parent id that wraps this editor
-          let container = editor.parentElement;
-          for (let depth = 0; depth < 8 && container; depth++, container = container.parentElement) {
-            if (container.id) {
-              const labelEl = ownerDoc.querySelector(
-                `label[for="${CSS.escape(container.id)}"]`
-              );
-              if (labelEl?.textContent) {
-                label = labelEl.textContent.trim().replace(/[\s*]+$/, "").trim();
-                fieldId = container.id;
-                break;
+            let label = "";
+            let fieldId = "";
+            const ownerDoc = editor.ownerDocument || document;
+
+            // Check if any label[for] references a sibling/parent id that wraps this editor
+            let container = editor.parentElement;
+            for (let depth = 0; depth < 8 && container; depth++, container = container.parentElement) {
+              if (container.id) {
+                const labelEl = ownerDoc.querySelector(
+                  `label[for="${CSS.escape(container.id)}"]`
+                );
+                if (labelEl?.textContent) {
+                  label = labelEl.textContent.trim().replace(/[\s*]+$/, "").trim();
+                  fieldId = container.id;
+                  break;
+                }
               }
             }
-          }
 
-          // Also try labels whose `for` doesn't match any real input (orphaned labels)
-          if (!label) {
-            const allLabels = ownerDoc.querySelectorAll<HTMLLabelElement>("label[for]");
-            allLabels.forEach((lbl) => {
-              if (label) return;
-              const forId = lbl.getAttribute("for") || "";
-              // If there's no actual input with this id, the label might point to the editor
-              if (forId && !ownerDoc.getElementById(forId)) {
+            // Also try orphaned labels (cached)
+            if (!label) {
+              for (const { lbl, forId } of getOrphanLabels(ownerDoc)) {
                 // Check if this label is near the editor (within the same parent container)
                 let editorAncestor = editor.parentElement;
                 for (let d = 0; d < 8 && editorAncestor; d++, editorAncestor = editorAncestor.parentElement) {
@@ -468,44 +528,45 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
                     break;
                   }
                 }
+                if (label) break;
               }
+            }
+
+            if (!label) label = findNearbyLabel(editor, 8);
+            if (!fieldId && label) fieldId = labelToFieldId(label);
+            if (!fieldId) fieldId = nextGeneratedFieldId();
+            fieldId = makeUniqueFieldId([fieldId]);
+            if (scannedFieldIds.has(fieldId)) continue;
+
+            // Stamp data-field on the nearest wrapper so fillFormFields can locate it
+            const wrapper = editor.closest("div:has(> [contenteditable])") || editor.parentElement;
+            if (wrapper) pendingWrites.push({ el: wrapper, attr: "data-field", value: fieldId });
+
+            const placeholderEl = editor.querySelector("[data-placeholder]");
+            const placeholder = placeholderEl?.getAttribute("data-placeholder") || null;
+
+            fields.push({
+              field_id: fieldId,
+              type: "contenteditable",
+              tag: "div",
+              label: label || fieldId,
+              placeholder,
+              required: false,
+              max_length: null,
+              options: null,
+              pattern: null,
             });
+            scannedFieldIds.add(fieldId);
           }
-
-          if (!label) label = findNearbyLabel(editor, 8);
-          if (!fieldId && label) fieldId = labelToFieldId(label);
-          if (!fieldId) fieldId = nextGeneratedFieldId();
-          fieldId = makeUniqueFieldId([fieldId]);
-          if (scannedFieldIds.has(fieldId)) return;
-
-          // Stamp data-field on the nearest wrapper so fillFormFields can locate it
-          const wrapper = editor.closest("div:has(> [contenteditable])") || editor.parentElement;
-          if (wrapper) wrapper.setAttribute("data-field", fieldId);
-
-          const placeholderEl = editor.querySelector("[data-placeholder]");
-          const placeholder = placeholderEl?.getAttribute("data-placeholder") || null;
-
-          fields.push({
-            field_id: fieldId,
-            type: "contenteditable",
-            tag: "div",
-            label: label || fieldId,
-            placeholder,
-            required: false,
-            max_length: null,
-            options: null,
-            pattern: null,
-          });
-          scannedFieldIds.add(fieldId);
-        });
+        }
       }
 
       // Pass 5: orphaned file inputs (hidden inputs not captured by pass 1 or 2)
-      for (const root of roots) {
-        root.querySelectorAll<HTMLInputElement>('input[type="file"]').forEach((fileInput) => {
-          if (seenElements.has(fileInput)) return;
+      for (const buckets of allBuckets) {
+        for (const fileInput of buckets.fileInputs) {
+          if (seenElements.has(fileInput)) continue;
           // Skip if already inside a [data-field] container (handled by pass 2)
-          if (fileInput.closest("[data-field]")) return;
+          if (fileInput.closest("[data-field]")) continue;
 
           let label = "";
           let fieldId = fileInput.getAttribute("name")?.trim() || fileInput.id || "";
@@ -541,7 +602,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
           if (!fieldId && label) fieldId = labelToFieldId(label);
           if (!fieldId) fieldId = nextGeneratedFieldId();
           fieldId = makeUniqueFieldId([fieldId]);
-          if (scannedFieldIds.has(fieldId)) return;
+          if (scannedFieldIds.has(fieldId)) continue;
 
           // Stamp data-field on the wrapping container that holds both the label and the file input,
           // so fillFormFields can find it via [data-field].
@@ -554,8 +615,8 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             }
           }
           if (!wrapper) wrapper = fileInput.parentElement;
-          if (wrapper) wrapper.setAttribute("data-field", fieldId);
-          fileInput.setAttribute("data-dd-field-id", fieldId);
+          if (wrapper) pendingWrites.push({ el: wrapper, attr: "data-field", value: fieldId });
+          pendingWrites.push({ el: fileInput, attr: "data-dd-field-id", value: fieldId });
 
           fields.push({
             field_id: fieldId,
@@ -569,7 +630,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
             pattern: fileInput.accept || null,
           });
           scannedFieldIds.add(fieldId);
-        });
+        }
       }
 
       // Pass 6: Radix UI checkbox groups (button[role="checkbox"])
@@ -577,9 +638,9 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
       // The hidden <input type="checkbox"> siblings fail isVisible(), so pass 1 misses them.
       {
         const processed = new Set<Element>();
-        for (const root of roots) {
-          root.querySelectorAll<HTMLElement>('button[role="checkbox"]').forEach((btn) => {
-            if (processed.has(btn)) return;
+        for (const buckets of allBuckets) {
+          for (const btn of buckets.checkboxButtons) {
+            if (processed.has(btn)) continue;
 
             // Walk up to find the container that holds the group label + all checkboxes
             let groupContainer: Element | null = null;
@@ -595,13 +656,13 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               }
             }
 
-            if (!groupContainer || !groupLabel) return;
+            if (!groupContainer || !groupLabel) continue;
 
             const allCheckboxes = groupContainer.querySelectorAll<HTMLElement>('button[role="checkbox"]');
             allCheckboxes.forEach((cb) => processed.add(cb));
 
             let fieldId = labelToFieldId(groupLabel);
-            if (!fieldId || scannedFieldIds.has(fieldId)) return;
+            if (!fieldId || scannedFieldIds.has(fieldId)) continue;
             fieldId = makeUniqueFieldId([fieldId]);
 
             // Collect options from associated labels
@@ -623,7 +684,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               if (optLabel) options.push({ value: optLabel, text: optLabel });
             });
 
-            groupContainer.setAttribute("data-field", fieldId);
+            pendingWrites.push({ el: groupContainer, attr: "data-field", value: fieldId });
             fields.push({
               field_id: fieldId,
               type: "checkbox-group",
@@ -636,16 +697,16 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               pattern: null,
             });
             scannedFieldIds.add(fieldId);
-          });
+          }
         }
       }
 
       // Pass 7: Radix UI radio groups (button[role="radio"] inside [role="radiogroup"] or grouped)
       {
         const processed = new Set<Element>();
-        for (const root of roots) {
-          root.querySelectorAll<HTMLElement>('button[role="radio"]').forEach((btn) => {
-            if (processed.has(btn)) return;
+        for (const buckets of allBuckets) {
+          for (const btn of buckets.radioButtons) {
+            if (processed.has(btn)) continue;
 
             // Prefer [role="radiogroup"] wrapper, otherwise walk up like checkbox groups
             let groupContainer: Element | null = btn.closest('[role="radiogroup"]');
@@ -675,13 +736,13 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               }
             }
 
-            if (!groupContainer || !groupLabel) return;
+            if (!groupContainer || !groupLabel) continue;
 
             const allRadios = groupContainer.querySelectorAll<HTMLElement>('button[role="radio"]');
             allRadios.forEach((rb) => processed.add(rb));
 
             let fieldId = labelToFieldId(groupLabel);
-            if (!fieldId || scannedFieldIds.has(fieldId)) return;
+            if (!fieldId || scannedFieldIds.has(fieldId)) continue;
             fieldId = makeUniqueFieldId([fieldId]);
 
             const options: { value: string; text: string }[] = [];
@@ -701,7 +762,7 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               if (optLabel) options.push({ value: optLabel, text: optLabel });
             });
 
-            groupContainer.setAttribute("data-field", fieldId);
+            pendingWrites.push({ el: groupContainer, attr: "data-field", value: fieldId });
             fields.push({
               field_id: fieldId,
               type: "radio-group",
@@ -714,9 +775,15 @@ export async function scanFormFields(timeoutMs = 12000): Promise<ScannedField[]>
               pattern: null,
             });
             scannedFieldIds.add(fieldId);
-          });
+          }
         }
       }
+    }
+
+    // Flush all deferred DOM writes in one batch — avoids layout thrashing
+    // from interleaving reads (getBoundingClientRect, checkVisibility) with writes.
+    for (const { el, attr, value } of pendingWrites) {
+      el.setAttribute(attr, value);
     }
 
     return fields;
