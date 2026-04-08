@@ -47,6 +47,11 @@ const EXTERNAL_BADGES = [
     href: "https://dododirectory.com",
     src: "https://dododirectory.com/badge-light.png",
     alt: "Featured on DodoDirectory",
+  },
+  {
+    href: "https://themegatools.com",
+    src: "https://themegatools.com/assets/images/badge.png",
+    alt: "The Mega Tools",
   }
 ];
 
