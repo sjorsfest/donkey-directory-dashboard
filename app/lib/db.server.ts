@@ -1,30 +1,27 @@
-import Database from "better-sqlite3"
-import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless"
+import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http"
 
-let sqlite: Database.Database | null = null
-let db: BetterSQLite3Database | null = null
+let client: NeonQueryFunction<false, false> | null = null
+let db: NeonHttpDatabase | null = null
 
-function getDatabasePath(): string {
-  return process.env.DATABASE_PATH || "./data/donkey.db"
-}
-
-export function getDb(): BetterSQLite3Database {
+export function getDb(): NeonHttpDatabase {
   if (db) return db
 
-  const dbPath = getDatabasePath()
-  sqlite = new Database(dbPath)
-  sqlite.pragma("journal_mode = WAL")
-  sqlite.pragma("foreign_keys = ON")
-  db = drizzle(sqlite)
+  const databaseUrl = process.env.DATABASE_URL
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL environment variable is not set")
+  }
+
+  client = neon(databaseUrl)
+  db = drizzle(client)
 
   return db
 }
 
-export function initializeDatabase(): void {
+export async function initializeDatabase(): Promise<void> {
   const database = getDb()
 
-  const rawDb = sqlite!
-  rawDb.exec(`
+  await database.execute(/*sql*/`
     CREATE TABLE IF NOT EXISTS donkey_articles (
       article_id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
@@ -44,8 +41,8 @@ export function initializeDatabase(): void {
       publish_status TEXT NOT NULL DEFAULT 'published',
       published_at TEXT,
       proposed_publication_date TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (NOW()::TEXT),
+      updated_at TEXT NOT NULL DEFAULT (NOW()::TEXT)
     );
 
     CREATE TABLE IF NOT EXISTS donkey_webhook_events (
@@ -55,7 +52,7 @@ export function initializeDatabase(): void {
       processed INTEGER NOT NULL DEFAULT 0,
       processed_at TEXT,
       error_message TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (NOW()::TEXT)
     );
 
     CREATE TABLE IF NOT EXISTS donkey_pillars (
@@ -67,7 +64,7 @@ export function initializeDatabase(): void {
       status TEXT NOT NULL DEFAULT 'active',
       primary_article_count INTEGER DEFAULT 0,
       published_primary_article_count INTEGER DEFAULT 0,
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      updated_at TEXT NOT NULL DEFAULT (NOW()::TEXT)
     );
   `)
 }

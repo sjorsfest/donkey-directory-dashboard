@@ -205,7 +205,7 @@ export async function processArticlePublication(
     const now = new Date().toISOString()
 
     // 6. Store article in database (upsert)
-    db.run(sql`
+    await db.execute(sql`
       INSERT INTO donkey_articles (
         article_id, project_id, slug, title, excerpt,
         seo_title, seo_description, seo_h1, primary_keyword,
@@ -258,7 +258,7 @@ export async function processArticlePublication(
     })
 
     // 8. Mark webhook event as processed
-    db.run(sql`
+    await db.execute(sql`
       UPDATE donkey_webhook_events
       SET processed = 1, processed_at = ${now}
       WHERE event_id = ${eventId}
@@ -274,13 +274,13 @@ export async function processArticlePublication(
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     const now = new Date().toISOString()
 
-    db.run(sql`
+    await db.execute(sql`
       UPDATE donkey_webhook_events
       SET processed = 1, processed_at = ${now}, error_message = ${errorMessage}
       WHERE event_id = ${eventId}
     `)
 
-    db.run(sql`
+    await db.execute(sql`
       INSERT INTO donkey_articles (
         article_id, project_id, slug, title, primary_keyword,
         webhook_payload, publish_status, created_at, updated_at

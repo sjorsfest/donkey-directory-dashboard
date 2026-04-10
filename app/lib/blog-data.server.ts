@@ -67,7 +67,7 @@ export async function getPublishedArticleBySlug(
 
   try {
     const db = getDb()
-    const result = db.all(sql`
+    const result = await db.execute(sql`
       SELECT
         article_id, slug, title, excerpt,
         seo_title, seo_description, seo_h1,
@@ -79,9 +79,9 @@ export async function getPublishedArticleBySlug(
       LIMIT 1
     `)
 
-    if (result.length === 0) return null
+    if (result.rows.length === 0) return null
 
-    const article = parseArticleRow(result[0] as Record<string, unknown>)
+    const article = parseArticleRow(result.rows[0] as Record<string, unknown>)
     await setCached(cacheKey, article, ARTICLE_CACHE_TTL)
     return article
   } catch (error) {
@@ -123,9 +123,10 @@ export async function getAllPublishedArticles(
           ORDER BY published_at DESC
         `
 
-    const result = db.all(query) as BlogArticleSummary[]
-    await setCached(cacheKey, result, ARTICLES_LIST_CACHE_TTL)
-    return result
+    const result = await db.execute(query)
+    const articles = result.rows as unknown as BlogArticleSummary[]
+    await setCached(cacheKey, articles, ARTICLES_LIST_CACHE_TTL)
+    return articles
   } catch (error) {
     console.error("[Blog Data] Failed to get all articles:", error)
     return []
@@ -144,7 +145,7 @@ export async function getArticlesByPillar(
 
   try {
     const db = getDb()
-    const result = db.all(sql`
+    const result = await db.execute(sql`
       SELECT
         article_id, slug, title, excerpt,
         featured_image_url, featured_image_alt,
@@ -152,10 +153,11 @@ export async function getArticlesByPillar(
       FROM donkey_articles
       WHERE pillar_slug = ${pillarSlug} AND publish_status = 'published'
       ORDER BY published_at DESC
-    `) as BlogArticleSummary[]
+    `)
+    const articles = result.rows as unknown as BlogArticleSummary[]
 
-    await setCached(cacheKey, result, ARTICLES_LIST_CACHE_TTL)
-    return result
+    await setCached(cacheKey, articles, ARTICLES_LIST_CACHE_TTL)
+    return articles
   } catch (error) {
     console.error("[Blog Data] Failed to get articles by pillar:", error)
     return []
@@ -170,12 +172,13 @@ export async function getPublishedArticlesForSitemap(): Promise<
 > {
   try {
     const db = getDb()
-    return db.all(sql`
+    const result = await db.execute(sql`
       SELECT slug, updated_at
       FROM donkey_articles
       WHERE publish_status = 'published'
       ORDER BY published_at DESC
-    `) as BlogArticleForSitemap[]
+    `)
+    return result.rows as unknown as BlogArticleForSitemap[]
   } catch (error) {
     console.error("[Blog Data] Failed to get articles for sitemap:", error)
     return []
@@ -196,15 +199,16 @@ export async function getCachedPillars(): Promise<
 
   try {
     const db = getDb()
-    const result = db.all(sql`
+    const result = await db.execute(sql`
       SELECT id, name, slug, description
       FROM donkey_pillars
       WHERE status = 'active'
       ORDER BY name ASC
-    `) as Array<{ id: string; name: string; slug: string; description: string | null }>
+    `)
+    const pillars = result.rows as unknown as Array<{ id: string; name: string; slug: string; description: string | null }>
 
-    await setCached(cacheKey, result, ARTICLES_LIST_CACHE_TTL)
-    return result
+    await setCached(cacheKey, pillars, ARTICLES_LIST_CACHE_TTL)
+    return pillars
   } catch (error) {
     console.error("[Blog Data] Failed to get cached pillars:", error)
     return []

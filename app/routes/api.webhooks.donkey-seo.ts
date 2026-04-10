@@ -49,7 +49,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   try {
     // Ensure database tables exist
-    initializeDatabase()
+    await initializeDatabase()
 
     // 1. Read raw body for signature verification
     const rawBody = await request.text()
@@ -121,13 +121,13 @@ export async function action({ request }: Route.ActionArgs) {
 
     // 5. Check idempotency
     const db = getDb()
-    const existingEvent = db.all(sql`
+    const existingEvent = await db.execute(sql`
       SELECT event_id, processed, error_message
       FROM donkey_webhook_events
       WHERE event_id = ${event_id}
     `)
 
-    const existingRow = existingEvent[0] as
+    const existingRow = existingEvent.rows[0] as
       | { processed: number; error_message: string | null }
       | undefined
 
@@ -143,7 +143,7 @@ export async function action({ request }: Route.ActionArgs) {
     // 6. Store event if this is the first delivery
     const now = new Date().toISOString()
     if (!existingRow) {
-      db.run(sql`
+      await db.execute(sql`
         INSERT INTO donkey_webhook_events (event_id, event_type, payload, processed, created_at)
         VALUES (${event_id}, ${event_type}, ${rawBody}, 0, ${now})
       `)
@@ -175,7 +175,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // Unknown event type - mark as processed
-    db.run(sql`
+    await db.execute(sql`
       UPDATE donkey_webhook_events
       SET processed = 1, processed_at = ${now}
       WHERE event_id = ${event_id}
