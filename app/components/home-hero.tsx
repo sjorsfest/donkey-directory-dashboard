@@ -1,5 +1,5 @@
 import { Icon } from "@iconify/react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { CheckCheck, Chrome, ListChecks, Zap } from "lucide-react";
@@ -183,6 +183,7 @@ type Props = {
 
 export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount }: Props) {
   const [activePhraseIndex, setActivePhraseIndex] = useState(0);
+  const [activeMock, setActiveMock] = useState(1);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -190,6 +191,14 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
     }, 2800);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const duration = 12000;
+    const timeout = setTimeout(() => {
+      setActiveMock((prev) => (prev + 1) % 2);
+    }, duration);
+    return () => clearTimeout(timeout);
+  }, [activeMock]);
 
   return (
     <div className="rounded-lg border-2 border-foreground bg-card shadow-[var(--shadow-md)] overflow-hidden">
@@ -352,136 +361,175 @@ export function HomeHero({ isAuthenticated, directoryCount, localDirectoryCount 
           <DotRippleCanvas />
 
           {/* Outer wrapper — positions the extension card as an overlay */}
-          <div className="relative w-full max-w-[300px]">
-
-            {/* ── Dashboard window ── */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ rotate: [-1, 1.5, -1.5, 1, 0], y: -3, transition: { duration: 0.45, ease: "easeInOut" } }}
-              className="rounded-xl border-2 border-foreground bg-card shadow-[4px_4px_0_#1A1A1A] overflow-hidden"
-            >
-              {/* Browser bar */}
-              <div className="flex items-center gap-1.5 px-3 py-2 border-b-2 border-foreground bg-secondary">
-                <div className="w-2 h-2 rounded-full bg-red-400 border border-black/20" />
-                <div className="w-2 h-2 rounded-full bg-yellow-400 border border-black/20" />
-                <div className="w-2 h-2 rounded-full bg-green-400 border border-black/20" />
-                <div className="flex-1 mx-2 h-4 rounded-sm bg-secondary-50 border border-foreground/20 flex items-center px-2">
-                  <span className="text-[0.5rem] text-muted-foreground">{MAIN_DOMAIN}</span>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="px-3 pt-2.5 pb-2 border-b border-foreground/10">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[0.55rem] font-bold text-foreground">Launch progress</span>
-                  <span className="text-[0.55rem] font-bold" style={{ color: "hsl(var(--accent))" }}>2 of 5</span>
-                </div>
-                <div className="h-1.5 rounded-full overflow-hidden bg-secondary border border-foreground/10">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: "hsl(var(--primary))" }}
-                    initial={{ width: "0%" }}
-                    animate={{ width: "40%" }}
-                    transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-                  />
-                </div>
-              </div>
-
-              {/* Table header */}
-              <div className="grid grid-cols-[1fr_auto] gap-2 px-3 py-1.5 bg-secondary/30 border-b border-foreground/10">
-                <span className="text-[0.45rem] font-bold uppercase tracking-widest text-muted-foreground">Directory</span>
-                <span className="text-[0.45rem] font-bold uppercase tracking-widest text-muted-foreground">Status</span>
-              </div>
-
-              {/* Rows */}
-              {([
-                { name: "Product Hunt", status: "submitted"   },
-                { name: "Hacker News",  status: "in_progress" },
-                { name: "G2",           status: "none"        },
-                { name: "BetaList",     status: "none"        },
-                { name: "Futurepedia", status: "submitted"   },
-              ] as { name: string; status: "submitted" | "in_progress" | "none" }[]).map((row, i) => (
+          <div className={`relative w-full transition-[max-width] duration-500 ease-in-out ${activeMock === 0 ? "max-w-[300px]" : "max-w-[380px]"}`}>
+            <AnimatePresence mode="wait">
+              {activeMock === 0 ? (
                 <motion.div
-                  key={row.name}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.15 + i * 0.07 }}
-                  className="flex items-center justify-between pr-3 py-2 border-b border-foreground/8 last:border-0"
-                  style={{
-                    paddingLeft: row.status === "submitted" ? "calc(0.75rem - 2px)" : "0.75rem",
-                    borderLeft: row.status === "submitted" ? "2px solid hsl(var(--primary))" : undefined,
-                    background: row.status === "submitted"
-                      ? "hsl(var(--primary) / 0.06)"
-                      : row.status === "in_progress"
-                      ? "hsl(45 100% 97%)"
-                      : undefined,
-                  } as React.CSSProperties}
+                  key="mock-dashboard"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <span className="text-[0.6rem] font-semibold">{row.name}</span>
-                  {row.status === "submitted" && (
-                    <span className="text-[0.48rem] font-bold bg-accent text-accent-foreground rounded-full px-1.5 py-0.5 border border-foreground whitespace-nowrap">
-                      ✓ Submitted
-                    </span>
-                  )}
-                  {row.status === "in_progress" && (
-                    <span className="text-[0.48rem] font-bold bg-amber-100 text-amber-800 rounded-full px-1.5 py-0.5 border border-amber-300 whitespace-nowrap">
-                      In progress
-                    </span>
-                  )}
-                  {row.status === "none" && (
-                    <span className="text-[0.48rem] text-muted-foreground rounded-full px-1.5 py-0.5 border border-foreground/12 whitespace-nowrap">
-                      Not started
-                    </span>
-                  )}
+                  {/* ── Dashboard window ── */}
+                  <motion.div
+                    whileHover={{ rotate: [-1, 1.5, -1.5, 1, 0], y: -3, transition: { duration: 0.45, ease: "easeInOut" } }}
+                    className="rounded-xl border-2 border-foreground bg-card shadow-[4px_4px_0_#1A1A1A] overflow-hidden"
+                  >
+                    {/* Browser bar */}
+                    <div className="flex items-center gap-1.5 px-3 py-2 border-b-2 border-foreground bg-secondary">
+                      <div className="w-2 h-2 rounded-full bg-red-400 border border-black/20" />
+                      <div className="w-2 h-2 rounded-full bg-yellow-400 border border-black/20" />
+                      <div className="w-2 h-2 rounded-full bg-green-400 border border-black/20" />
+                      <div className="flex-1 mx-2 h-4 rounded-sm bg-secondary-50 border border-foreground/20 flex items-center px-2">
+                        <span className="text-[0.5rem] text-muted-foreground">{MAIN_DOMAIN}</span>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="px-3 pt-2.5 pb-2 border-b border-foreground/10">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[0.55rem] font-bold text-foreground">Launch progress</span>
+                        <span className="text-[0.55rem] font-bold" style={{ color: "hsl(var(--accent))" }}>2 of 5</span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden bg-secondary border border-foreground/10">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ background: "hsl(var(--primary))" }}
+                          initial={{ width: "0%" }}
+                          animate={{ width: "40%" }}
+                          transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Table header */}
+                    <div className="grid grid-cols-[1fr_auto] gap-2 px-3 py-1.5 bg-secondary/30 border-b border-foreground/10">
+                      <span className="text-[0.45rem] font-bold uppercase tracking-widest text-muted-foreground">Directory</span>
+                      <span className="text-[0.45rem] font-bold uppercase tracking-widest text-muted-foreground">Status</span>
+                    </div>
+
+                    {/* Rows */}
+                    {([
+                      { name: "Product Hunt", status: "submitted"   },
+                      { name: "Hacker News",  status: "in_progress" },
+                      { name: "G2",           status: "none"        },
+                      { name: "BetaList",     status: "none"        },
+                      { name: "Futurepedia", status: "submitted"   },
+                    ] as { name: string; status: "submitted" | "in_progress" | "none" }[]).map((row, i) => (
+                      <motion.div
+                        key={row.name}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.15 + i * 0.07 }}
+                        className="flex items-center justify-between pr-3 py-2 border-b border-foreground/8 last:border-0"
+                        style={{
+                          paddingLeft: row.status === "submitted" ? "calc(0.75rem - 2px)" : "0.75rem",
+                          borderLeft: row.status === "submitted" ? "2px solid hsl(var(--primary))" : undefined,
+                          background: row.status === "submitted"
+                            ? "hsl(var(--primary) / 0.06)"
+                            : row.status === "in_progress"
+                            ? "hsl(45 100% 97%)"
+                            : undefined,
+                        } as React.CSSProperties}
+                      >
+                        <span className="text-[0.6rem] font-semibold">{row.name}</span>
+                        {row.status === "submitted" && (
+                          <span className="text-[0.48rem] font-bold bg-accent text-accent-foreground rounded-full px-1.5 py-0.5 border border-foreground whitespace-nowrap">
+                            ✓ Submitted
+                          </span>
+                        )}
+                        {row.status === "in_progress" && (
+                          <span className="text-[0.48rem] font-bold bg-amber-100 text-amber-800 rounded-full px-1.5 py-0.5 border border-amber-300 whitespace-nowrap">
+                            In progress
+                          </span>
+                        )}
+                        {row.status === "none" && (
+                          <span className="text-[0.48rem] text-muted-foreground rounded-full px-1.5 py-0.5 border border-foreground/12 whitespace-nowrap">
+                            Not started
+                          </span>
+                        )}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+
+                  {/* ── Chrome extension popup — overlapping bottom-right ── */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.45, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={{ rotate: [1, -2, 2, -1, 0], y: -4, transition: { duration: 0.4, ease: "easeInOut" } }}
+                    style={{ y: 0 }}
+                    className="absolute -bottom-4 -right-4 w-[185px] rounded-xl border-2 border-foreground bg-card shadow-[4px_4px_0_#1A1A1A] overflow-hidden"
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-2.5 py-2 bg-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Chrome className="h-3 w-3 text-background/80" />
+                        <span className="text-[0.58rem] font-bold text-background">Chrome Extension</span>
+                      </div>
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    </div>
+
+                    {/* Autofill body */}
+                    <div className="px-2.5 py-2 space-y-1.5">
+                      <p className="text-[0.5rem] text-muted-foreground">
+                        Submitting to <span className="font-bold text-foreground">BetaList</span> for you...
+                      </p>
+                      {/* Single field with cursor */}
+                      <div className="h-5 rounded-md border border-foreground/20 bg-secondary/40 px-2 flex items-center gap-0.5">
+                        <span className="text-[0.55rem] text-foreground">My new app</span>
+                        <motion.span
+                          className="h-2.5 w-px bg-foreground"
+                          animate={{ opacity: [1, 0, 1] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <ChromeExtensionLink className="flex items-center justify-between px-2.5 py-2 bg-accent-100 border-t border-foreground/15 hover:bg-secondary/40 transition-colors group">
+                      <span className="text-[0.55rem] font-bold" style={{ color: "hsl(var(--accent))" }}>
+                        Add to Chrome, it's free!
+                      </span>
+                      <span className="text-[0.6rem] font-bold text-muted-foreground group-hover:translate-x-0.5 transition-transform">→</span>
+                    </ChromeExtensionLink>
+                  </motion.div>
                 </motion.div>
-              ))}
-            </motion.div>
+              ) : (
+                <motion.div
+                  key="mock-detail"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {/* ── Chrome extension GIF demo ── */}
+                  <motion.div
+                    whileHover={{ rotate: [-1, 1.5, -1.5, 1, 0], y: -3, transition: { duration: 0.45, ease: "easeInOut" } }}
+                    className="rounded-xl border-2 border-foreground bg-card shadow-[4px_4px_0_#1A1A1A] overflow-hidden"
+                  >
+                    {/* Browser bar */}
+                    <div className="flex items-center gap-1.5 px-3 py-2 border-b-2 border-foreground bg-secondary">
+                      <div className="w-2 h-2 rounded-full bg-red-400 border border-black/20" />
+                      <div className="w-2 h-2 rounded-full bg-yellow-400 border border-black/20" />
+                      <div className="w-2 h-2 rounded-full bg-green-400 border border-black/20" />
+                      <div className="flex-1 mx-2 h-4 rounded-sm bg-secondary-50 border border-foreground/20 flex items-center px-2">
+                        <span className="text-[0.5rem] text-muted-foreground">Chrome Extension in action</span>
+                      </div>
+                    </div>
 
-            {/* ── Chrome extension popup — overlapping bottom-right ── */}
-            <motion.div
-              initial={{ opacity: 0, y: 12, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.45, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ rotate: [1, -2, 2, -1, 0], y: -4, transition: { duration: 0.4, ease: "easeInOut" } }}
-              style={{ y: 0 }}
-              className="absolute -bottom-4 -right-4 w-[185px] rounded-xl border-2 border-foreground bg-card shadow-[4px_4px_0_#1A1A1A] overflow-hidden"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-2.5 py-2 bg-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Chrome className="h-3 w-3 text-background/80" />
-                  <span className="text-[0.58rem] font-bold text-background">Chrome Extension</span>
-                </div>
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              </div>
+                    {/* GIF */}
+                    <img
+                      src="https://public.donkey.directory/gif/example_directory_fill.gif"
+                      alt="Chrome extension auto-filling a directory submission form"
+                      className="w-full block"
+                    />
+                  </motion.div>
 
-              {/* Autofill body */}
-              <div className="px-2.5 py-2 space-y-1.5">
-                <p className="text-[0.5rem] text-muted-foreground">
-                  Submitting to <span className="font-bold text-foreground">BetaList</span> for you...
-                </p>
-                {/* Single field with cursor */}
-                <div className="h-5 rounded-md border border-foreground/20 bg-secondary/40 px-2 flex items-center gap-0.5">
-                  <span className="text-[0.55rem] text-foreground">My new app</span>
-                  <motion.span
-                    className="h-2.5 w-px bg-foreground"
-                    animate={{ opacity: [1, 0, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  />
-                </div>
-              </div>
-
-              {/* CTA */}
-              <ChromeExtensionLink className="flex items-center justify-between px-2.5 py-2 bg-accent-100 border-t border-foreground/15 hover:bg-secondary/40 transition-colors group">
-                <span className="text-[0.55rem] font-bold" style={{ color: "hsl(var(--accent))" }}>
-                  Add to Chrome, it's free!
-                </span>
-                <span className="text-[0.6rem] font-bold text-muted-foreground group-hover:translate-x-0.5 transition-transform">→</span>
-              </ChromeExtensionLink>
-            </motion.div>
-
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
