@@ -18,7 +18,7 @@ const DONKEY_SEO_URL =
 
 const EXTERNAL_BADGES = [
   {
-    href: "https://toolprism.com",
+    href: "https://toolprism.com/ai/donkey-directories",
     src: "https://toolprism.com/assets/images/badge.png",
     alt: "Tool Prism",
   },
@@ -29,7 +29,7 @@ const EXTERNAL_BADGES = [
   },
 
   {
-    href: "https://toptrendtools.com",
+    href: "https://toptrendtools.com/tool/donkey-directories",
     src: "https://toptrendtools.com/assets/images/badge.png",
     alt: "Top Trend Tools",
   },
@@ -49,7 +49,7 @@ const EXTERNAL_BADGES = [
     alt: "Featured on DodoDirectory",
   },
   {
-    href: "https://themegatools.com",
+    href: "https://themegatools.com/tool/donkey-directories",
     src: "https://themegatools.com/assets/images/badge.png",
     alt: "The Mega Tools",
   },
@@ -87,6 +87,11 @@ const EXTERNAL_BADGES = [
     href: "https://startupaideas.com",
     src: "https://startupaideas.com/assets/images/badge.png",
     alt: "Startup AIdeas",
+  },
+  {
+    href: "https://beamtools.com",
+    src: "https://beamtools.com/assets/images/badge.png",
+    alt: "Beam Tools",
   }
 ];
 
