@@ -2,7 +2,7 @@
 // Handles all database queries for blog articles
 
 import { sql } from "drizzle-orm"
-import { getDb } from "~/lib/db.server"
+import { ensureDb } from "~/lib/db.server"
 import { getCached, setCached } from "~/lib/redis.server"
 import type { ModularDocument } from "~/lib/donkey-seo-client.server"
 
@@ -66,7 +66,7 @@ export async function getPublishedArticleBySlug(
   if (cached) return cached
 
   try {
-    const db = getDb()
+    const db = await ensureDb()
     const result = await db.execute(sql`
       SELECT
         article_id, slug, title, excerpt,
@@ -101,7 +101,7 @@ export async function getAllPublishedArticles(
   if (cached) return cached
 
   try {
-    const db = getDb()
+    const db = await ensureDb()
     const query = limit
       ? sql`
           SELECT
@@ -144,7 +144,7 @@ export async function getArticlesByPillar(
   if (cached) return cached
 
   try {
-    const db = getDb()
+    const db = await ensureDb()
     const result = await db.execute(sql`
       SELECT
         article_id, slug, title, excerpt,
@@ -171,7 +171,7 @@ export async function getPublishedArticlesForSitemap(): Promise<
   BlogArticleForSitemap[]
 > {
   try {
-    const db = getDb()
+    const db = await ensureDb()
     const result = await db.execute(sql`
       SELECT slug, updated_at
       FROM donkey_articles
@@ -198,7 +198,7 @@ export async function getCachedPillars(): Promise<
   if (cached) return cached
 
   try {
-    const db = getDb()
+    const db = await ensureDb()
     const result = await db.execute(sql`
       SELECT id, name, slug, description
       FROM donkey_pillars

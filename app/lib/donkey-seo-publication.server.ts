@@ -2,7 +2,7 @@
 // Handles the full publication workflow for Donkey SEO articles
 
 import { sql } from "drizzle-orm"
-import { getDb } from "~/lib/db.server"
+import { ensureDb } from "~/lib/db.server"
 import { getDonkeySeoClient } from "~/lib/donkey-seo-client.server"
 import { uploadImageToR2 } from "~/lib/r2.server"
 import type { ModularBlock, ModularDocument } from "~/lib/donkey-seo-client.server"
@@ -145,7 +145,7 @@ export async function processArticlePublication(
   eventId: string,
   payload: WebhookArticlePayload
 ): Promise<void> {
-  const db = getDb()
+  const db = await ensureDb()
   const client = getDonkeySeoClient()
 
   try {

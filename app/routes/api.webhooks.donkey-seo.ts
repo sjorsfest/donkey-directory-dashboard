@@ -2,7 +2,7 @@
 
 import type { Route } from "./+types/api.webhooks.donkey-seo"
 import { sql } from "drizzle-orm"
-import { getDb, initializeDatabase } from "~/lib/db.server"
+import { ensureDb } from "~/lib/db.server"
 import { verifyWebhookSignature } from "~/lib/webhook-verification.server"
 import {
   processArticlePublication,
@@ -49,7 +49,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   try {
     // Ensure database tables exist
-    await initializeDatabase()
+    await ensureDb()
 
     // 1. Read raw body for signature verification
     const rawBody = await request.text()
@@ -120,7 +120,7 @@ export async function action({ request }: Route.ActionArgs) {
     console.log(`[Donkey SEO Webhook] Received event: ${event_type} (${event_id})`)
 
     // 5. Check idempotency
-    const db = getDb()
+    const db = await ensureDb()
     const existingEvent = await db.execute(sql`
       SELECT event_id, processed, error_message
       FROM donkey_webhook_events

@@ -3,6 +3,8 @@ import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http"
 
 let client: NeonQueryFunction<false, false> | null = null
 let db: NeonHttpDatabase | null = null
+let initialized = false
+let initPromise: Promise<void> | null = null
 
 export function getDb(): NeonHttpDatabase {
   if (db) return db
@@ -18,9 +20,19 @@ export function getDb(): NeonHttpDatabase {
   return db
 }
 
-export async function initializeDatabase(): Promise<void> {
+export async function ensureDb(): Promise<NeonHttpDatabase> {
   const database = getDb()
+  if (!initialized) {
+    if (!initPromise) {
+      initPromise = createTables(database)
+    }
+    await initPromise
+    initialized = true
+  }
+  return database
+}
 
+async function createTables(database: NeonHttpDatabase): Promise<void> {
   await database.execute(/*sql*/`
     CREATE TABLE IF NOT EXISTS donkey_articles (
       article_id TEXT PRIMARY KEY,
@@ -72,3 +84,6 @@ export async function initializeDatabase(): Promise<void> {
     )
   `)
 }
+
+/** @deprecated Use ensureDb() instead */
+export const initializeDatabase = () => ensureDb()
