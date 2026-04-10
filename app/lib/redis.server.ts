@@ -5,10 +5,13 @@ let redis: Redis | null = null;
 function getRedis(): Redis | null {
   if (redis) return redis;
 
+  if (process.env.NODE_ENV !== "production") return null;
+
   const url = process.env.REDIS_URL;
   if (!url) return null;
 
   redis = new Redis(url, { lazyConnect: true, enableOfflineQueue: false });
+  redis.on("error", () => {}); // suppress unhandled error events
   return redis;
 }
 
