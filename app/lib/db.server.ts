@@ -43,8 +43,10 @@ export async function initializeDatabase(): Promise<void> {
       proposed_publication_date TEXT,
       created_at TEXT NOT NULL DEFAULT (NOW()::TEXT),
       updated_at TEXT NOT NULL DEFAULT (NOW()::TEXT)
-    );
+    )
+  `)
 
+  await database.execute(/*sql*/`
     CREATE TABLE IF NOT EXISTS donkey_webhook_events (
       event_id TEXT PRIMARY KEY,
       event_type TEXT NOT NULL,
@@ -53,8 +55,10 @@ export async function initializeDatabase(): Promise<void> {
       processed_at TEXT,
       error_message TEXT,
       created_at TEXT NOT NULL DEFAULT (NOW()::TEXT)
-    );
+    )
+  `)
 
+  await database.execute(/*sql*/`
     CREATE TABLE IF NOT EXISTS donkey_pillars (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
@@ -65,6 +69,6 @@ export async function initializeDatabase(): Promise<void> {
       primary_article_count INTEGER DEFAULT 0,
       published_primary_article_count INTEGER DEFAULT 0,
       updated_at TEXT NOT NULL DEFAULT (NOW()::TEXT)
-    );
+    )
   `)
 }
