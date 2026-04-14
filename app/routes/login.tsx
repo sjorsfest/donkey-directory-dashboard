@@ -1,4 +1,4 @@
-import { Form, Link, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { Form, Link, data, redirect, useActionData, useNavigation } from "react-router";
 import type { Route } from "./+types/login";
 import { getServerApiBaseUrl } from "~/lib/api-base-url.server";
 import { API_ROUTES, type ApiLoginRequest, isApiToken } from "~/lib/api-contract";
@@ -6,9 +6,6 @@ import { commitSession, getSession } from "~/lib/session.server";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Separator } from "@/shared/ui/separator";
 
 type SocialIntent = "oauth:google" | "oauth:x";
 
@@ -95,15 +92,12 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function LoginPage() {
-  const loaderData = useLoaderData<typeof loader>();
-  const next = loaderData?.next ?? "/";
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const activeIntent = String(navigation.formData?.get("intent") ?? "");
   const isBusy = navigation.state !== "idle";
   const isGoogleLoading = isBusy && activeIntent === "oauth:google";
   const isXLoading = isBusy && activeIntent === "oauth:x";
-  const isLoginLoading = isBusy && activeIntent !== "oauth:google" && activeIntent !== "oauth:x";
 
   return (
     <main className="min-h-screen grid place-items-center p-6">
@@ -145,28 +139,7 @@ export default function LoginPage() {
             </Button>
           </Form>
 
-          <Separator />
-
-          <Form method="post" className="grid gap-4">
-            <input type="hidden" name="next" value={next} />
-            <div className="grid gap-2">
-              <Label htmlFor="login-email">Email</Label>
-              <Input id="login-email" type="email" name="email" autoComplete="email" required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="login-password">Password</Label>
-              <Input
-                id="login-password"
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                required
-              />
-            </div>
-            <Button type="submit" disabled={isBusy}>
-              {isLoginLoading ? "Logging in..." : "Login"}
-            </Button>
-          </Form>
+          {/* Email/password login temporarily disabled due to bot abuse */}
 
           <div className="flex items-center justify-between pt-1">
             <p className="text-sm text-muted-foreground">

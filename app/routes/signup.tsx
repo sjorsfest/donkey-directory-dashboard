@@ -10,9 +10,6 @@ import { commitSession, getSession } from "~/lib/session.server";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Separator } from "@/shared/ui/separator";
 
 type SocialIntent = "oauth:google" | "oauth:x";
 
@@ -102,7 +99,6 @@ export default function SignupPage() {
   const isBusy = navigation.state !== "idle";
   const isGoogleLoading = isBusy && activeIntent === "oauth:google";
   const isXLoading = isBusy && activeIntent === "oauth:x";
-  const isSignupLoading = isBusy && activeIntent !== "oauth:google" && activeIntent !== "oauth:x";
 
   return (
     <main className="min-h-screen grid place-items-center p-6">
@@ -144,27 +140,7 @@ export default function SignupPage() {
             </Button>
           </Form>
 
-          <Separator />
-
-          <Form method="post" className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="signup-email">Email</Label>
-              <Input id="signup-email" type="email" name="email" autoComplete="email" required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="signup-password">Password</Label>
-              <Input
-                id="signup-password"
-                type="password"
-                name="password"
-                autoComplete="new-password"
-                required
-              />
-            </div>
-            <Button type="submit" disabled={isBusy}>
-              {isSignupLoading ? "Creating account..." : "Create account"}
-            </Button>
-          </Form>
+          {/* Email/password signup temporarily disabled due to bot abuse */}
 
           <div className="flex items-center justify-between pt-1">
             <p className="text-sm text-muted-foreground">
