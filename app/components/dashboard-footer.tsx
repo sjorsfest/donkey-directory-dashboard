@@ -276,7 +276,7 @@ export function DashboardFooter() {
                   key={`${badge.href}-${i}`}
                   href={badge.href}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="nofollow noopener noreferrer"
                   className="shrink-0 opacity-50 transition-opacity hover:opacity-90"
                 >
                   <img
