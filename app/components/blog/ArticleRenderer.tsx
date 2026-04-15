@@ -399,11 +399,12 @@ function BlockLinks({ links }: { links?: ModularBlock["links"] }) {
 function HeroBlock({ block, skipHeading }: { block: ModularBlock; skipHeading: boolean }) {
   const heading = safeString(block.heading)
   const body = safeString(block.body)
-  if (!heading && !body) return null
+  const visibleHeading = heading && !skipHeading
+  if (!visibleHeading && !body) return null
 
   return (
     <header className="rounded-lg border-2 border-foreground bg-primary-100 px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10 shadow-[var(--shadow-md)]">
-      {heading && !skipHeading && (
+      {visibleHeading && (
         <h2 className="font-[Fredoka] text-xl sm:text-3xl md:text-4xl font-bold leading-tight text-foreground mb-3 sm:mb-5">
           {heading}
         </h2>
@@ -411,7 +412,7 @@ function HeroBlock({ block, skipHeading }: { block: ModularBlock; skipHeading: b
       {body && (
         <MarkdownContent
           content={body}
-          className={cn(!skipHeading && heading && "mt-0")}
+          className={cn(visibleHeading && "mt-0")}
           paragraphClassName="text-base sm:text-lg leading-relaxed text-foreground/80"
         />
       )}
@@ -938,7 +939,7 @@ export function ArticleRenderer({
         />
       ))}
 
-      <article className="rounded-lg border-2 border-foreground bg-background px-5 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-10 md:py-12 space-y-8 sm:space-y-10 md:space-y-12 shadow-[var(--shadow-md)]">
+      <article className="rounded-lg border-2 border-foreground bg-white px-5 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-10 md:py-12 space-y-8 sm:space-y-10 md:space-y-12 shadow-[var(--shadow-md)]">
         {/* Article H1 */}
         {h1Text && (
           <h1 className="font-[Fredoka] text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-foreground">
